@@ -1,8 +1,6 @@
 package org.novasearch.jitter.resources;
 
 import cc.twittertools.index.IndexStatuses;
-import cc.twittertools.search.api.TResultComparable;
-import cc.twittertools.thrift.gen.TResult;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -19,6 +17,7 @@ import org.novasearch.jitter.api.ResponseHeader;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.api.search.DocumentsResponse;
 import org.novasearch.jitter.api.search.SearchResponse;
+import org.novasearch.jitter.core.DocumentComparable;
 import org.novasearch.jitter.core.ReputationReader;
 
 import javax.ws.rs.GET;
@@ -68,21 +67,26 @@ public class SearchResource {
                                  @QueryParam("limit") Optional<Integer> limit,
                                  @QueryParam("max_id") Optional<Long> max_id,
                                  @QueryParam("filter_rt") Optional<Boolean> filter_rt,
+                                 @QueryParam("names") Optional<Boolean> names,
+                                 @QueryParam("reputation") Optional<Boolean> reputation,
                                  @Context UriInfo uriInfo)
             throws IOException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
         String queryText = URLDecoder.decode(query.or(""), "UTF-8");
         int queryLimit = limit.or(1000);
         boolean filterRT = filter_rt.or(false);
+        boolean isNamesEnabled = names.or(false);
+        boolean isReputationEnable = reputation.or(false);
 
         int totalHits;
         int numResults;
-        List<TResult> results = Lists.newArrayList();
+        List<Document> results = Lists.newArrayList();
         long startTime = System.currentTimeMillis();
 
         try {
             Query q = QUERY_PARSER.parse(queryText);
             numResults = queryLimit > 10000 ? 10000 : queryLimit;
+
 
             TopDocs rs = null;
             if (max_id.isPresent()) {
@@ -96,7 +100,7 @@ public class SearchResource {
             for (ScoreDoc scoreDoc : rs.scoreDocs) {
                 org.apache.lucene.document.Document hit = searcher.doc(scoreDoc.doc);
 
-                TResult p = new TResult();
+                Document p = new Document();
                 p.id = (Long) hit.getField(IndexStatuses.StatusField.ID.name).numericValue();
                 p.screen_name = hit.get(IndexStatuses.StatusField.SCREEN_NAME.name);
                 p.epoch = (Long) hit.getField(IndexStatuses.StatusField.EPOCH.name).numericValue();
@@ -130,6 +134,12 @@ public class SearchResource {
                     p.retweeted_count = (Integer) hit.getField(IndexStatuses.StatusField.RETWEET_COUNT.name).numericValue();
                 }
 
+                if (isNamesEnabled) {
+                    if (hit.getValues("entities") != null) {
+                        p.entities = hit.getValues("entities");
+                    }
+                }
+
                 results.add(p);
             }
         } catch (Exception e) {
@@ -138,26 +148,28 @@ public class SearchResource {
         }
 
         int retweetCount = 0;
-        SortedSet<TResultComparable> sortedResults = new TreeSet<TResultComparable>();
-        for (TResult p : results) {
+        SortedSet<DocumentComparable> sortedResults = new TreeSet<DocumentComparable>();
+        for (Document p : results) {
             // Throw away retweets.
             if (filterRT && p.getRetweeted_status_id() != 0) {
                 retweetCount++;
                 continue;
             }
 
-            sortedResults.add(new TResultComparable(p));
+            sortedResults.add(new DocumentComparable(p));
         }
-        LOG.info("filter_rt count: " + retweetCount);
-        totalHits -= retweetCount;
+        if (filterRT) {
+            LOG.info("filter_rt count: " + retweetCount);
+            totalHits -= retweetCount;
+        }
 
         List<Document> docs = Lists.newArrayList();
 
         int i = 1;
         int dupliCount = 0;
         double rsvPrev = 0;
-        for (TResultComparable sortedResult : sortedResults) {
-            TResult result = sortedResult.getTResult();
+        for (DocumentComparable sortedResult : sortedResults) {
+            Document result = sortedResult.getDocument();
             double rsvCurr = result.rsv;
             if (Math.abs(rsvCurr - rsvPrev) > 0.0000001) {
                 dupliCount = 0;
@@ -165,16 +177,14 @@ public class SearchResource {
                 dupliCount++;
                 rsvCurr = rsvCurr - 0.000001 / numResults * dupliCount;
             }
+
+            if (isReputationEnable)
+                result.setReputation(reputationReader.getEntitiesReputation(result.getText()));
+
             docs.add(new Document(result));
             i++;
             rsvPrev = result.rsv;
         }
-
-//        if (hit.getValues("entities") != null) {
-//            p.entities = hit.getValues("entities");
-//        }
-//
-//        p.reputation = reputationReader.getEntitiesReputation(p.text);
 
         long endTime = System.currentTimeMillis();
         LOG.info(String.format("%4dms %s", (endTime - startTime), queryText));

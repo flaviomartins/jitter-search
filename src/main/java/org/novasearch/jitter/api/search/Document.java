@@ -26,7 +26,7 @@ public class Document /* cannot extend TResult */ {
         // Jackson deserialization
     }
 
-    public Document(TResult result) {
+    public Document(Document result) {
         id = result.id;
         rsv = result.rsv;
         screen_name = result.screen_name;
@@ -40,6 +40,8 @@ public class Document /* cannot extend TResult */ {
         retweeted_status_id = result.retweeted_status_id;
         retweeted_user_id = result.retweeted_user_id;
         retweeted_count = result.retweeted_count;
+        entities = result.entities;
+        reputation = result.reputation;
     }
 
     @JsonProperty
