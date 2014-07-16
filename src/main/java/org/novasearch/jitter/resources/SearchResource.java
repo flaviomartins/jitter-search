@@ -66,6 +66,7 @@ public class SearchResource {
                                  @QueryParam("fq") Optional<String> filterQuery,
                                  @QueryParam("limit") Optional<Integer> limit,
                                  @QueryParam("max_id") Optional<Long> max_id,
+                                 @QueryParam("epoch") Optional<String> epoch_range,
                                  @QueryParam("filter_rt") Optional<Boolean> filter_rt,
                                  @QueryParam("names") Optional<Boolean> names,
                                  @QueryParam("reputation") Optional<Boolean> reputation,
@@ -92,6 +93,19 @@ public class SearchResource {
             if (max_id.isPresent()) {
                 Filter filter =
                         NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, max_id.get(), true, true);
+                rs = searcher.search(q, filter, numResults);
+            } else if (epoch_range.isPresent()) {
+                long first_epoch = 0L;
+                long last_epoch = Long.MAX_VALUE;
+                String[] epochs = epoch_range.get().split("[: ]");
+                try {
+                    first_epoch = Long.parseLong(epochs[0]);
+                    last_epoch = Long.parseLong(epochs[1]);
+                } catch (Exception e) {
+                    // pass
+                }
+                Filter filter =
+                        NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, first_epoch, last_epoch, true, true);
                 rs = searcher.search(q, filter, numResults);
             } else {
                 rs = searcher.search(q, numResults);
