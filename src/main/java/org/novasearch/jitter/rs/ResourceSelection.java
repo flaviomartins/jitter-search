@@ -17,6 +17,7 @@ import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.twitter.TwitterManager;
 import org.novasearch.jitter.twitter.UserTimeline;
+import org.novasearch.jitter.twitter_archiver.TwitterArchiver;
 import twitter4j.Status;
 
 import java.io.File;
@@ -56,19 +57,41 @@ public class ResourceSelection {
     private IndexSearcher searcher;
 
     private final String index;
-    private final TwitterManager twitterManager;
+    private String twitterMode;
+    private TwitterArchiver twitterArchiver;
+    private TwitterManager twitterManager;
 
-    public ResourceSelection(String index, TwitterManager twitterManager) throws IOException {
+    public ResourceSelection(String index, String twitterMode) throws IOException {
         this.index = index;
-        this.twitterManager = twitterManager;
+        this.twitterMode = twitterMode;
     }
 
     public String getIndex() {
         return index;
     }
 
+    public TwitterArchiver getTwitterArchiver() {
+        return twitterArchiver;
+    }
+
     public TwitterManager getTwitterManager() {
         return twitterManager;
+    }
+
+    public String getTwitterMode() {
+        return twitterMode;
+    }
+
+    public void setTwitterArchiver(TwitterArchiver twitterArchiver) {
+        this.twitterArchiver = twitterArchiver;
+    }
+
+    public void setTwitterManager(TwitterManager twitterManager) {
+        this.twitterManager = twitterManager;
+    }
+
+    public void setTwitterMode(String twitterMode) {
+        this.twitterMode = twitterMode;
     }
 
     public void close() {
@@ -96,8 +119,13 @@ public class ResourceSelection {
                 p.text = hit.get(IndexStatuses.StatusField.TEXT.name);
                 p.rsv = scoreDoc.score;
 
-                p.followers_count = (Integer) hit.getField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name).numericValue();
-                p.statuses_count = (Integer) hit.getField(IndexStatuses.StatusField.STATUSES_COUNT.name).numericValue();
+                if (hit.get(IndexStatuses.StatusField.FOLLOWERS_COUNT.name) != null) {
+                    p.followers_count = (Integer) hit.getField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name).numericValue();
+                }
+
+                if (hit.get(IndexStatuses.StatusField.STATUSES_COUNT.name) != null) {
+                    p.statuses_count = (Integer) hit.getField(IndexStatuses.StatusField.STATUSES_COUNT.name).numericValue();
+                }
 
                 if (hit.get(IndexStatuses.StatusField.LANG.name) != null) {
                     p.lang = hit.get(IndexStatuses.StatusField.LANG.name);
@@ -132,10 +160,69 @@ public class ResourceSelection {
     }
 
     public void index() throws IOException {
+        if ("archiver".equals(twitterMode)) {
+            logger.info("archiver index");
+            indexArchiver();
+        } else if ("normal".equals(twitterMode)) {
+            logger.info("normal index");
+            indexManager();
+        } else {
+            logger.error("Invalid Twitter mode");
+        }
+    }
+
+    public void indexArchiver() throws IOException {
         File indexPath = new File(index);
         Directory dir = FSDirectory.open(indexPath);
         IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+
+        final FieldType textOptions = new FieldType();
+        textOptions.setIndexed(true);
+        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        textOptions.setStored(true);
+        textOptions.setTokenized(true);
+
+        IndexWriter writer = new IndexWriter(dir, config);
+        int cnt = 0;
+        try {
+            for (String screenName : twitterArchiver.getUsers()) {
+                org.novasearch.jitter.twitter_archiver.UserTimeline userTimeline = twitterArchiver.getUserTimeline(screenName);
+                if (userTimeline == null)
+                    break;
+                LinkedHashMap<Long, org.novasearch.jitter.twitter_archiver.Status> statuses = userTimeline.getStatuses();
+                if (userTimeline.getStatuses() == null)
+                    break;
+                for (org.novasearch.jitter.twitter_archiver.Status status : statuses.values()) {
+                    cnt++;
+                    org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
+                    doc.add(new LongField(StatusField.ID.name, status.getId(), Field.Store.YES));
+                    doc.add(new LongField(StatusField.EPOCH.name, status.getEpoch(), Field.Store.YES));
+                    doc.add(new TextField(StatusField.SCREEN_NAME.name, status.getScreenName(), Field.Store.YES));
+
+                    doc.add(new Field(StatusField.TEXT.name, status.getText(), textOptions));
+
+                    writer.addDocument(doc);
+                    if (cnt % 1000 == 0) {
+                        logger.debug(cnt + " statuses indexed");
+                    }
+                }
+                logger.info(String.format("Total of %s statuses added", cnt));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            writer.close();
+            dir.close();
+        }
+    }
+
+    public void indexManager() throws IOException {
+        File indexPath = new File(index);
+        Directory dir = FSDirectory.open(indexPath);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();
         textOptions.setIndexed(true);
@@ -190,8 +277,8 @@ public class ResourceSelection {
                     }
 
                     writer.addDocument(doc);
-                    if (cnt % 200 == 0) {
-                        logger.info(cnt + " statuses indexed");
+                    if (cnt % 1000 == 0) {
+                        logger.debug(cnt + " statuses indexed");
                     }
                 }
                 logger.info(String.format("Total of %s statuses added", cnt));

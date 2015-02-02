@@ -7,12 +7,14 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.novasearch.jitter.twitter.TwitterManager;
 
 import java.io.IOException;
-import java.util.List;
 
 public class ResourceSelectionFactory {
 
     @NotEmpty
     private String index;
+
+    @NotEmpty
+    private String twitterMode;
 
     @JsonProperty
     public String getIndex() {
@@ -24,8 +26,18 @@ public class ResourceSelectionFactory {
         this.index = index;
     }
 
-    public ResourceSelection build(Environment environment, TwitterManager twitterManager) throws IOException {
-        final ResourceSelection rs = new ResourceSelection(index, twitterManager);
+    @JsonProperty("twitter")
+    public String getTwitterMode() {
+        return twitterMode;
+    }
+
+    @JsonProperty("twitter")
+    public void setTwitterMode(String twitterMode) {
+        this.twitterMode = twitterMode;
+    }
+
+    public ResourceSelection build(Environment environment) throws IOException {
+        final ResourceSelection resourceSelection = new ResourceSelection(index, twitterMode);
         environment.lifecycle().manage(new Managed() {
             @Override
             public void start() {
@@ -33,10 +45,10 @@ public class ResourceSelectionFactory {
 
             @Override
             public void stop() {
-                rs.close();
+                resourceSelection.close();
             }
         });
-        return rs;
+        return resourceSelection;
     }
 
 }

@@ -60,7 +60,11 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.healthChecks().register("twitter-archiver", twitterArchiverHealthCheck);
         environment.admin().addTask(new TwitterArchiverLoadTask(twitterArchiver));
 
-        ResourceSelection resourceSelection = configuration.getResourceSelectionFactory().build(environment, twitterManager);
+
+        ResourceSelection resourceSelection = configuration.getResourceSelectionFactory().build(environment);
+        resourceSelection.setTwitterArchiver(twitterArchiver);
+        resourceSelection.setTwitterManager(twitterManager);
+
         final ResourceSelectionHealthCheck healthCheck =
                 new ResourceSelectionHealthCheck(resourceSelection);
         environment.healthChecks().register("rs", healthCheck);

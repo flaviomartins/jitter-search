@@ -12,9 +12,9 @@ public class ResourceSelectionHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() throws Exception {
-        final int numTwitter = resourceSelection.getTwitterManager().getUsers().size();
-        if (numTwitter == 0) {
-            return Result.unhealthy("ResourceSelection doesn't have any Twitter sources");
+        String index = resourceSelection.getIndex();
+        if (index == null) {
+            return Result.unhealthy("ResourceSelection doesn't have any index");
         }
         return Result.healthy();
     }
