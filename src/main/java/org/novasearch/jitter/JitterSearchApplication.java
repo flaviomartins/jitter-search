@@ -9,6 +9,7 @@ import org.novasearch.jitter.resources.ResourceSelectionResource;
 import org.novasearch.jitter.resources.SearchResource;
 import org.novasearch.jitter.resources.TopTermsResource;
 import org.novasearch.jitter.rs.ResourceSelection;
+import org.novasearch.jitter.tasks.ResourceSelectionIndexTask;
 import org.novasearch.jitter.tasks.TwitterArchiverTask;
 import org.novasearch.jitter.twitter.TwitterManager;
 import org.slf4j.Logger;
@@ -55,6 +56,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final ResourceSelectionHealthCheck healthCheck =
                 new ResourceSelectionHealthCheck(resourceSelection);
         environment.healthChecks().register("rs", healthCheck);
+        environment.admin().addTask(new ResourceSelectionIndexTask(resourceSelection));
 
         final ResourceSelectionResource resourceSelectionResource = new ResourceSelectionResource(resourceSelection);
         environment.jersey().register(resourceSelectionResource);

@@ -16,10 +16,12 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.twitter.TwitterManager;
+import org.novasearch.jitter.twitter.UserTimeline;
 import twitter4j.Status;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class ResourceSelection {
@@ -129,74 +131,77 @@ public class ResourceSelection {
         return results;
     }
 
-//    public void index() throws IOException {
-//        File indexPath = new File(index);
-//        Directory dir = FSDirectory.open(indexPath);
-//        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
-//        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-//
-//        final FieldType textOptions = new FieldType();
-//        textOptions.setIndexed(true);
-//        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-//        textOptions.setStored(true);
-//        textOptions.setTokenized(true);
-//
-//        IndexWriter writer = new IndexWriter(dir, config);
-//        int cnt = 0;
-//        try {
-//            twitterManager.start();
-//
-//            for (String screenName : twitterManager.getUsers()) {
-//                List<Status> userTimeline = twitterManager.getUserTimeline(screenName);
-//                for (Status status : userTimeline) {
-//                    cnt++;
-//                    org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
-//                    doc.add(new LongField(StatusField.ID.name, status.getId(), Field.Store.YES));
-//                    doc.add(new LongField(StatusField.EPOCH.name, status.getCreatedAt().getTime(), Field.Store.YES));
-//                    doc.add(new TextField(StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), Field.Store.YES));
-//
-//                    doc.add(new Field(StatusField.TEXT.name, status.getText(), textOptions));
-//
-//                    doc.add(new IntField(StatusField.FRIENDS_COUNT.name, status.getUser().getFollowersCount(), Field.Store.YES));
-//                    doc.add(new IntField(StatusField.FOLLOWERS_COUNT.name, status.getUser().getFriendsCount(), Field.Store.YES));
-//                    doc.add(new IntField(StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount(), Field.Store.YES));
-//
-//                    long inReplyToStatusId = status.getInReplyToStatusId();
-//                    if (inReplyToStatusId > 0) {
-//                        doc.add(new LongField(StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId, Field.Store.YES));
-//                        doc.add(new LongField(StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId(), Field.Store.YES));
-//                    }
-//
-//                    String lang = status.getLang();
-//                    if (!lang.equals("unknown")) {
-//                        doc.add(new TextField(StatusField.LANG.name, status.getLang(), Field.Store.YES));
-//                    }
-//
-//                    if (status.isRetweet()) {
-//                        long retweetStatusId = status.getRetweetedStatus().getId();
-//                        if (retweetStatusId > 0) {
-//                            doc.add(new LongField(StatusField.RETWEETED_STATUS_ID.name, retweetStatusId, Field.Store.YES));
-//                            doc.add(new LongField(StatusField.RETWEETED_USER_ID.name, status.getRetweetedStatus().getUser().getId(), Field.Store.YES));
-//                            doc.add(new IntField(StatusField.RETWEET_COUNT.name, status.getRetweetCount(), Field.Store.YES));
-//                            if (status.getRetweetCount() < 0 || status.getRetweetedStatus().getId() < 0) {
-//                                logger.warn("Error parsing retweet fields of " + status.getId());
-//                            }
-//                        }
-//                    }
-//
-//                    writer.addDocument(doc);
-//                    if (cnt % 200 == 0) {
-//                        logger.info(cnt + " statuses indexed");
-//                    }
-//                }
-//                logger.info(String.format("Total of %s statuses added", cnt));
-//            }
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        } finally {
-//            writer.close();
-//            dir.close();
-//        }
-//    }
+    public void index() throws IOException {
+        File indexPath = new File(index);
+        Directory dir = FSDirectory.open(indexPath);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+
+        final FieldType textOptions = new FieldType();
+        textOptions.setIndexed(true);
+        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        textOptions.setStored(true);
+        textOptions.setTokenized(true);
+
+        IndexWriter writer = new IndexWriter(dir, config);
+        int cnt = 0;
+        try {
+            for (String screenName : twitterManager.getUsers()) {
+                UserTimeline userTimeline = twitterManager.getUserTimeline(screenName);
+                if (userTimeline == null)
+                    break;
+                LinkedHashMap<Long, Status> statuses = userTimeline.getStatuses();
+                if (userTimeline.getStatuses() == null)
+                    break;
+                for (Status status : statuses.values()) {
+                    cnt++;
+                    org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
+                    doc.add(new LongField(StatusField.ID.name, status.getId(), Field.Store.YES));
+                    doc.add(new LongField(StatusField.EPOCH.name, status.getCreatedAt().getTime(), Field.Store.YES));
+                    doc.add(new TextField(StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), Field.Store.YES));
+
+                    doc.add(new Field(StatusField.TEXT.name, status.getText(), textOptions));
+
+                    doc.add(new IntField(StatusField.FRIENDS_COUNT.name, status.getUser().getFollowersCount(), Field.Store.YES));
+                    doc.add(new IntField(StatusField.FOLLOWERS_COUNT.name, status.getUser().getFriendsCount(), Field.Store.YES));
+                    doc.add(new IntField(StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount(), Field.Store.YES));
+
+                    long inReplyToStatusId = status.getInReplyToStatusId();
+                    if (inReplyToStatusId > 0) {
+                        doc.add(new LongField(StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId, Field.Store.YES));
+                        doc.add(new LongField(StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId(), Field.Store.YES));
+                    }
+
+                    String lang = status.getLang();
+                    if (!lang.equals("unknown")) {
+                        doc.add(new TextField(StatusField.LANG.name, status.getLang(), Field.Store.YES));
+                    }
+
+                    if (status.isRetweet()) {
+                        long retweetStatusId = status.getRetweetedStatus().getId();
+                        if (retweetStatusId > 0) {
+                            doc.add(new LongField(StatusField.RETWEETED_STATUS_ID.name, retweetStatusId, Field.Store.YES));
+                            doc.add(new LongField(StatusField.RETWEETED_USER_ID.name, status.getRetweetedStatus().getUser().getId(), Field.Store.YES));
+                            doc.add(new IntField(StatusField.RETWEET_COUNT.name, status.getRetweetCount(), Field.Store.YES));
+                            if (status.getRetweetCount() < 0 || status.getRetweetedStatus().getId() < 0) {
+                                logger.warn("Error parsing retweet fields of " + status.getId());
+                            }
+                        }
+                    }
+
+                    writer.addDocument(doc);
+                    if (cnt % 200 == 0) {
+                        logger.info(cnt + " statuses indexed");
+                    }
+                }
+                logger.info(String.format("Total of %s statuses added", cnt));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            writer.close();
+            dir.close();
+        }
+    }
 }
