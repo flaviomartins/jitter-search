@@ -49,6 +49,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TwitterManagerHealthCheck twitterManagerHealthCheck =
                 new TwitterManagerHealthCheck(twitterManager);
         environment.healthChecks().register("twitter-manager", twitterManagerHealthCheck);
+        environment.admin().addTask(new TwitterArchiverTask(twitterManager));
 
         ResourceSelection resourceSelection = configuration.getResourceSelectionFactory().build(environment, twitterManager);
         final ResourceSelectionHealthCheck healthCheck =
@@ -57,7 +58,5 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         final ResourceSelectionResource resourceSelectionResource = new ResourceSelectionResource(resourceSelection);
         environment.jersey().register(resourceSelectionResource);
-
-        environment.admin().addTask(new TwitterArchiverTask(twitterManager));
     }
 }

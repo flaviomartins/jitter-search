@@ -1,7 +1,5 @@
 package org.novasearch.jitter.twitter;
 
-import com.fasterxml.jackson.core.util.TextBuffer;
-import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +7,7 @@ import twitter4j.*;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TwitterManager implements Managed {
     final static Logger logger = LoggerFactory.getLogger(TwitterManager.class);
@@ -16,8 +15,9 @@ public class TwitterManager implements Managed {
     private static final int MAX_USERS_LOOKUP = 100;
     private static final int MAX_STATUSES_REQUEST = 200;
 
-    private LinkedHashMap<String, User> usersMap;
     private List<String> screenNames;
+    private Map<String, User> usersMap;
+    private Map<String, UserTimeline> userTimelines;
 
     // The factory instance is re-useable and thread safe.
     private Twitter twitter = TwitterFactory.getSingleton();
@@ -25,10 +25,15 @@ public class TwitterManager implements Managed {
     public TwitterManager(List<String> screenNames) {
         this.screenNames = screenNames;
         this.usersMap = new LinkedHashMap<>();
+        this.userTimelines = new LinkedHashMap<>();
     }
 
     @Override
     public void start() throws Exception {
+//        lookupUsers();
+    }
+
+    public void lookupUsers() {
         int remaining = screenNames.size();
         logger.info(remaining + " total users");
 
@@ -51,10 +56,6 @@ public class TwitterManager implements Managed {
             remaining -= reqSize;
             i += reqSize;
         } while (remaining > 0);
-
-//        for (User user: usersMap.values()) {
-//            getUserTimeline(user.getScreenName());
-//        }
     }
 
     @Override
@@ -62,26 +63,46 @@ public class TwitterManager implements Managed {
 
     }
 
-    public List<Status> getUserTimeline(String screenName) {
-        List<Status> all = Lists.newArrayList();
-        User user = usersMap.get(screenName);
-        try {
-            if (user.getStatus() != null) {
-                for (int page = 1;;page++) {
-                    List<Status> statuses = null;
-                        statuses = twitter.getUserTimeline(user.getId(), new Paging(page, MAX_STATUSES_REQUEST));
-                    if (statuses.isEmpty())
-                        break;
-                    all.addAll(statuses);
-                }
-            }
-        } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-        return all;
+    public UserTimeline getUserTimeline(String screenName) {
+        return userTimelines.get(screenName);
     }
 
     public void archive() {
+        lookupUsers();
+        for (String screenName : screenNames) {
+            User user = usersMap.get(screenName);
+            if (user == null)
+                logger.warn("Failed to lookup " + screenName);
+
+            UserTimeline timeline;
+            if (userTimelines.get(screenName) != null) {
+                timeline = userTimelines.get(screenName);
+            } else {
+                timeline = new UserTimeline(user);
+                userTimelines.put(screenName, timeline);
+            }
+
+            long sinceId = timeline.getLatestId();
+            try {
+                if (user.getStatus() != null) {
+                    int page = 1;
+                    logger.info(screenName + " since_id: " + sinceId);
+                    Paging paging = new Paging(page, MAX_STATUSES_REQUEST).sinceId(sinceId);
+                    for (;;page++) {
+                        paging.setPage(page);
+                        logger.info(screenName + " page: " + page);
+                        List<Status> statuses = twitter.getUserTimeline(user.getId(), paging);
+                        if (statuses.isEmpty()) {
+                            logger.info(screenName + " total : " + timeline.size());
+                            break;
+                        }
+                        timeline.addAll(statuses);
+                    }
+                }
+            } catch (TwitterException e) {
+                e.printStackTrace();
+            }
+        }
 
     }
 
