@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ReputationReader {
-    private static final Logger LOG = Logger.getLogger(ReputationReader.class);
+    private static final Logger logger = Logger.getLogger(ReputationReader.class);
 
     private final Map<String, Double> entityReputation;
 

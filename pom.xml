@@ -6,13 +6,33 @@
 
     <groupId>org.novasearch.jitter</groupId>
     <artifactId>jitter-search</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
             <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-misc</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.twitter4j</groupId>
+            <artifactId>twitter4j-core</artifactId>
+            <version>4.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.twitter4j</groupId>
+            <artifactId>twitter4j-stream</artifactId>
+            <version>4.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>hbc-core</artifactId> <!-- or hbc-twitter4j -->
+            <version>2.2.0</version> <!-- or whatever the latest version is -->
         </dependency>
         <dependency>
             <groupId>cc.twittertools</groupId>
@@ -29,15 +49,10 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-misc</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
     </dependencies>
 
     <properties>
-        <dropwizard.version>0.7.0</dropwizard.version>
+        <dropwizard.version>0.7.1</dropwizard.version>
         <lucene.version>4.3.1</lucene.version>
         <!-- use UTF-8 for everything -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

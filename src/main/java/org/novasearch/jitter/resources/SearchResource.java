@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Path("/search")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class SearchResource {
-    private static final Logger LOG = Logger.getLogger(SearchResource.class);
+    private static final Logger logger = Logger.getLogger(SearchResource.class);
 
     private static QueryParser QUERY_PARSER =
             new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
@@ -47,9 +47,9 @@ public class SearchResource {
     private final AtomicLong counter;
     private final IndexReader reader;
     private final IndexSearcher searcher;
-    private final ReputationReader reputationReader;
+    private ReputationReader reputationReader;
 
-    public SearchResource(File indexPath, ReputationReader reputationReader) throws IOException {
+    public SearchResource(File indexPath) throws IOException {
         Preconditions.checkNotNull(indexPath);
         Preconditions.checkArgument(indexPath.exists());
 
@@ -57,6 +57,10 @@ public class SearchResource {
         reader = DirectoryReader.open(FSDirectory.open(indexPath));
         searcher = new IndexSearcher(reader);
         searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
+    }
+
+    public SearchResource(File indexPath, ReputationReader reputationReader) throws IOException {
+        this(indexPath);
         this.reputationReader = reputationReader;
     }
 
@@ -173,7 +177,7 @@ public class SearchResource {
             sortedResults.add(new DocumentComparable(p));
         }
         if (filterRT) {
-            LOG.info("filter_rt count: " + retweetCount);
+            logger.info("filter_rt count: " + retweetCount);
             totalHits -= retweetCount;
         }
 
@@ -192,8 +196,9 @@ public class SearchResource {
                 rsvCurr = rsvCurr - 0.000001 / numResults * dupliCount;
             }
 
-            if (isReputationEnable)
+            if (isReputationEnable && reputationReader != null) {
                 result.setReputation(reputationReader.getEntitiesReputation(result.getText()));
+            }
 
             docs.add(new Document(result));
             i++;
@@ -201,7 +206,7 @@ public class SearchResource {
         }
 
         long endTime = System.currentTimeMillis();
-        LOG.info(String.format("%4dms %s", (endTime - startTime), queryText));
+        logger.info(String.format("%4dms %s", (endTime - startTime), queryText));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
         DocumentsResponse documentsResponse = new DocumentsResponse(totalHits, 0, docs);

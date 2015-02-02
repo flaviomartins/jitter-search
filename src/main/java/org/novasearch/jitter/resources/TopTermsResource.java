@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Path("/top/terms")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class TopTermsResource {
-    private static final Logger LOG = Logger.getLogger(TopTermsResource.class);
+    private static final Logger logger = Logger.getLogger(TopTermsResource.class);
 
     private final AtomicLong counter;
     private final IndexReader reader;

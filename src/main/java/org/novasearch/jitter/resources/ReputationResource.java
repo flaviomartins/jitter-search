@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Path("/reputation")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class ReputationResource {
-    private static final Logger LOG = Logger.getLogger(ReputationResource.class);
+    private static final Logger logger = Logger.getLogger(ReputationResource.class);
 
     private final AtomicLong counter;
     private final ReputationReader reputationReader;
@@ -45,7 +45,7 @@ public class ReputationResource {
         double reputation = reputationReader.getReputation(queryText);
 
         long endTime = System.currentTimeMillis();
-        LOG.info(String.format("%4dms %s", (endTime - startTime), queryText));
+        logger.info(String.format("%4dms %s", (endTime - startTime), queryText));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
         InnerReputationResponse innerReputationResponse = new InnerReputationResponse(reputation);
