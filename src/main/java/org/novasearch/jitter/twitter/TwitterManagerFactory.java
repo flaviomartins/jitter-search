@@ -36,7 +36,7 @@ public class TwitterManagerFactory {
     }
 
     public TwitterManager build(Environment environment) throws IOException {
-        final TwitterManager twitterManager = new TwitterManager(users);
+        final TwitterManager twitterManager = new TwitterManager(database, users);
         environment.lifecycle().manage(twitterManager);
         return twitterManager;
     }

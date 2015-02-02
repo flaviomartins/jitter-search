@@ -6,11 +6,11 @@ import org.novasearch.jitter.twitter.TwitterManager;
 
 import java.io.PrintWriter;
 
-public class TwitterArchiverTask extends Task {
+public class TwitterManagerArchiveTask extends Task {
 
     private final TwitterManager twitterManager;
 
-    public TwitterArchiverTask(TwitterManager twitterManager) {
+    public TwitterManagerArchiveTask(TwitterManager twitterManager) {
         super("archive");
         this.twitterManager = twitterManager;
     }

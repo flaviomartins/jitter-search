@@ -4,17 +4,19 @@ import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.novasearch.jitter.health.ResourceSelectionHealthCheck;
+import org.novasearch.jitter.health.TwitterArchiverHealthCheck;
 import org.novasearch.jitter.health.TwitterManagerHealthCheck;
 import org.novasearch.jitter.resources.ResourceSelectionResource;
 import org.novasearch.jitter.resources.SearchResource;
 import org.novasearch.jitter.resources.TopTermsResource;
 import org.novasearch.jitter.rs.ResourceSelection;
 import org.novasearch.jitter.tasks.ResourceSelectionIndexTask;
-import org.novasearch.jitter.tasks.TwitterArchiverTask;
+import org.novasearch.jitter.tasks.TwitterArchiverLoadTask;
+import org.novasearch.jitter.tasks.TwitterManagerArchiveTask;
 import org.novasearch.jitter.twitter.TwitterManager;
+import org.novasearch.jitter.twitter_archiver.TwitterArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import twitter4j.Twitter;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +52,13 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TwitterManagerHealthCheck twitterManagerHealthCheck =
                 new TwitterManagerHealthCheck(twitterManager);
         environment.healthChecks().register("twitter-manager", twitterManagerHealthCheck);
-        environment.admin().addTask(new TwitterArchiverTask(twitterManager));
+        environment.admin().addTask(new TwitterManagerArchiveTask(twitterManager));
+
+        final TwitterArchiver twitterArchiver = configuration.getTwitterArchiverFactory().build(environment);
+        final TwitterArchiverHealthCheck twitterArchiverHealthCheck =
+                new TwitterArchiverHealthCheck(twitterArchiver);
+        environment.healthChecks().register("twitter-archiver", twitterArchiverHealthCheck);
+        environment.admin().addTask(new TwitterArchiverLoadTask(twitterArchiver));
 
         ResourceSelection resourceSelection = configuration.getResourceSelectionFactory().build(environment, twitterManager);
         final ResourceSelectionHealthCheck healthCheck =

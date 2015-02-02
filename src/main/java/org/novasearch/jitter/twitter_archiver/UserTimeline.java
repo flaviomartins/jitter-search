@@ -1,28 +1,25 @@
-package org.novasearch.jitter.twitter;
-
-import twitter4j.Status;
-import twitter4j.User;
+package org.novasearch.jitter.twitter_archiver;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 
 public class UserTimeline {
 
-    private User user;
+    private String user;
     private LinkedHashMap<Long, Status> statuses;
 
     private long latestId = 1;
 
-    public UserTimeline(User user) {
+    public UserTimeline(String user) {
         this.user = user;
         this.statuses = new LinkedHashMap<>();
     }
 
-    public User getUser() {
+    public String getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(String user) {
         this.user = user;
     }
 
