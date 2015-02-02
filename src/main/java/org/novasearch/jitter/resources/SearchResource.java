@@ -18,7 +18,6 @@ import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.api.search.DocumentsResponse;
 import org.novasearch.jitter.api.search.SearchResponse;
 import org.novasearch.jitter.core.DocumentComparable;
-import org.novasearch.jitter.core.ReputationReader;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -47,7 +46,6 @@ public class SearchResource {
     private final AtomicLong counter;
     private final IndexReader reader;
     private final IndexSearcher searcher;
-    private ReputationReader reputationReader;
 
     public SearchResource(File indexPath) throws IOException {
         Preconditions.checkNotNull(indexPath);
@@ -59,11 +57,6 @@ public class SearchResource {
         searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
     }
 
-    public SearchResource(File indexPath, ReputationReader reputationReader) throws IOException {
-        this(indexPath);
-        this.reputationReader = reputationReader;
-    }
-
     @GET
     @Timed
     public SearchResponse search(@QueryParam("q") Optional<String> query,
@@ -72,16 +65,12 @@ public class SearchResource {
                                  @QueryParam("max_id") Optional<Long> max_id,
                                  @QueryParam("epoch") Optional<String> epoch_range,
                                  @QueryParam("filter_rt") Optional<Boolean> filter_rt,
-                                 @QueryParam("names") Optional<Boolean> names,
-                                 @QueryParam("reputation") Optional<Boolean> reputation,
                                  @Context UriInfo uriInfo)
             throws IOException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
         String queryText = URLDecoder.decode(query.or(""), "UTF-8");
         int queryLimit = limit.or(1000);
         boolean filterRT = filter_rt.or(false);
-        boolean isNamesEnabled = names.or(false);
-        boolean isReputationEnable = reputation.or(false);
 
         int totalHits;
         int numResults;
@@ -152,12 +141,6 @@ public class SearchResource {
                     p.retweeted_count = (Integer) hit.getField(IndexStatuses.StatusField.RETWEET_COUNT.name).numericValue();
                 }
 
-                if (isNamesEnabled) {
-                    if (hit.getValues("entities") != null) {
-                        p.entities = hit.getValues("entities");
-                    }
-                }
-
                 results.add(p);
             }
         } catch (Exception e) {
@@ -194,10 +177,6 @@ public class SearchResource {
             } else {
                 dupliCount++;
                 rsvCurr = rsvCurr - 0.000001 / numResults * dupliCount;
-            }
-
-            if (isReputationEnable && reputationReader != null) {
-                result.setReputation(reputationReader.getEntitiesReputation(result.getText()));
             }
 
             docs.add(new Document(result));

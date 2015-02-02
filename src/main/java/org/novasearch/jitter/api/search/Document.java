@@ -1,9 +1,6 @@
 package org.novasearch.jitter.api.search;
 
-import cc.twittertools.thrift.gen.TResult;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.Map;
 
 public class Document /* cannot extend TResult */ {
     public long id; // required
@@ -19,8 +16,6 @@ public class Document /* cannot extend TResult */ {
     public long retweeted_status_id; // required
     public long retweeted_user_id; // required
     public int retweeted_count; // required
-    public String[] entities;
-    public Map<String, Double> reputation;
 
     public Document() {
         // Jackson deserialization
@@ -40,8 +35,6 @@ public class Document /* cannot extend TResult */ {
         retweeted_status_id = result.retweeted_status_id;
         retweeted_user_id = result.retweeted_user_id;
         retweeted_count = result.retweeted_count;
-        entities = result.entities;
-        reputation = result.reputation;
     }
 
     @JsonProperty
@@ -109,16 +102,6 @@ public class Document /* cannot extend TResult */ {
         return retweeted_count;
     }
 
-    @JsonProperty
-    public String[] getEntities() {
-        return entities;
-    }
-
-    @JsonProperty
-    public Map<String, Double> getReputation() {
-        return reputation;
-    }
-
     public void setId(long id) {
         this.id = id;
     }
@@ -169,13 +152,5 @@ public class Document /* cannot extend TResult */ {
 
     public void setRetweeted_count(int retweeted_count) {
         this.retweeted_count = retweeted_count;
-    }
-
-    public void setEntities(String[] entities) {
-        this.entities = entities;
-    }
-
-    public void setReputation(Map<String, Double> reputation) {
-        this.reputation = reputation;
     }
 }
