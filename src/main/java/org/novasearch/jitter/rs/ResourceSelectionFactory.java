@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.novasearch.jitter.twitter.TwitterManager;
 
 import java.io.IOException;
 import java.util.List;
@@ -12,9 +13,6 @@ public class ResourceSelectionFactory {
 
     @NotEmpty
     private String index;
-
-    @NotEmpty
-    private List<String> twitter;
 
     @JsonProperty
     public String getIndex() {
@@ -26,18 +24,8 @@ public class ResourceSelectionFactory {
         this.index = index;
     }
 
-    @JsonProperty
-    public List<String> getTwitter() {
-        return twitter;
-    }
-
-    @JsonProperty
-    public void setTwitter(List<String> twitter) {
-        this.twitter = twitter;
-    }
-
-    public ResourceSelection build(Environment environment) throws IOException {
-        final ResourceSelection rs = new ResourceSelection(index, twitter);
+    public ResourceSelection build(Environment environment, TwitterManager twitterManager) throws IOException {
+        final ResourceSelection rs = new ResourceSelection(index, twitterManager);
         environment.lifecycle().manage(new Managed() {
             @Override
             public void start() {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.novasearch.jitter.rs.ResourceSelectionFactory;
+import org.novasearch.jitter.twitter.TwitterManagerFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -13,7 +14,9 @@ public class JitterSearchConfiguration extends Configuration {
     @NotEmpty
     private String index;
 
-    private String reputationFile;
+    @Valid
+    @NotNull
+    private TwitterManagerFactory twitterManagerFactory = new TwitterManagerFactory();
 
     @Valid
     @NotNull
@@ -29,16 +32,6 @@ public class JitterSearchConfiguration extends Configuration {
         this.index = index;
     }
 
-    @JsonProperty
-    public String getReputationFile() {
-        return reputationFile;
-    }
-
-    @JsonProperty
-    public void setReputationFile(String reputationFile) {
-        this.reputationFile = reputationFile;
-    }
-
     @JsonProperty("rs")
     public ResourceSelectionFactory getResourceSelectionFactory() {
         return resourceSelectionFactory;
@@ -49,4 +42,13 @@ public class JitterSearchConfiguration extends Configuration {
         this.resourceSelectionFactory = resourceSelectionFactory;
     }
 
+    @JsonProperty("twitter")
+    public TwitterManagerFactory getTwitterManagerFactory() {
+        return twitterManagerFactory;
+    }
+
+    @JsonProperty("twitter")
+    public void setTwitterManagerFactory(TwitterManagerFactory twitterManagerFactory) {
+        this.twitterManagerFactory = twitterManagerFactory;
+    }
 }

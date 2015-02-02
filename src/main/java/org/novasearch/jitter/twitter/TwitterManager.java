@@ -1,6 +1,8 @@
 package org.novasearch.jitter.twitter;
 
+import com.fasterxml.jackson.core.util.TextBuffer;
 import com.google.common.collect.Lists;
+import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.*;
@@ -8,8 +10,8 @@ import twitter4j.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class TwitterUserTimelinesManager {
-    final static Logger logger = LoggerFactory.getLogger(TwitterUserTimelinesManager.class);
+public class TwitterManager implements Managed {
+    final static Logger logger = LoggerFactory.getLogger(TwitterManager.class);
 
     private static final int MAX_USERS_LOOKUP = 100;
     private static final int MAX_STATUSES_REQUEST = 200;
@@ -20,12 +22,13 @@ public class TwitterUserTimelinesManager {
     // The factory instance is re-useable and thread safe.
     private Twitter twitter = TwitterFactory.getSingleton();
 
-    public TwitterUserTimelinesManager(List<String> screenNames) {
+    public TwitterManager(List<String> screenNames) {
         this.screenNames = screenNames;
         this.usersMap = new LinkedHashMap<>();
     }
 
-    public void start() {
+    @Override
+    public void start() throws Exception {
         int remaining = screenNames.size();
         logger.info(remaining + " total users");
 
@@ -54,6 +57,11 @@ public class TwitterUserTimelinesManager {
 //        }
     }
 
+    @Override
+    public void stop() throws Exception {
+
+    }
+
     public List<Status> getUserTimeline(String screenName) {
         List<Status> all = Lists.newArrayList();
         User user = usersMap.get(screenName);
@@ -73,4 +81,11 @@ public class TwitterUserTimelinesManager {
         return all;
     }
 
+    public void archive() {
+
+    }
+
+    public List<String> getUsers() {
+        return screenNames;
+    }
 }

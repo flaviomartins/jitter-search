@@ -1,7 +1,6 @@
 package org.novasearch.jitter.rs;
 
 import cc.twittertools.index.IndexStatuses;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.*;
@@ -16,7 +15,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
-import org.novasearch.jitter.twitter.TwitterUserTimelinesManager;
+import org.novasearch.jitter.twitter.TwitterManager;
 import twitter4j.Status;
 
 import java.io.File;
@@ -55,19 +54,19 @@ public class ResourceSelection {
     private IndexSearcher searcher;
 
     private final String index;
-    private final List<String> twitter;
+    private final TwitterManager twitterManager;
 
-    public ResourceSelection(String index, List<String> twitter) throws IOException {
+    public ResourceSelection(String index, TwitterManager twitterManager) throws IOException {
         this.index = index;
-        this.twitter = twitter;
+        this.twitterManager = twitterManager;
     }
 
     public String getIndex() {
         return index;
     }
 
-    public List<String> getTwitter() {
-        return twitter;
+    public TwitterManager getTwitterManager() {
+        return twitterManager;
     }
 
     public void close() {
@@ -145,11 +144,10 @@ public class ResourceSelection {
         IndexWriter writer = new IndexWriter(dir, config);
         int cnt = 0;
         try {
-            TwitterUserTimelinesManager twitterUserTimelinesManager = new TwitterUserTimelinesManager(twitter);
-            twitterUserTimelinesManager.start();
+            twitterManager.start();
 
-            for (String screenName : twitter) {
-                List<Status> userTimeline = twitterUserTimelinesManager.getUserTimeline(screenName);
+            for (String screenName : twitterManager.getUsers()) {
+                List<Status> userTimeline = twitterManager.getUserTimeline(screenName);
                 for (Status status : userTimeline) {
                     cnt++;
                     org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
