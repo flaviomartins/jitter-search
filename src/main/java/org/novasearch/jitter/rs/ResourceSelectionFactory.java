@@ -14,6 +14,9 @@ public class ResourceSelectionFactory {
     private String index;
 
     @NotEmpty
+    private String method;
+
+    @NotEmpty
     private String twitterMode;
 
     @JsonProperty
@@ -24,6 +27,16 @@ public class ResourceSelectionFactory {
     @JsonProperty
     public void setIndex(String index) {
         this.index = index;
+    }
+
+    @JsonProperty
+    public String getMethod() {
+        return method;
+    }
+
+    @JsonProperty
+    public void setMethod(String method) {
+        this.method = method;
     }
 
     @JsonProperty("twitter")
@@ -37,7 +50,7 @@ public class ResourceSelectionFactory {
     }
 
     public ResourceSelection build(Environment environment) throws IOException {
-        final ResourceSelection resourceSelection = new ResourceSelection(index, twitterMode);
+        final ResourceSelection resourceSelection = new ResourceSelection(index, method, twitterMode);
         environment.lifecycle().manage(new Managed() {
             @Override
             public void start() {

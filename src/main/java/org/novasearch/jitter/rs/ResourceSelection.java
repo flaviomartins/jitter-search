@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
 
 public class ResourceSelection {
     private static final Logger logger = Logger.getLogger(ResourceSelection.class);
@@ -57,13 +59,19 @@ public class ResourceSelection {
     private IndexSearcher searcher;
 
     private final String index;
+    private String method;
     private String twitterMode;
     private TwitterArchiver twitterArchiver;
     private TwitterManager twitterManager;
 
-    public ResourceSelection(String index, String twitterMode) throws IOException {
+    public ResourceSelection(String index, String method, String twitterMode) throws IOException {
         this.index = index;
+        this.method = method;
         this.twitterMode = twitterMode;
+    }
+
+    public String getMethod() {
+        return method;
     }
 
     public String getIndex() {
@@ -96,6 +104,15 @@ public class ResourceSelection {
 
     public void close() {
 
+    }
+
+    public SortedMap<String, Float> getRanked(List<Document> results) {
+        ResourceSelectionMethod resourceSelectionMethod = ResourceSelectionMethodFactory.getMethod(method);
+        return resourceSelectionMethod.getRanked(results);
+    }
+
+    public SortedMap<String, Float> getRanked(ResourceSelectionMethod resourceSelectionMethod, List<Document> results) {
+        return resourceSelectionMethod.getRanked(results);
     }
 
     public List<Document> search(String queryText, int queryLimit) {

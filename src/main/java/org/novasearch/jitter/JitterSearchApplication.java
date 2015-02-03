@@ -61,12 +61,12 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.admin().addTask(new TwitterManagerArchiveTask(twitterManager));
         resourceSelection.setTwitterManager(twitterManager);
 
-//        final TwitterArchiver twitterArchiver = configuration.getTwitterArchiverFactory().build(environment);
-//        final TwitterArchiverHealthCheck twitterArchiverHealthCheck =
-//                new TwitterArchiverHealthCheck(twitterArchiver);
-//        environment.healthChecks().register("twitter-archiver", twitterArchiverHealthCheck);
-//        environment.admin().addTask(new TwitterArchiverLoadTask(twitterArchiver));
-//        resourceSelection.setTwitterArchiver(twitterArchiver);
+        final TwitterArchiver twitterArchiver = configuration.getTwitterArchiverFactory().build(environment);
+        final TwitterArchiverHealthCheck twitterArchiverHealthCheck =
+                new TwitterArchiverHealthCheck(twitterArchiver);
+        environment.healthChecks().register("twitter-archiver", twitterArchiverHealthCheck);
+        environment.admin().addTask(new TwitterArchiverLoadTask(twitterArchiver));
+        resourceSelection.setTwitterArchiver(twitterArchiver);
 
         final ResourceSelectionResource resourceSelectionResource = new ResourceSelectionResource(resourceSelection);
         environment.jersey().register(resourceSelectionResource);

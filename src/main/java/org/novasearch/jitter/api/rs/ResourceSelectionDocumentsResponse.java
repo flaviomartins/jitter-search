@@ -5,10 +5,12 @@ import org.novasearch.jitter.api.search.Document;
 
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 public class ResourceSelectionDocumentsResponse {
 
-    private Map<String, Integer> sources;
+    private SortedMap<String, Float> collections;
+    private String method;
     private int numFound;
     private int start;
     private List<Document> docs;
@@ -17,10 +19,11 @@ public class ResourceSelectionDocumentsResponse {
         // Jackson deserialization
     }
 
-    public ResourceSelectionDocumentsResponse(int numFound, int start, Map<String, Integer> sources, List<Document> docs) {
+    public ResourceSelectionDocumentsResponse(SortedMap<String, Float> collections, String method, int numFound, int start, List<Document> docs) {
+        this.collections = collections;
+        this.method = method;
         this.numFound = numFound;
         this.start = start;
-        this.sources = sources;
         this.docs = docs;
     }
 
@@ -35,12 +38,17 @@ public class ResourceSelectionDocumentsResponse {
     }
 
     @JsonProperty
-    public Map<String, Integer> getSources() {
-        return sources;
+    public Map<String, Float> getCollections() {
+        return collections;
     }
 
     @JsonProperty
     public List<Document> getDocs() {
         return docs;
+    }
+
+    @JsonProperty
+    public String getMethod() {
+        return method;
     }
 }
