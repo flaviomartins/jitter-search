@@ -48,27 +48,25 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TopTermsResource topTermsResource = new TopTermsResource(new File(configuration.getIndex()));
         environment.jersey().register(topTermsResource);
 
+        ResourceSelection resourceSelection = configuration.getResourceSelectionFactory().build(environment);
+        final ResourceSelectionHealthCheck healthCheck =
+                new ResourceSelectionHealthCheck(resourceSelection);
+        environment.healthChecks().register("rs", healthCheck);
+        environment.admin().addTask(new ResourceSelectionIndexTask(resourceSelection));
+
         final TwitterManager twitterManager = configuration.getTwitterManagerFactory().build(environment);
         final TwitterManagerHealthCheck twitterManagerHealthCheck =
                 new TwitterManagerHealthCheck(twitterManager);
         environment.healthChecks().register("twitter-manager", twitterManagerHealthCheck);
         environment.admin().addTask(new TwitterManagerArchiveTask(twitterManager));
-
-        final TwitterArchiver twitterArchiver = configuration.getTwitterArchiverFactory().build(environment);
-        final TwitterArchiverHealthCheck twitterArchiverHealthCheck =
-                new TwitterArchiverHealthCheck(twitterArchiver);
-        environment.healthChecks().register("twitter-archiver", twitterArchiverHealthCheck);
-        environment.admin().addTask(new TwitterArchiverLoadTask(twitterArchiver));
-
-
-        ResourceSelection resourceSelection = configuration.getResourceSelectionFactory().build(environment);
-        resourceSelection.setTwitterArchiver(twitterArchiver);
         resourceSelection.setTwitterManager(twitterManager);
 
-        final ResourceSelectionHealthCheck healthCheck =
-                new ResourceSelectionHealthCheck(resourceSelection);
-        environment.healthChecks().register("rs", healthCheck);
-        environment.admin().addTask(new ResourceSelectionIndexTask(resourceSelection));
+//        final TwitterArchiver twitterArchiver = configuration.getTwitterArchiverFactory().build(environment);
+//        final TwitterArchiverHealthCheck twitterArchiverHealthCheck =
+//                new TwitterArchiverHealthCheck(twitterArchiver);
+//        environment.healthChecks().register("twitter-archiver", twitterArchiverHealthCheck);
+//        environment.admin().addTask(new TwitterArchiverLoadTask(twitterArchiver));
+//        resourceSelection.setTwitterArchiver(twitterArchiver);
 
         final ResourceSelectionResource resourceSelectionResource = new ResourceSelectionResource(resourceSelection);
         environment.jersey().register(resourceSelectionResource);

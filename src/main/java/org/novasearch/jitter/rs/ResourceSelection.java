@@ -163,8 +163,8 @@ public class ResourceSelection {
         if ("archiver".equals(twitterMode)) {
             logger.info("archiver index");
             indexArchiver();
-        } else if ("normal".equals(twitterMode)) {
-            logger.info("normal index");
+        } else if ("standard".equals(twitterMode)) {
+            logger.info("standard index");
             indexManager();
         } else {
             logger.error("Invalid Twitter mode");

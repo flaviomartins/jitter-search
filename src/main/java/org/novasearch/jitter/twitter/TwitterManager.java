@@ -51,7 +51,7 @@ public class TwitterManager implements Managed {
                 userResponseList = twitter.lookupUsers(names);
                 for (User user : userResponseList) {
                     logger.info("Got info for " + user.getScreenName() + " : " + user.getName() + " : " + user.getStatusesCount());
-                    usersMap.put(user.getScreenName(), user);
+                    usersMap.put(user.getScreenName().toLowerCase(), user);
                 }
             } catch (TwitterException e) {
                 e.printStackTrace();
