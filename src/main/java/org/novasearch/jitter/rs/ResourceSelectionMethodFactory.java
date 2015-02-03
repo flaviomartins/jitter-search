@@ -1,9 +1,6 @@
 package org.novasearch.jitter.rs;
 
-import org.novasearch.jitter.rs.methods.CRCSEXP;
-import org.novasearch.jitter.rs.methods.CRCSLIN;
-import org.novasearch.jitter.rs.methods.ReDDE;
-import org.novasearch.jitter.rs.methods.Votes;
+import org.novasearch.jitter.rs.methods.*;
 
 public class ResourceSelectionMethodFactory {
 
@@ -16,7 +13,12 @@ public class ResourceSelectionMethodFactory {
             return new CRCSLIN();
         } else if ("CRCSEXP".equalsIgnoreCase(method)) {
             return new CRCSEXP();
+        } else if ("CRCSISR".equalsIgnoreCase(method)) {
+            return new CRCSISR();
+        } else if ("CRCSLOGISR".equalsIgnoreCase(method)) {
+            return new CRCSLOGISR();
         }
+        // default
         return new Votes();
     }
 

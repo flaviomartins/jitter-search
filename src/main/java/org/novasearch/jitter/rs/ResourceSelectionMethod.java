@@ -2,14 +2,25 @@ package org.novasearch.jitter.rs;
 
 import org.novasearch.jitter.api.search.Document;
 
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 public abstract class ResourceSelectionMethod {
 
     protected ResourceSelectionMethod() {
+    }
+
+    public Map<String, Float> getCounts(List<Document> results) {
+        HashMap<String, Float> counts = new HashMap<>();
+        for (Document result : results) {
+            String screenName = result.getScreen_name();
+            if (!counts.containsKey(screenName)) {
+                counts.put(screenName, 1f);
+            } else {
+                float cur = counts.get(screenName);
+                counts.put(screenName, cur + 1f);
+            }
+        }
+        return counts;
     }
 
     public SortedMap<String, Float> getRanked(List<Document> results) {

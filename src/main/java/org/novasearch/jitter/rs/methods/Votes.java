@@ -15,16 +15,6 @@ public class Votes extends ResourceSelectionMethod {
 
     @Override
     public Map<String, Float> rank(List<Document> results) {
-        HashMap<String, Float> map = new HashMap<>();
-        for (Document result : results) {
-            String screenName = result.getScreen_name();
-            if (!map.containsKey(screenName)) {
-                map.put(screenName, 1f);
-            } else {
-                float cur = map.get(screenName);
-                map.put(screenName, cur + 1f);
-            }
-        }
-        return map;
+        return getCounts(results);
     }
 }
