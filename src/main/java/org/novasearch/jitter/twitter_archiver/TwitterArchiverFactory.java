@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
-import java.io.IOException;
 import java.util.List;
 
 public class TwitterArchiverFactory {
@@ -35,7 +34,7 @@ public class TwitterArchiverFactory {
         this.users = users;
     }
 
-    public TwitterArchiver build(Environment environment) throws IOException {
+    public TwitterArchiver build(Environment environment) {
         final TwitterArchiver twitterArchiver = new TwitterArchiver(directory, users);
         environment.lifecycle().manage(twitterArchiver);
         return twitterArchiver;

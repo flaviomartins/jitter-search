@@ -4,7 +4,7 @@ import java.util.Comparator;
 import java.util.Map;
 
 public class ResourceSelectionComparator implements Comparator<String> {
-    Map<String, Float> map;
+    final Map<String, Float> map;
     public ResourceSelectionComparator(Map<String, Float> map) {
         this.map = map;
     }

@@ -2,7 +2,6 @@ package org.novasearch.jitter.api.rs;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.novasearch.jitter.api.ResponseHeader;
-import org.novasearch.jitter.api.search.DocumentsResponse;
 
 public class ResourceSelectionResponse {
 

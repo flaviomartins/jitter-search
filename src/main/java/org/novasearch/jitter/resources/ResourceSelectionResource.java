@@ -9,7 +9,6 @@ import org.novasearch.jitter.api.rs.ResourceSelectionDocumentsResponse;
 import org.novasearch.jitter.api.rs.ResourceSelectionResponse;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.rs.ResourceSelection;
-import org.novasearch.jitter.rs.ResourceSelectionFactory;
 import org.novasearch.jitter.rs.ResourceSelectionMethod;
 import org.novasearch.jitter.rs.ResourceSelectionMethodFactory;
 

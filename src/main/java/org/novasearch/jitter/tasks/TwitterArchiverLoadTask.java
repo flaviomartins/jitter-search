@@ -2,7 +2,6 @@ package org.novasearch.jitter.tasks;
 
 import com.google.common.collect.ImmutableMultimap;
 import io.dropwizard.servlets.tasks.Task;
-import org.novasearch.jitter.twitter.TwitterManager;
 import org.novasearch.jitter.twitter_archiver.TwitterArchiver;
 
 import java.io.PrintWriter;

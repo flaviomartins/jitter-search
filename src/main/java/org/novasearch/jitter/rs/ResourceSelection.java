@@ -24,13 +24,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 
 public class ResourceSelection {
     private static final Logger logger = Logger.getLogger(ResourceSelection.class);
 
-    private static QueryParser QUERY_PARSER =
+    private static final QueryParser QUERY_PARSER =
             new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
 
     public static enum StatusField {
@@ -53,13 +52,13 @@ public class ResourceSelection {
         StatusField(String s) {
             name = s;
         }
-    };
+    }
 
     private IndexReader reader;
     private IndexSearcher searcher;
 
     private final String index;
-    private String method;
+    private final String method;
     private String twitterMode;
     private TwitterArchiver twitterArchiver;
     private TwitterManager twitterManager;
@@ -68,6 +67,9 @@ public class ResourceSelection {
         this.index = index;
         this.method = method;
         this.twitterMode = twitterMode;
+        reader = DirectoryReader.open(FSDirectory.open(new File(index)));
+        searcher = new IndexSearcher(reader);
+        searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
     }
 
     public String getMethod() {
@@ -102,8 +104,8 @@ public class ResourceSelection {
         this.twitterMode = twitterMode;
     }
 
-    public void close() {
-
+    public void close() throws IOException {
+        reader.close();
     }
 
     public SortedMap<String, Float> getRanked(List<Document> results) {
@@ -116,12 +118,8 @@ public class ResourceSelection {
     }
 
     public List<Document> search(String queryText, int queryLimit) {
-        File indexPath = new File(index);
         List<Document> results = Lists.newArrayList();
         try {
-            reader = DirectoryReader.open(FSDirectory.open(indexPath));
-            searcher = new IndexSearcher(reader);
-            searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
             Query q = QUERY_PARSER.parse(queryText);
             int numResults = queryLimit > 10000 ? 10000 : queryLimit;
 
@@ -200,9 +198,8 @@ public class ResourceSelection {
         textOptions.setStored(true);
         textOptions.setTokenized(true);
 
-        IndexWriter writer = new IndexWriter(dir, config);
         int cnt = 0;
-        try {
+        try (IndexWriter writer = new IndexWriter(dir, config)) {
             for (String screenName : twitterArchiver.getUsers()) {
                 org.novasearch.jitter.twitter_archiver.UserTimeline userTimeline = twitterArchiver.getUserTimeline(screenName);
                 if (userTimeline == null)
@@ -230,7 +227,6 @@ public class ResourceSelection {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            writer.close();
             dir.close();
         }
     }
@@ -247,9 +243,8 @@ public class ResourceSelection {
         textOptions.setStored(true);
         textOptions.setTokenized(true);
 
-        IndexWriter writer = new IndexWriter(dir, config);
         int cnt = 0;
-        try {
+        try (IndexWriter writer = new IndexWriter(dir, config)) {
             for (String screenName : twitterManager.getUsers()) {
                 UserTimeline userTimeline = twitterManager.getUserTimeline(screenName);
                 if (userTimeline == null)
@@ -304,7 +299,6 @@ public class ResourceSelection {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            writer.close();
             dir.close();
         }
     }

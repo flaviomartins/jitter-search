@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
-import org.novasearch.jitter.twitter.TwitterManager;
 
 import java.io.IOException;
 
@@ -57,7 +56,7 @@ public class ResourceSelectionFactory {
             }
 
             @Override
-            public void stop() {
+            public void stop() throws IOException {
                 resourceSelection.close();
             }
         });

@@ -15,9 +15,9 @@ public class TwitterArchiver implements Managed {
     final static Logger logger = LoggerFactory.getLogger(TwitterArchiver.class);
 
     private final String directory;
-    private List<String> screenNames;
+    private final List<String> screenNames;
 
-    private Map<String, UserTimeline> userTimelines;
+    private final Map<String, UserTimeline> userTimelines;
 
     public TwitterArchiver(String directory, List<String> screenNames) {
         this.directory = directory;
@@ -50,7 +50,7 @@ public class TwitterArchiver implements Managed {
             userTimelines.put(screenName, timeline);
         }
 
-        Status status = null;
+        Status status;
         int cnt = 0;
         while (true) {
             status = fileStatusReader.next();

@@ -40,11 +40,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SearchResource {
     private static final Logger logger = Logger.getLogger(SearchResource.class);
 
-    private static QueryParser QUERY_PARSER =
+    private static final QueryParser QUERY_PARSER =
             new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
 
     private final AtomicLong counter;
-    private final IndexReader reader;
     private final IndexSearcher searcher;
 
     public SearchResource(File indexPath) throws IOException {
@@ -52,7 +51,7 @@ public class SearchResource {
         Preconditions.checkArgument(indexPath.exists());
 
         counter = new AtomicLong();
-        reader = DirectoryReader.open(FSDirectory.open(indexPath));
+        IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
         searcher = new IndexSearcher(reader);
         searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
     }
@@ -82,7 +81,7 @@ public class SearchResource {
             numResults = queryLimit > 10000 ? 10000 : queryLimit;
 
 
-            TopDocs rs = null;
+            TopDocs rs;
             if (max_id.isPresent()) {
                 Filter filter =
                         NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, max_id.get(), true, true);
@@ -149,7 +148,7 @@ public class SearchResource {
         }
 
         int retweetCount = 0;
-        SortedSet<DocumentComparable> sortedResults = new TreeSet<DocumentComparable>();
+        SortedSet<DocumentComparable> sortedResults = new TreeSet<>();
         for (Document p : results) {
             // Throw away retweets.
             if (filterRT && p.getRetweeted_status_id() != 0) {

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
-import java.io.IOException;
 import java.util.List;
 
 public class TwitterManagerFactory {
@@ -35,7 +34,7 @@ public class TwitterManagerFactory {
         this.users = users;
     }
 
-    public TwitterManager build(Environment environment) throws IOException {
+    public TwitterManager build(Environment environment) {
         final TwitterManager twitterManager = new TwitterManager(database, users);
         environment.lifecycle().manage(twitterManager);
         return twitterManager;

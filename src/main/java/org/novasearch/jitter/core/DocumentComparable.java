@@ -3,7 +3,7 @@ package org.novasearch.jitter.core;
 import org.novasearch.jitter.api.search.Document;
 
 public class DocumentComparable implements Comparable<DocumentComparable> {
-    private Document document;
+    private final Document document;
 
     public DocumentComparable(Document document) {
         this.document = document;
@@ -30,12 +30,6 @@ public class DocumentComparable implements Comparable<DocumentComparable> {
     }
 
     public boolean equals(Object other) {
-        if (other == null) {
-            return false;
-        } if (other.getClass() != this.getClass()) {
-            return false;
-        }
-
-        return ((DocumentComparable) other).document.id == this.document.id;
+        return other != null && other.getClass() == this.getClass() && ((DocumentComparable) other).document.id == this.document.id;
     }
 }

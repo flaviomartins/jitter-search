@@ -15,14 +15,15 @@ public class TwitterManager implements Managed {
     private static final int MAX_USERS_LOOKUP = 100;
     private static final int MAX_STATUSES_REQUEST = 200;
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final String database;
-    private List<String> screenNames;
+    private final List<String> screenNames;
 
-    private Map<String, User> usersMap;
-    private Map<String, UserTimeline> userTimelines;
+    private final Map<String, User> usersMap;
+    private final Map<String, UserTimeline> userTimelines;
 
     // The factory instance is re-useable and thread safe.
-    private Twitter twitter = TwitterFactory.getSingleton();
+    private final Twitter twitter = TwitterFactory.getSingleton();
 
     public TwitterManager(String database, List<String> screenNames) {
         this.database = database;
@@ -44,7 +45,8 @@ public class TwitterManager implements Managed {
         do {
             int reqSize = Math.min(remaining, MAX_USERS_LOOKUP);
 
-            String[] names = screenNames.subList(i, i + reqSize).toArray(new String[0]);
+            List<String> var = screenNames.subList(i, i + reqSize);
+            String[] names = var.toArray(new String[var.size()]);
             ResponseList<User> userResponseList;
             try {
                 logger.info(reqSize + " users info requested");
