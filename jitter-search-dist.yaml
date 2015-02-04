@@ -1,5 +1,24 @@
-index: index/
-reputationFile: reputation.json
+search:
+  index: index
+  database: collectdb.db
+
+selection:
+  index: index1
+  method: crcslin
+  twitter: archiver
+  removeDuplicates: true
+
+twitter:
+  database: twitter.db
+  users:
+    - ap
+    - reuters
+
+twitterArchiver:
+  directory: twitter-archiver/
+  users:
+    - ap
+    - reuters
 
 logging:
 
