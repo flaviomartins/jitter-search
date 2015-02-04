@@ -3,7 +3,9 @@ package org.novasearch.jitter;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.novasearch.jitter.core.search.SearchManager;
 import org.novasearch.jitter.health.ResourceSelectionHealthCheck;
+import org.novasearch.jitter.health.SearchManagerHealthCheck;
 import org.novasearch.jitter.health.TwitterArchiverHealthCheck;
 import org.novasearch.jitter.health.TwitterManagerHealthCheck;
 import org.novasearch.jitter.resources.ResourceSelectionResource;
@@ -11,6 +13,7 @@ import org.novasearch.jitter.resources.SearchResource;
 import org.novasearch.jitter.resources.TopTermsResource;
 import org.novasearch.jitter.rs.ResourceSelection;
 import org.novasearch.jitter.tasks.ResourceSelectionIndexTask;
+import org.novasearch.jitter.tasks.SearchManagerIndexTask;
 import org.novasearch.jitter.tasks.TwitterArchiverLoadTask;
 import org.novasearch.jitter.tasks.TwitterManagerArchiveTask;
 import org.novasearch.jitter.twitter.TwitterManager;
@@ -18,7 +21,6 @@ import org.novasearch.jitter.twitter_archiver.TwitterArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 
 public class JitterSearchApplication extends Application<JitterSearchConfiguration> {
@@ -42,13 +44,19 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
     public void run(JitterSearchConfiguration configuration,
                     Environment environment) throws IOException {
 
-        SearchResource searchResource = new SearchResource(new File(configuration.getIndex()));
+        final SearchManager searchManager = configuration.getSearchManagerFactory().build(environment);
+        final SearchManagerHealthCheck searchManagerHealthCheck =
+                new SearchManagerHealthCheck(searchManager);
+        environment.healthChecks().register("search-manager", searchManagerHealthCheck);
+        environment.admin().addTask(new SearchManagerIndexTask(searchManager));
+
+        final SearchResource searchResource = new SearchResource(searchManager);
         environment.jersey().register(searchResource);
 
-        final TopTermsResource topTermsResource = new TopTermsResource(new File(configuration.getIndex()));
+        final TopTermsResource topTermsResource = new TopTermsResource(searchManager);
         environment.jersey().register(topTermsResource);
 
-        ResourceSelection resourceSelection = configuration.getResourceSelectionFactory().build(environment);
+        final ResourceSelection resourceSelection = configuration.getResourceSelectionFactory().build(environment);
         final ResourceSelectionHealthCheck healthCheck =
                 new ResourceSelectionHealthCheck(resourceSelection);
         environment.healthChecks().register("rs", healthCheck);

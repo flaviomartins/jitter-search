@@ -11,7 +11,7 @@ public class ResourceSelectionIndexTask extends Task {
     private final ResourceSelection resourceSelection;
 
     public ResourceSelectionIndexTask(ResourceSelection resourceSelection) {
-        super("index");
+        super("rs-index");
         this.resourceSelection = resourceSelection;
     }
 

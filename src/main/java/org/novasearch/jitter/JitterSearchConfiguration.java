@@ -2,7 +2,7 @@ package org.novasearch.jitter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
-import org.hibernate.validator.constraints.NotEmpty;
+import org.novasearch.jitter.core.search.SearchManagerFactory;
 import org.novasearch.jitter.rs.ResourceSelectionFactory;
 import org.novasearch.jitter.twitter.TwitterManagerFactory;
 import org.novasearch.jitter.twitter_archiver.TwitterArchiverFactory;
@@ -12,8 +12,9 @@ import javax.validation.constraints.NotNull;
 
 public class JitterSearchConfiguration extends Configuration {
 
-    @NotEmpty
-    private String index;
+    @Valid
+    @NotNull
+    private SearchManagerFactory searchManagerFactory = new SearchManagerFactory();
 
     @Valid
     @NotNull
@@ -27,14 +28,14 @@ public class JitterSearchConfiguration extends Configuration {
     @NotNull
     private ResourceSelectionFactory resourceSelectionFactory = new ResourceSelectionFactory();
 
-    @JsonProperty
-    public String getIndex() {
-        return index;
+    @JsonProperty("search")
+    public SearchManagerFactory getSearchManagerFactory() {
+        return searchManagerFactory;
     }
 
-    @JsonProperty
-    public void setIndex(String index) {
-        this.index = index;
+    @JsonProperty("search")
+    public void setSearchManagerFactory(SearchManagerFactory searchManagerFactory) {
+        this.searchManagerFactory = searchManagerFactory;
     }
 
     @JsonProperty("rs")

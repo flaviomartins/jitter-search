@@ -11,7 +11,7 @@ public class TwitterArchiverLoadTask extends Task {
     private final TwitterArchiver twitterArchiver;
 
     public TwitterArchiverLoadTask(TwitterArchiver twitterArchiver) {
-        super("load");
+        super("ta-load");
         this.twitterArchiver = twitterArchiver;
     }
 

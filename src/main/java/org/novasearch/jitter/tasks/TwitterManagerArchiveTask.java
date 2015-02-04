@@ -11,7 +11,7 @@ public class TwitterManagerArchiveTask extends Task {
     private final TwitterManager twitterManager;
 
     public TwitterManagerArchiveTask(TwitterManager twitterManager) {
-        super("archive");
+        super("tm-archive");
         this.twitterManager = twitterManager;
     }
 

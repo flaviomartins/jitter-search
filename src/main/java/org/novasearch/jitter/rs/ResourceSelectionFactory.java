@@ -1,7 +1,6 @@
 package org.novasearch.jitter.rs;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -66,16 +65,7 @@ public class ResourceSelectionFactory {
 
     public ResourceSelection build(Environment environment) throws IOException {
         final ResourceSelection resourceSelection = new ResourceSelection(index, method, twitterMode, removeDuplicates);
-        environment.lifecycle().manage(new Managed() {
-            @Override
-            public void start() {
-            }
-
-            @Override
-            public void stop() throws IOException {
-                resourceSelection.close();
-            }
-        });
+        environment.lifecycle().manage(resourceSelection);
         return resourceSelection;
     }
 

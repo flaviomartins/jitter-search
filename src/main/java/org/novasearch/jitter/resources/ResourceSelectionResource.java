@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import org.apache.log4j.Logger;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.novasearch.jitter.api.ResponseHeader;
 import org.novasearch.jitter.api.rs.ResourceSelectionDocumentsResponse;
 import org.novasearch.jitter.api.rs.ResourceSelectionResponse;
@@ -26,7 +27,7 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Path("/rs")
+@Path("/select")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class ResourceSelectionResource {
     private static final Logger logger = Logger.getLogger(SearchResource.class);
@@ -43,19 +44,19 @@ public class ResourceSelectionResource {
 
     @GET
     @Timed
-    public ResourceSelectionResponse search(@QueryParam("q") Optional<String> query,
+    public ResourceSelectionResponse search(@QueryParam("q") Optional<String> q,
                                             @QueryParam("method") Optional<String> method,
                                             @QueryParam("limit") Optional<Integer> limit,
                                             @Context UriInfo uriInfo)
-            throws IOException {
+            throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        String queryText = URLDecoder.decode(query.or(""), "UTF-8");
+        String query = URLDecoder.decode(q.or(""), "UTF-8");
         String methodText = method.or(resourceSelection.getMethod());
-        int queryLimit = limit.or(50);
+        int n = limit.or(50);
 
         long startTime = System.currentTimeMillis();
 
-        List<Document> results = resourceSelection.search(queryText, queryLimit);
+        List<Document> results = resourceSelection.search(query, n);
         int totalHits = results != null ? results.size() : 0;
 
         ResourceSelectionMethod resourceSelectionMethod = ResourceSelectionMethodFactory.getMethod(methodText);
@@ -64,10 +65,10 @@ public class ResourceSelectionResource {
         SortedMap<String, Float> ranked = resourceSelection.getRanked(resourceSelectionMethod, results);
 
         long endTime = System.currentTimeMillis();
-        logger.info(String.format("%4dms %s", (endTime - startTime), queryText));
+        logger.info(String.format("%4dms %s", (endTime - startTime), query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        ResourceSelectionDocumentsResponse documentsResponse = new ResourceSelectionDocumentsResponse(ranked, methodName, totalHits, 0, results); // docs
+        ResourceSelectionDocumentsResponse documentsResponse = new ResourceSelectionDocumentsResponse(ranked, methodName, totalHits, 0, results);
         return new ResourceSelectionResponse(responseHeader, documentsResponse);
     }
 }

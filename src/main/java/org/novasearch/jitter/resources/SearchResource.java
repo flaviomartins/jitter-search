@@ -4,20 +4,15 @@ import cc.twittertools.index.IndexStatuses;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.*;
-import org.apache.lucene.search.similarities.LMDirichletSimilarity;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.ResponseHeader;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.api.search.DocumentsResponse;
 import org.novasearch.jitter.api.search.SearchResponse;
-import org.novasearch.jitter.core.DocumentComparable;
+import org.novasearch.jitter.core.search.SearchManager;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -27,12 +22,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
-import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/search")
@@ -44,150 +36,59 @@ public class SearchResource {
             new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
 
     private final AtomicLong counter;
-    private final IndexSearcher searcher;
+    private final SearchManager searchManager;
 
-    public SearchResource(File indexPath) throws IOException {
-        Preconditions.checkNotNull(indexPath);
-        Preconditions.checkArgument(indexPath.exists());
+    public SearchResource(SearchManager searchManager) throws IOException {
+        Preconditions.checkNotNull(searchManager);
 
         counter = new AtomicLong();
-        IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
-        searcher = new IndexSearcher(reader);
-        searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
+        this.searchManager = searchManager;
     }
 
     @GET
     @Timed
-    public SearchResponse search(@QueryParam("q") Optional<String> query,
+    public SearchResponse search(@QueryParam("q") Optional<String> q,
                                  @QueryParam("fq") Optional<String> filterQuery,
                                  @QueryParam("limit") Optional<Integer> limit,
                                  @QueryParam("max_id") Optional<Long> max_id,
                                  @QueryParam("epoch") Optional<String> epoch_range,
                                  @QueryParam("filter_rt") Optional<Boolean> filter_rt,
                                  @Context UriInfo uriInfo)
-            throws IOException {
+            throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        String queryText = URLDecoder.decode(query.or(""), "UTF-8");
-        int queryLimit = limit.or(1000);
+        String query = URLDecoder.decode(q.or(""), "UTF-8");
+        int n = limit.or(1000);
+        long maxId = max_id.or(-1L);
         boolean filterRT = filter_rt.or(false);
 
-        int totalHits;
-        int numResults;
-        List<Document> results = Lists.newArrayList();
         long startTime = System.currentTimeMillis();
 
-        try {
-            Query q = QUERY_PARSER.parse(queryText);
-            numResults = queryLimit > 10000 ? 10000 : queryLimit;
+        List<Document> results;
 
-
-            TopDocs rs;
-            if (max_id.isPresent()) {
-                Filter filter =
-                        NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, max_id.get(), true, true);
-                rs = searcher.search(q, filter, numResults);
-            } else if (epoch_range.isPresent()) {
-                long first_epoch = 0L;
-                long last_epoch = Long.MAX_VALUE;
-                String[] epochs = epoch_range.get().split("[: ]");
-                try {
-                    first_epoch = Long.parseLong(epochs[0]);
-                    last_epoch = Long.parseLong(epochs[1]);
-                } catch (Exception e) {
-                    // pass
-                }
-                Filter filter =
-                        NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, first_epoch, last_epoch, true, true);
-                rs = searcher.search(q, filter, numResults);
-            } else {
-                rs = searcher.search(q, numResults);
+        if (max_id.isPresent()) {
+            results = searchManager.search(query, n, filterRT, maxId);
+        } else if (epoch_range.isPresent()) {
+            long firstEpoch = 0L;
+            long lastEpoch = Long.MAX_VALUE;
+            String[] epochs = epoch_range.get().split("[: ]");
+            try {
+                firstEpoch = Long.parseLong(epochs[0]);
+                lastEpoch = Long.parseLong(epochs[1]);
+            } catch (Exception e) {
+                // pass
             }
-            totalHits = rs.totalHits;
-            for (ScoreDoc scoreDoc : rs.scoreDocs) {
-                org.apache.lucene.document.Document hit = searcher.doc(scoreDoc.doc);
-
-                Document p = new Document();
-                p.id = (Long) hit.getField(IndexStatuses.StatusField.ID.name).numericValue();
-                p.screen_name = hit.get(IndexStatuses.StatusField.SCREEN_NAME.name);
-                p.epoch = (Long) hit.getField(IndexStatuses.StatusField.EPOCH.name).numericValue();
-                p.text = hit.get(IndexStatuses.StatusField.TEXT.name);
-                p.rsv = scoreDoc.score;
-
-                p.followers_count = (Integer) hit.getField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name).numericValue();
-                p.statuses_count = (Integer) hit.getField(IndexStatuses.StatusField.STATUSES_COUNT.name).numericValue();
-
-                if (hit.get(IndexStatuses.StatusField.LANG.name) != null) {
-                    p.lang = hit.get(IndexStatuses.StatusField.LANG.name);
-                }
-
-                if (hit.get(IndexStatuses.StatusField.IN_REPLY_TO_STATUS_ID.name) != null) {
-                    p.in_reply_to_status_id = (Long) hit.getField(IndexStatuses.StatusField.IN_REPLY_TO_STATUS_ID.name).numericValue();
-                }
-
-                if (hit.get(IndexStatuses.StatusField.IN_REPLY_TO_USER_ID.name) != null) {
-                    p.in_reply_to_user_id = (Long) hit.getField(IndexStatuses.StatusField.IN_REPLY_TO_USER_ID.name).numericValue();
-                }
-
-                if (hit.get(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name) != null) {
-                    p.retweeted_status_id = (Long) hit.getField(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name).numericValue();
-                }
-
-                if (hit.get(IndexStatuses.StatusField.RETWEETED_USER_ID.name) != null) {
-                    p.retweeted_user_id = (Long) hit.getField(IndexStatuses.StatusField.RETWEETED_USER_ID.name).numericValue();
-                }
-
-                if (hit.get(IndexStatuses.StatusField.RETWEET_COUNT.name) != null) {
-                    p.retweeted_count = (Integer) hit.getField(IndexStatuses.StatusField.RETWEET_COUNT.name).numericValue();
-                }
-
-                results.add(p);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new IOException(e.getMessage()); // replace by specific exception
+            results = searchManager.search(query, n, filterRT, firstEpoch, lastEpoch);
+        } else {
+            results = searchManager.search(query, n, filterRT);
         }
 
-        int retweetCount = 0;
-        SortedSet<DocumentComparable> sortedResults = new TreeSet<>();
-        for (Document p : results) {
-            // Throw away retweets.
-            if (filterRT && p.getRetweeted_status_id() != 0) {
-                retweetCount++;
-                continue;
-            }
-
-            sortedResults.add(new DocumentComparable(p));
-        }
-        if (filterRT) {
-            logger.info("filter_rt count: " + retweetCount);
-            totalHits -= retweetCount;
-        }
-
-        List<Document> docs = Lists.newArrayList();
-
-        int i = 1;
-        int dupliCount = 0;
-        double rsvPrev = 0;
-        for (DocumentComparable sortedResult : sortedResults) {
-            Document result = sortedResult.getDocument();
-            double rsvCurr = result.rsv;
-            if (Math.abs(rsvCurr - rsvPrev) > 0.0000001) {
-                dupliCount = 0;
-            } else {
-                dupliCount++;
-                rsvCurr = rsvCurr - 0.000001 / numResults * dupliCount;
-            }
-
-            docs.add(new Document(result));
-            i++;
-            rsvPrev = result.rsv;
-        }
+        int totalHits = results != null ? results.size() : 0;
 
         long endTime = System.currentTimeMillis();
-        logger.info(String.format("%4dms %s", (endTime - startTime), queryText));
+        logger.info(String.format("%4dms %s", (endTime - startTime), query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        DocumentsResponse documentsResponse = new DocumentsResponse(totalHits, 0, docs);
+        DocumentsResponse documentsResponse = new DocumentsResponse(totalHits, 0, results);
         return new SearchResponse(responseHeader, documentsResponse);
     }
 }
