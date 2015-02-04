@@ -5,6 +5,8 @@ import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 
 public class ResourceSelectionFactory {
@@ -17,6 +19,10 @@ public class ResourceSelectionFactory {
 
     @NotEmpty
     private String twitterMode;
+
+    @Valid
+    @NotNull
+    private boolean removeDuplicates;
 
     @JsonProperty
     public String getIndex() {
@@ -48,8 +54,18 @@ public class ResourceSelectionFactory {
         this.twitterMode = twitterMode;
     }
 
+    @JsonProperty
+    public boolean isRemoveDuplicates() {
+        return removeDuplicates;
+    }
+
+    @JsonProperty
+    public void setRemoveDuplicates(boolean removeDuplicates) {
+        this.removeDuplicates = removeDuplicates;
+    }
+
     public ResourceSelection build(Environment environment) throws IOException {
-        final ResourceSelection resourceSelection = new ResourceSelection(index, method, twitterMode);
+        final ResourceSelection resourceSelection = new ResourceSelection(index, method, twitterMode, removeDuplicates);
         environment.lifecycle().manage(new Managed() {
             @Override
             public void start() {

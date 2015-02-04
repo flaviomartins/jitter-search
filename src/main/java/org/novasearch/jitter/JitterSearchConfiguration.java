@@ -57,12 +57,12 @@ public class JitterSearchConfiguration extends Configuration {
         this.twitterManagerFactory = twitterManagerFactory;
     }
 
-    @JsonProperty("twitter_archiver")
+    @JsonProperty("twitterArchiver")
     public TwitterArchiverFactory getTwitterArchiverFactory() {
         return twitterArchiverFactory;
     }
 
-    @JsonProperty("twitter_archiver")
+    @JsonProperty("twitterArchiver")
     public void setTwitterArchiverFactory(TwitterArchiverFactory twitterArchiverFactory) {
         this.twitterArchiverFactory = twitterArchiverFactory;
     }

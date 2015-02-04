@@ -1,7 +1,11 @@
 package org.novasearch.jitter.rs;
 
 import cc.twittertools.index.IndexStatuses;
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnel;
+import com.google.common.hash.PrimitiveSink;
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
@@ -18,6 +22,7 @@ import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.twitter.TwitterManager;
 import org.novasearch.jitter.twitter.UserTimeline;
 import org.novasearch.jitter.twitter_archiver.TwitterArchiver;
+import org.novasearch.jitter.utils.TweetUtils;
 import twitter4j.Status;
 
 import java.io.File;
@@ -31,6 +36,7 @@ public class ResourceSelection {
 
     private static final QueryParser QUERY_PARSER =
             new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
+    public static final int EXPECTED_COLLECTION_SIZE = 4000;
 
     public static enum StatusField {
         ID("id"),
@@ -60,13 +66,15 @@ public class ResourceSelection {
     private final String index;
     private final String method;
     private String twitterMode;
+    private boolean removeDuplicates;
     private TwitterArchiver twitterArchiver;
     private TwitterManager twitterManager;
 
-    public ResourceSelection(String index, String method, String twitterMode) throws IOException {
+    public ResourceSelection(String index, String method, String twitterMode, boolean removeDuplicates) throws IOException {
         this.index = index;
         this.method = method;
         this.twitterMode = twitterMode;
+        this.removeDuplicates = removeDuplicates;
         reader = DirectoryReader.open(FSDirectory.open(new File(index)));
         searcher = new IndexSearcher(reader);
         searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
@@ -198,6 +206,13 @@ public class ResourceSelection {
         textOptions.setStored(true);
         textOptions.setTokenized(true);
 
+        Funnel<String> tweetFunnel = new Funnel<String>() {
+            @Override
+            public void funnel(String tweetText, PrimitiveSink into) {
+                into.putString(TweetUtils.removeAll(tweetText), Charsets.UTF_8);
+            }
+        };
+
         int cnt = 0;
         try (IndexWriter writer = new IndexWriter(dir, config)) {
             for (String screenName : twitterArchiver.getUsers()) {
@@ -207,8 +222,12 @@ public class ResourceSelection {
                 LinkedHashMap<Long, org.novasearch.jitter.twitter_archiver.Status> statuses = userTimeline.getStatuses();
                 if (userTimeline.getStatuses() == null)
                     break;
+
+                BloomFilter<String> bloomFilter = null;
+                if (removeDuplicates) {
+                    bloomFilter = BloomFilter.create(tweetFunnel, EXPECTED_COLLECTION_SIZE);
+                }
                 for (org.novasearch.jitter.twitter_archiver.Status status : statuses.values()) {
-                    cnt++;
                     org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
                     doc.add(new LongField(StatusField.ID.name, status.getId(), Field.Store.YES));
                     doc.add(new LongField(StatusField.EPOCH.name, status.getEpoch(), Field.Store.YES));
@@ -216,7 +235,17 @@ public class ResourceSelection {
 
                     doc.add(new Field(StatusField.TEXT.name, status.getText(), textOptions));
 
+                    if (removeDuplicates && bloomFilter != null) {
+                        if (bloomFilter.mightContain(status.getText())) {
+                            logger.debug(status.getScreenName() + " duplicate: " + status.getText());
+                            continue;
+                        }
+                    }
+
+                    cnt++;
                     writer.addDocument(doc);
+                    bloomFilter.put(status.getText());
+
                     if (cnt % 1000 == 0) {
                         logger.debug(cnt + " statuses indexed");
                     }
