@@ -21,6 +21,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
+import org.novasearch.jitter.core.selection.methods.SelectionMethod;
+import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
 import org.novasearch.jitter.core.twitter.TwitterManager;
 import org.novasearch.jitter.core.twitter.UserTimeline;
 import org.novasearch.jitter.core.twitter_archiver.TwitterArchiver;

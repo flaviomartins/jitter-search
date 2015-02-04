@@ -1,13 +1,10 @@
 package org.novasearch.jitter.resources;
 
-import cc.twittertools.index.IndexStatuses;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import org.apache.log4j.Logger;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.ResponseHeader;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.api.search.DocumentsResponse;
@@ -31,9 +28,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class SearchResource {
     private static final Logger logger = Logger.getLogger(SearchResource.class);
-
-    private static final QueryParser QUERY_PARSER =
-            new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
 
     private final AtomicLong counter;
     private final SearchManager searchManager;

@@ -1,6 +1,7 @@
-package org.novasearch.jitter.core.selection;
+package org.novasearch.jitter.core.selection.methods;
 
 import org.novasearch.jitter.api.search.Document;
+import org.novasearch.jitter.core.selection.SelectionComparator;
 
 import java.util.*;
 

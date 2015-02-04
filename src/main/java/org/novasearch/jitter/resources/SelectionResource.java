@@ -10,8 +10,8 @@ import org.novasearch.jitter.api.selection.SelectionDocumentsResponse;
 import org.novasearch.jitter.api.selection.SelectionResponse;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.core.selection.SelectionManager;
-import org.novasearch.jitter.core.selection.SelectionMethod;
-import org.novasearch.jitter.core.selection.SelectionMethodFactory;
+import org.novasearch.jitter.core.selection.methods.SelectionMethod;
+import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

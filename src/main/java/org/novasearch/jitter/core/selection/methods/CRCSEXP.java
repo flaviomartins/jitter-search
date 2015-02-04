@@ -1,7 +1,6 @@
 package org.novasearch.jitter.core.selection.methods;
 
 import org.novasearch.jitter.api.search.Document;
-import org.novasearch.jitter.core.selection.SelectionMethod;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +11,7 @@ public class CRCSEXP extends SelectionMethod {
     public float alpha = 1.2f;
     public float beta = 0.28f;
 
-    public CRCSEXP() {
+    protected CRCSEXP() {
     }
 
     @Override

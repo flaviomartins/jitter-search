@@ -1,7 +1,6 @@
 package org.novasearch.jitter.core.selection.methods;
 
 import org.novasearch.jitter.api.search.Document;
-import org.novasearch.jitter.core.selection.SelectionMethod;
 
 import java.util.HashMap;
 import java.util.List;
@@ -9,7 +8,7 @@ import java.util.Map;
 
 public class CRCSLOGISR extends SelectionMethod {
 
-    public CRCSLOGISR() {
+    protected CRCSLOGISR() {
     }
 
     @Override

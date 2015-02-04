@@ -1,6 +1,4 @@
-package org.novasearch.jitter.core.selection;
-
-import org.novasearch.jitter.core.selection.methods.*;
+package org.novasearch.jitter.core.selection.methods;
 
 public class SelectionMethodFactory {
 
