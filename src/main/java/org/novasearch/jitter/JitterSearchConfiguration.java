@@ -3,9 +3,9 @@ package org.novasearch.jitter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import org.novasearch.jitter.core.search.SearchManagerFactory;
-import org.novasearch.jitter.rs.ResourceSelectionFactory;
-import org.novasearch.jitter.twitter.TwitterManagerFactory;
-import org.novasearch.jitter.twitter_archiver.TwitterArchiverFactory;
+import org.novasearch.jitter.core.selection.SelectionManagerFactory;
+import org.novasearch.jitter.core.twitter.TwitterManagerFactory;
+import org.novasearch.jitter.core.twitter_archiver.TwitterArchiverFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -26,7 +26,7 @@ public class JitterSearchConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private ResourceSelectionFactory resourceSelectionFactory = new ResourceSelectionFactory();
+    private SelectionManagerFactory selectionManagerFactory = new SelectionManagerFactory();
 
     @JsonProperty("search")
     public SearchManagerFactory getSearchManagerFactory() {
@@ -38,14 +38,14 @@ public class JitterSearchConfiguration extends Configuration {
         this.searchManagerFactory = searchManagerFactory;
     }
 
-    @JsonProperty("rs")
-    public ResourceSelectionFactory getResourceSelectionFactory() {
-        return resourceSelectionFactory;
+    @JsonProperty("selection")
+    public SelectionManagerFactory getSelectionManagerFactory() {
+        return selectionManagerFactory;
     }
 
-    @JsonProperty("rs")
-    public void setResourceSelectionFactory(ResourceSelectionFactory resourceSelectionFactory) {
-        this.resourceSelectionFactory = resourceSelectionFactory;
+    @JsonProperty("selection")
+    public void setSelectionManagerFactory(SelectionManagerFactory selectionManagerFactory) {
+        this.selectionManagerFactory = selectionManagerFactory;
     }
 
     @JsonProperty("twitter")

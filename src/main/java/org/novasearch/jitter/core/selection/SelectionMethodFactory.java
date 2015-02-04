@@ -1,0 +1,25 @@
+package org.novasearch.jitter.core.selection;
+
+import org.novasearch.jitter.core.selection.methods.*;
+
+public class SelectionMethodFactory {
+
+    public static SelectionMethod getMethod(String method) {
+        if ("Votes".equalsIgnoreCase(method)) {
+            return new Votes();
+        } else if ("ReDDE".equalsIgnoreCase(method)) {
+            return new ReDDE();
+        } else if ("CRCSLIN".equalsIgnoreCase(method)) {
+            return new CRCSLIN();
+        } else if ("CRCSEXP".equalsIgnoreCase(method)) {
+            return new CRCSEXP();
+        } else if ("CRCSISR".equalsIgnoreCase(method)) {
+            return new CRCSISR();
+        } else if ("CRCSLOGISR".equalsIgnoreCase(method)) {
+            return new CRCSLOGISR();
+        }
+        // default
+        return new Votes();
+    }
+
+}

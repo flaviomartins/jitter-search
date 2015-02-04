@@ -1,7 +1,7 @@
 package org.novasearch.jitter.health;
 
 import com.codahale.metrics.health.HealthCheck;
-import org.novasearch.jitter.twitter.TwitterManager;
+import org.novasearch.jitter.core.twitter.TwitterManager;
 
 public class TwitterManagerHealthCheck extends HealthCheck {
     private final TwitterManager twitterManager;

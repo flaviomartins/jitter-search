@@ -15,7 +15,6 @@ import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
-import org.novasearch.jitter.core.DocumentComparable;
 
 import java.io.File;
 import java.io.IOException;

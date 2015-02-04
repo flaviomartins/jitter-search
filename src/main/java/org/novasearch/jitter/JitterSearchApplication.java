@@ -4,20 +4,20 @@ import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.novasearch.jitter.core.search.SearchManager;
-import org.novasearch.jitter.health.ResourceSelectionHealthCheck;
+import org.novasearch.jitter.health.SelectionManagerHealthCheck;
 import org.novasearch.jitter.health.SearchManagerHealthCheck;
 import org.novasearch.jitter.health.TwitterArchiverHealthCheck;
 import org.novasearch.jitter.health.TwitterManagerHealthCheck;
-import org.novasearch.jitter.resources.ResourceSelectionResource;
+import org.novasearch.jitter.resources.SelectionResource;
 import org.novasearch.jitter.resources.SearchResource;
 import org.novasearch.jitter.resources.TopTermsResource;
-import org.novasearch.jitter.rs.ResourceSelection;
-import org.novasearch.jitter.tasks.ResourceSelectionIndexTask;
+import org.novasearch.jitter.core.selection.SelectionManager;
+import org.novasearch.jitter.tasks.SelectionManagerIndexTask;
 import org.novasearch.jitter.tasks.SearchManagerIndexTask;
 import org.novasearch.jitter.tasks.TwitterArchiverLoadTask;
 import org.novasearch.jitter.tasks.TwitterManagerArchiveTask;
-import org.novasearch.jitter.twitter.TwitterManager;
-import org.novasearch.jitter.twitter_archiver.TwitterArchiver;
+import org.novasearch.jitter.core.twitter.TwitterManager;
+import org.novasearch.jitter.core.twitter_archiver.TwitterArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,27 +56,27 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TopTermsResource topTermsResource = new TopTermsResource(searchManager);
         environment.jersey().register(topTermsResource);
 
-        final ResourceSelection resourceSelection = configuration.getResourceSelectionFactory().build(environment);
-        final ResourceSelectionHealthCheck healthCheck =
-                new ResourceSelectionHealthCheck(resourceSelection);
-        environment.healthChecks().register("rs", healthCheck);
-        environment.admin().addTask(new ResourceSelectionIndexTask(resourceSelection));
+        final SelectionManager selectionManager = configuration.getSelectionManagerFactory().build(environment);
+        final SelectionManagerHealthCheck healthCheck =
+                new SelectionManagerHealthCheck(selectionManager);
+        environment.healthChecks().register("selection", healthCheck);
+        environment.admin().addTask(new SelectionManagerIndexTask(selectionManager));
 
         final TwitterManager twitterManager = configuration.getTwitterManagerFactory().build(environment);
         final TwitterManagerHealthCheck twitterManagerHealthCheck =
                 new TwitterManagerHealthCheck(twitterManager);
         environment.healthChecks().register("twitter-manager", twitterManagerHealthCheck);
         environment.admin().addTask(new TwitterManagerArchiveTask(twitterManager));
-        resourceSelection.setTwitterManager(twitterManager);
+        selectionManager.setTwitterManager(twitterManager);
 
         final TwitterArchiver twitterArchiver = configuration.getTwitterArchiverFactory().build(environment);
         final TwitterArchiverHealthCheck twitterArchiverHealthCheck =
                 new TwitterArchiverHealthCheck(twitterArchiver);
         environment.healthChecks().register("twitter-archiver", twitterArchiverHealthCheck);
         environment.admin().addTask(new TwitterArchiverLoadTask(twitterArchiver));
-        resourceSelection.setTwitterArchiver(twitterArchiver);
+        selectionManager.setTwitterArchiver(twitterArchiver);
 
-        final ResourceSelectionResource resourceSelectionResource = new ResourceSelectionResource(resourceSelection);
-        environment.jersey().register(resourceSelectionResource);
+        final SelectionResource selectionResource = new SelectionResource(selectionManager);
+        environment.jersey().register(selectionResource);
     }
 }
