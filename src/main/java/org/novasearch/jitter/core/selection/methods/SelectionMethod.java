@@ -1,7 +1,6 @@
 package org.novasearch.jitter.core.selection.methods;
 
 import org.novasearch.jitter.api.search.Document;
-import org.novasearch.jitter.core.selection.SelectionComparator;
 
 import java.util.*;
 
@@ -11,7 +10,7 @@ public abstract class SelectionMethod {
     }
 
     public Map<String, Float> getCounts(List<Document> results) {
-        HashMap<String, Float> counts = new HashMap<>();
+        Map<String, Float> counts = new HashMap<>();
         for (Document result : results) {
             String screenName = result.getScreen_name();
             if (!counts.containsKey(screenName)) {
@@ -24,17 +23,11 @@ public abstract class SelectionMethod {
         return counts;
     }
 
-    public SortedMap<String, Float> getRanked(List<Document> results) {
+    public Map<String, Float> getRanked(List<Document> results) {
         Map<String, Float> map = rank(results);
-        return getSortedMap(map);
+        return map;
     }
 
-    private SortedMap<String, Float> getSortedMap(Map<String, Float> map) {
-        SelectionComparator comparator = new SelectionComparator(map);
-        TreeMap<String, Float> sortedMap = new TreeMap<>(comparator);
-        sortedMap.putAll(map);
-        return sortedMap;
-    }
 
     public abstract Map<String, Float> rank(List<Document> results);
 

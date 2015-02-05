@@ -8,6 +8,7 @@ import org.novasearch.jitter.health.SelectionManagerHealthCheck;
 import org.novasearch.jitter.health.SearchManagerHealthCheck;
 import org.novasearch.jitter.health.TwitterArchiverHealthCheck;
 import org.novasearch.jitter.health.TwitterManagerHealthCheck;
+import org.novasearch.jitter.resources.SelectSearchResource;
 import org.novasearch.jitter.resources.SelectionResource;
 import org.novasearch.jitter.resources.SearchResource;
 import org.novasearch.jitter.resources.TopTermsResource;
@@ -78,5 +79,8 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         final SelectionResource selectionResource = new SelectionResource(selectionManager);
         environment.jersey().register(selectionResource);
+
+        final SelectSearchResource selectSearchResource = new SelectSearchResource(searchManager, selectionManager);
+        environment.jersey().register(selectSearchResource);
     }
 }

@@ -45,9 +45,9 @@ public class SelectionResource {
     @GET
     @Timed
     public SelectionResponse search(@QueryParam("q") Optional<String> q,
-                                            @QueryParam("method") Optional<String> method,
-                                            @QueryParam("limit") Optional<Integer> limit,
-                                            @Context UriInfo uriInfo)
+                                    @QueryParam("method") Optional<String> method,
+                                    @QueryParam("limit") Optional<Integer> limit,
+                                    @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
         String query = URLDecoder.decode(q.or(""), "UTF-8");

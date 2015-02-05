@@ -7,6 +7,8 @@ import org.hibernate.validator.constraints.NotEmpty;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 public class SelectionManagerFactory {
 
@@ -22,6 +24,8 @@ public class SelectionManagerFactory {
     @Valid
     @NotNull
     private boolean removeDuplicates;
+
+    private Map<String, List<String>> topics;
 
     @JsonProperty
     public String getIndex() {
@@ -63,8 +67,18 @@ public class SelectionManagerFactory {
         this.removeDuplicates = removeDuplicates;
     }
 
+    @JsonProperty
+    public Map<String, List<String>> getTopics() {
+        return topics;
+    }
+
+    @JsonProperty
+    public void setTopics(Map<String, List<String>> topics) {
+        this.topics = topics;
+    }
+
     public SelectionManager build(Environment environment) throws IOException {
-        final SelectionManager selectionManager = new SelectionManager(index, method, twitterMode, removeDuplicates);
+        final SelectionManager selectionManager = new SelectionManager(index, method, twitterMode, removeDuplicates, topics);
         environment.lifecycle().manage(selectionManager);
         return selectionManager;
     }

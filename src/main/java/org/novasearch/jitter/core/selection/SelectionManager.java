@@ -31,9 +31,7 @@ import twitter4j.Status;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.SortedMap;
+import java.util.*;
 
 public class SelectionManager implements Managed {
     private static final Logger logger = Logger.getLogger(SelectionManager.class);
@@ -49,14 +47,16 @@ public class SelectionManager implements Managed {
     private final String method;
     private final String twitterMode;
     private final boolean removeDuplicates;
+    private Map<String, List<String>> topics;
     private TwitterArchiver twitterArchiver;
     private TwitterManager twitterManager;
 
-    public SelectionManager(String index, String method, String twitterMode, boolean removeDuplicates) {
+    public SelectionManager(String index, String method, String twitterMode, boolean removeDuplicates, Map<String, List<String>> topics) {
         this.index = index;
         this.method = method;
         this.twitterMode = twitterMode;
         this.removeDuplicates = removeDuplicates;
+        this.topics = topics;
     }
 
     @Override
@@ -99,11 +99,35 @@ public class SelectionManager implements Managed {
 
     public SortedMap<String, Float> getRanked(List<Document> results) {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-        return selectionMethod.getRanked(results);
+        return getSortedMap(selectionMethod.getRanked(results));
     }
 
     public SortedMap<String, Float> getRanked(SelectionMethod selectionMethod, List<Document> results) {
-        return selectionMethod.getRanked(results);
+        return getSortedMap(selectionMethod.getRanked(results));
+    }
+
+    public SortedMap<String, Float> getRankedTopics(SelectionMethod selectionMethod, List<Document> results) {
+        Map<String, Float> ranked = selectionMethod.getRanked(results);
+        Map<String, Float> map = new HashMap<>();
+        for (String topic : topics.keySet()) {
+            float sum = 0;
+            for (String collection : topics.get(topic)) {
+                for (String col : ranked.keySet()) {
+                    if (col.equalsIgnoreCase(collection))
+                        sum += ranked.get(col);
+                }
+            }
+            if (sum != 0)
+                map.put(topic, sum);
+        }
+        return getSortedMap(map);
+    }
+
+    private SortedMap<String, Float> getSortedMap(Map<String, Float> map) {
+        SelectionComparator comparator = new SelectionComparator(map);
+        TreeMap<String, Float> sortedMap = new TreeMap<>(comparator);
+        sortedMap.putAll(map);
+        return sortedMap;
     }
 
     public List<Document> search(String query, int n) throws IOException, ParseException {
