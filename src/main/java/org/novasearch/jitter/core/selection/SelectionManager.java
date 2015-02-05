@@ -52,19 +52,16 @@ public class SelectionManager implements Managed {
     private TwitterArchiver twitterArchiver;
     private TwitterManager twitterManager;
 
-    public SelectionManager(String index, String method, String twitterMode, boolean removeDuplicates) throws IOException {
+    public SelectionManager(String index, String method, String twitterMode, boolean removeDuplicates) {
         this.index = index;
         this.method = method;
         this.twitterMode = twitterMode;
         this.removeDuplicates = removeDuplicates;
-        reader = DirectoryReader.open(FSDirectory.open(new File(index)));
-        searcher = new IndexSearcher(reader);
-        searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
     }
 
     @Override
     public void start() throws Exception {
-
+        searcher = getSearcher();
     }
 
     @Override
@@ -115,9 +112,9 @@ public class SelectionManager implements Managed {
 
         List<Document> results = Lists.newArrayList();
 
-        TopDocs rs = searcher.search(q, numResults);
+        TopDocs rs = getSearcher().search(q, numResults);
         for (ScoreDoc scoreDoc : rs.scoreDocs) {
-            org.apache.lucene.document.Document hit = searcher.doc(scoreDoc.doc);
+            org.apache.lucene.document.Document hit = getSearcher().doc(scoreDoc.doc);
 
             Document p = new Document();
             p.id = (Long) hit.getField(IndexStatuses.StatusField.ID.name).numericValue();
@@ -218,7 +215,7 @@ public class SelectionManager implements Managed {
 
                     if (removeDuplicates) {
                         if (bloomFilter.mightContain(status.getText())) {
-                            logger.debug(status.getScreenName() + " duplicate: " + status.getText());
+//                            logger.debug(status.getScreenName() + " duplicate: " + status.getText());
                             continue;
                         }
                     }
@@ -314,5 +311,18 @@ public class SelectionManager implements Managed {
         } finally {
             dir.close();
         }
+    }
+
+    public IndexSearcher getSearcher() throws IOException {
+        try {
+            if (searcher == null) {
+                reader = DirectoryReader.open(FSDirectory.open(new File(index)));
+                searcher = new IndexSearcher(reader);
+                searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
+            }
+        } catch (IndexNotFoundException e) {
+            logger.warn(e);
+        }
+        return searcher;
     }
 }
