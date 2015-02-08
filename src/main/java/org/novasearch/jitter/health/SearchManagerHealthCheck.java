@@ -4,11 +4,9 @@ import com.codahale.metrics.health.HealthCheck;
 import org.novasearch.jitter.core.search.SearchManager;
 
 public class SearchManagerHealthCheck extends HealthCheck {
-
     private final SearchManager searchManager;
 
     public SearchManagerHealthCheck(SearchManager searchManager) {
-
         this.searchManager = searchManager;
     }
 

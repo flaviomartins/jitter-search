@@ -89,6 +89,18 @@ public class SelectionManager implements Managed {
         return twitterMode;
     }
 
+    public Map<String, List<String>> getTopics() {
+        return topics;
+    }
+
+    public void setTopics(Map<String, List<String>> topics) {
+        this.topics = topics;
+    }
+
+    public boolean isRemoveDuplicates() {
+        return removeDuplicates;
+    }
+
     public void setTwitterArchiver(TwitterArchiver twitterArchiver) {
         this.twitterArchiver = twitterArchiver;
     }
