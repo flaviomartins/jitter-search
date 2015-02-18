@@ -37,7 +37,7 @@ public class SearchManager implements Managed {
     private final String index;
     private final String database;
 
-    private IndexReader reader;
+    private DirectoryReader reader;
     private IndexSearcher searcher;
 
     public SearchManager(String index, String database) {
@@ -47,7 +47,8 @@ public class SearchManager implements Managed {
 
     @Override
     public void start() throws Exception {
-        searcher = getSearcher();
+        reader = DirectoryReader.open(FSDirectory.open(new File(index)));
+        searcher = new IndexSearcher(reader);
     }
 
     @Override
@@ -362,8 +363,10 @@ public class SearchManager implements Managed {
 
     public IndexSearcher getSearcher() throws IOException {
         try {
-            if (searcher == null) {
-                reader = DirectoryReader.open(FSDirectory.open(new File(index)));
+            DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
+            if (newReader != null) {
+                reader.close();
+                reader = newReader;
                 searcher = new IndexSearcher(reader);
                 searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
             }

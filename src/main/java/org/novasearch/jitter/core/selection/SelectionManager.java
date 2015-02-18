@@ -40,7 +40,7 @@ public class SelectionManager implements Managed {
             new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
     public static final int EXPECTED_COLLECTION_SIZE = 4000;
 
-    private IndexReader reader;
+    private DirectoryReader reader;
     private IndexSearcher searcher;
 
     private final String index;
@@ -61,7 +61,8 @@ public class SelectionManager implements Managed {
 
     @Override
     public void start() throws Exception {
-        searcher = getSearcher();
+        reader = DirectoryReader.open(FSDirectory.open(new File(index)));
+        searcher = new IndexSearcher(reader);
     }
 
     @Override
@@ -351,8 +352,10 @@ public class SelectionManager implements Managed {
 
     public IndexSearcher getSearcher() throws IOException {
         try {
-            if (searcher == null) {
-                reader = DirectoryReader.open(FSDirectory.open(new File(index)));
+            DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
+            if (newReader != null) {
+                reader.close();
+                reader = newReader;
                 searcher = new IndexSearcher(reader);
                 searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
             }
