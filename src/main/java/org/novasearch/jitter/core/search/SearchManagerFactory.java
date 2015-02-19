@@ -9,33 +9,33 @@ import java.io.IOException;
 public class SearchManagerFactory {
 
     @NotEmpty
-    private String index;
+    private String indexPath;
 
     @NotEmpty
-    private String database;
+    private String databasePath;
 
-    @JsonProperty
-    public String getIndex() {
-        return index;
+    @JsonProperty("index")
+    public String getIndexPath() {
+        return indexPath;
     }
 
-    @JsonProperty
-    public void setIndex(String index) {
-        this.index = index;
+    @JsonProperty("index")
+    public void setIndexPath(String indexPath) {
+        this.indexPath = indexPath;
     }
 
-    @JsonProperty
-    public String getDatabase() {
-        return database;
+    @JsonProperty("database")
+    public String getDatabasePath() {
+        return databasePath;
     }
 
-    @JsonProperty
-    public void setDatabase(String database) {
-        this.database = database;
+    @JsonProperty("database")
+    public void setDatabasePath(String databasePath) {
+        this.databasePath = databasePath;
     }
 
     public SearchManager build(Environment environment) throws IOException {
-        final SearchManager searchManager = new SearchManager(index, database);
+        final SearchManager searchManager = new SearchManager(indexPath, databasePath);
         environment.lifecycle().manage(searchManager);
         return searchManager;
     }

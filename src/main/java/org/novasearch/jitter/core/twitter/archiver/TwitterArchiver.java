@@ -32,13 +32,13 @@ public class TwitterArchiver implements Managed {
 
     public static final int EXPECTED_COLLECTION_SIZE = 4000;
 
-    private final String directory;
+    private final String collectionPath;
     private final List<String> screenNames;
 
     private final Map<String, UserTimeline> userTimelines;
 
-    public TwitterArchiver(String directory, List<String> screenNames) {
-        this.directory = directory;
+    public TwitterArchiver(String collectionPath, List<String> screenNames) {
+        this.collectionPath = collectionPath;
         this.screenNames = screenNames;
         this.userTimelines = new LinkedHashMap<>();
     }
@@ -58,7 +58,7 @@ public class TwitterArchiver implements Managed {
     }
 
     public void loadFromFile(String screenName) throws IOException {
-        FileStatusReader fileStatusReader = new FileStatusReader(new File(FilenameUtils.concat(directory, screenName.toLowerCase())));
+        FileStatusReader fileStatusReader = new FileStatusReader(new File(FilenameUtils.concat(collectionPath, screenName.toLowerCase())));
 
         UserTimeline timeline;
         if (userTimelines.get(screenName) != null) {

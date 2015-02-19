@@ -8,23 +8,24 @@ server:
 
 
 search:
-  index: index
+  index: index/
   database: collectdb.db
 
 selection:
-  index: index1
+  index: index1/
   method: crcslin
   twitter: archiver
   removeDuplicates: true
 
 twitter:
   database: twitter.db
+  collection: collection/
   users:
     - ap
     - reuters
 
 twitterArchiver:
-  directory: twitter-archiver/
+  collection: twitter-archiver/
   users:
     - ap
     - reuters

@@ -22,7 +22,7 @@ public class SelectionManagerHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() throws Exception {
-        String index = selectionManager.getIndex();
+        String index = selectionManager.getIndexPath();
         if (index == null) {
             return Result.unhealthy("SelectionManager doesn't have any index");
         }

@@ -13,6 +13,7 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.NoSuchDirectoryException;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.core.selection.methods.SelectionMethod;
@@ -33,7 +34,7 @@ public class SelectionManager implements Managed {
     private DirectoryReader reader;
     private IndexSearcher searcher;
 
-    private final String index;
+    private final String indexPath;
     private final String method;
     private final String twitterMode;
     private final boolean removeDuplicates;
@@ -41,8 +42,8 @@ public class SelectionManager implements Managed {
     private TwitterArchiver twitterArchiver;
     private TwitterManager twitterManager;
 
-    public SelectionManager(String index, String method, String twitterMode, boolean removeDuplicates, Map<String, List<String>> topics) {
-        this.index = index;
+    public SelectionManager(String indexPath, String method, String twitterMode, boolean removeDuplicates, Map<String, List<String>> topics) {
+        this.indexPath = indexPath;
         this.method = method;
         this.twitterMode = twitterMode;
         this.removeDuplicates = removeDuplicates;
@@ -51,8 +52,12 @@ public class SelectionManager implements Managed {
 
     @Override
     public void start() throws Exception {
-        reader = DirectoryReader.open(FSDirectory.open(new File(index)));
-        searcher = new IndexSearcher(reader);
+        try {
+            reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+            searcher = new IndexSearcher(reader);
+        } catch (Exception e) {
+            logger.error(e);
+        }
     }
 
     @Override
@@ -64,8 +69,8 @@ public class SelectionManager implements Managed {
         return method;
     }
 
-    public String getIndex() {
-        return index;
+    public String getIndexPath() {
+        return indexPath;
     }
 
     public TwitterArchiver getTwitterArchiver() {
@@ -190,10 +195,10 @@ public class SelectionManager implements Managed {
     public void index() throws IOException {
         if ("archiver".equals(twitterMode)) {
             logger.info("archiver index");
-            twitterArchiver.index(index, removeDuplicates);
+            twitterArchiver.index(indexPath, removeDuplicates);
         } else if ("standard".equals(twitterMode)) {
             logger.info("standard index");
-            twitterManager.index(index, removeDuplicates);
+            twitterManager.index(indexPath, removeDuplicates);
         } else {
             logger.error("Invalid Twitter mode");
         }
@@ -201,15 +206,21 @@ public class SelectionManager implements Managed {
 
     public IndexSearcher getSearcher() throws IOException {
         try {
-            DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
-            if (newReader != null) {
-                reader.close();
-                reader = newReader;
+            if (reader == null) {
+                reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
                 searcher = new IndexSearcher(reader);
                 searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
+            } else {
+                DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
+                if (newReader != null) {
+                    reader.close();
+                    reader = newReader;
+                    searcher = new IndexSearcher(reader);
+                    searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
+                }
             }
         } catch (IndexNotFoundException e) {
-            logger.warn(e);
+            logger.error(e);
         }
         return searcher;
     }

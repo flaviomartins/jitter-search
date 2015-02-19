@@ -9,19 +9,19 @@ import java.util.List;
 public class TwitterArchiverFactory {
 
     @NotEmpty
-    private String directory;
+    private String collectionPath;
 
     @NotEmpty
     private List<String> users;
 
-    @JsonProperty
-    public String getDirectory() {
-        return directory;
+    @JsonProperty("collection")
+    public String getCollectionPath() {
+        return collectionPath;
     }
 
-    @JsonProperty
-    public void setDirectory(String directory) {
-        this.directory = directory;
+    @JsonProperty("collection")
+    public void setCollectionPath(String collectionPath) {
+        this.collectionPath = collectionPath;
     }
 
     @JsonProperty
@@ -35,7 +35,7 @@ public class TwitterArchiverFactory {
     }
 
     public TwitterArchiver build(Environment environment) {
-        final TwitterArchiver twitterArchiver = new TwitterArchiver(directory, users);
+        final TwitterArchiver twitterArchiver = new TwitterArchiver(collectionPath, users);
         environment.lifecycle().manage(twitterArchiver);
         return twitterArchiver;
     }

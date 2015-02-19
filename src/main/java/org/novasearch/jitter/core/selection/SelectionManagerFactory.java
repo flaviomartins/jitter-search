@@ -27,12 +27,12 @@ public class SelectionManagerFactory {
 
     private Map<String, List<String>> topics;
 
-    @JsonProperty
+    @JsonProperty("index")
     public String getIndex() {
         return index;
     }
 
-    @JsonProperty
+    @JsonProperty("index")
     public void setIndex(String index) {
         this.index = index;
     }

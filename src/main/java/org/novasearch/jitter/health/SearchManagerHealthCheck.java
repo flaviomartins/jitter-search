@@ -12,7 +12,7 @@ public class SearchManagerHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() throws Exception {
-        String index = searchManager.getIndex();
+        String index = searchManager.getIndexPath();
         if (index == null) {
             return Result.unhealthy("SearchManager doesn't have any index");
         }

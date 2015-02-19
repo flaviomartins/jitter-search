@@ -9,32 +9,32 @@ import java.util.List;
 public class TwitterManagerFactory {
 
     @NotEmpty
-    private String database;
+    private String databasePath;
 
     @NotEmpty
-    private String collection;
+    private String collectionPath;
 
     @NotEmpty
     private List<String> users;
 
-    @JsonProperty
-    public String getDatabase() {
-        return database;
+    @JsonProperty("database")
+    public String getDatabasePath() {
+        return databasePath;
     }
 
-    @JsonProperty
-    public void setDatabase(String database) {
-        this.database = database;
-    }
-
-    @JsonProperty("collection")
-    public String getCollection() {
-        return collection;
+    @JsonProperty("database")
+    public void setDatabasePath(String databasePath) {
+        this.databasePath = databasePath;
     }
 
     @JsonProperty("collection")
-    public void setCollection(String collection) {
-        this.collection = collection;
+    public String getCollectionPath() {
+        return collectionPath;
+    }
+
+    @JsonProperty("collection")
+    public void setCollectionPath(String collectionPath) {
+        this.collectionPath = collectionPath;
     }
 
     @JsonProperty
@@ -48,7 +48,7 @@ public class TwitterManagerFactory {
     }
 
     public TwitterManager build(Environment environment) {
-        final TwitterManager twitterManager = new TwitterManager(database, collection, users);
+        final TwitterManager twitterManager = new TwitterManager(databasePath, collectionPath, users);
         environment.lifecycle().manage(twitterManager);
         return twitterManager;
     }

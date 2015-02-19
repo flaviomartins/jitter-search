@@ -34,21 +34,25 @@ public class SearchManager implements Managed {
     private static final QueryParser QUERY_PARSER =
             new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
 
-    private final String index;
-    private final String database;
+    private final String indexPath;
+    private final String databasePath;
 
     private DirectoryReader reader;
     private IndexSearcher searcher;
 
-    public SearchManager(String index, String database) {
-        this.index = index;
-        this.database = database;
+    public SearchManager(String indexPath, String databasePath) {
+        this.indexPath = indexPath;
+        this.databasePath = databasePath;
     }
 
     @Override
     public void start() throws Exception {
-        reader = DirectoryReader.open(FSDirectory.open(new File(index)));
-        searcher = new IndexSearcher(reader);
+        try {
+            reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+            searcher = new IndexSearcher(reader);
+        } catch (Exception e) {
+            logger.error(e);
+        }
     }
 
     @Override
@@ -180,7 +184,7 @@ public class SearchManager implements Managed {
         Connection connection = null;
         try {
             // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:" + database);
+            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);  // set timeout to 30 sec.
 
@@ -217,7 +221,7 @@ public class SearchManager implements Managed {
         Connection connection = null;
         try {
             // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:" + database);
+            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
             connection.setAutoCommit(false);
 
             for (TResult result : results) {
@@ -262,7 +266,7 @@ public class SearchManager implements Managed {
 
     public void index() throws IOException {
         logger.info("Indexing started!");
-        File indexPath = new File(index);
+        File indexPath = new File(this.indexPath);
         Directory dir = FSDirectory.open(indexPath);
         IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
@@ -277,7 +281,7 @@ public class SearchManager implements Managed {
         int cnt = 0;
         try (IndexWriter writer = new IndexWriter(dir, config)) {
             // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:" + database);
+            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
             connection.setAutoCommit(false);
 
             try {
@@ -348,12 +352,12 @@ public class SearchManager implements Managed {
         }
     }
 
-    public String getIndex() {
-        return index;
+    public String getIndexPath() {
+        return indexPath;
     }
 
-    public String getDatabase() {
-        return database;
+    public String getDatabasePath() {
+        return databasePath;
     }
 
     public TermStats[] getHighFreqTerms(int n) throws Exception {
@@ -363,15 +367,21 @@ public class SearchManager implements Managed {
 
     public IndexSearcher getSearcher() throws IOException {
         try {
-            DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
-            if (newReader != null) {
-                reader.close();
-                reader = newReader;
+            if (reader == null) {
+                reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
                 searcher = new IndexSearcher(reader);
                 searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
+            } else {
+                DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
+                if (newReader != null) {
+                    reader.close();
+                    reader = newReader;
+                    searcher = new IndexSearcher(reader);
+                    searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
+                }
             }
         } catch (IndexNotFoundException e) {
-            logger.warn(e);
+            logger.error(e);
         }
         return searcher;
     }
