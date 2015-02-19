@@ -1,4 +1,4 @@
-package org.novasearch.jitter.core.twitter;
+package org.novasearch.jitter.core.twitter.manager;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;
@@ -10,6 +10,9 @@ public class TwitterManagerFactory {
 
     @NotEmpty
     private String database;
+
+    @NotEmpty
+    private String collection;
 
     @NotEmpty
     private List<String> users;
@@ -24,6 +27,16 @@ public class TwitterManagerFactory {
         this.database = database;
     }
 
+    @JsonProperty("collection")
+    public String getCollection() {
+        return collection;
+    }
+
+    @JsonProperty("collection")
+    public void setCollection(String collection) {
+        this.collection = collection;
+    }
+
     @JsonProperty
     public List<String> getUsers() {
         return users;
@@ -35,7 +48,7 @@ public class TwitterManagerFactory {
     }
 
     public TwitterManager build(Environment environment) {
-        final TwitterManager twitterManager = new TwitterManager(database, users);
+        final TwitterManager twitterManager = new TwitterManager(database, collection, users);
         environment.lifecycle().manage(twitterManager);
         return twitterManager;
     }

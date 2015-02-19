@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import org.novasearch.jitter.core.search.SearchManagerFactory;
 import org.novasearch.jitter.core.selection.SelectionManagerFactory;
-import org.novasearch.jitter.core.twitter.TwitterManagerFactory;
-import org.novasearch.jitter.core.twitter_archiver.TwitterArchiverFactory;
+import org.novasearch.jitter.core.twitter.manager.TwitterManagerFactory;
+import org.novasearch.jitter.core.twitter.archiver.TwitterArchiverFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;

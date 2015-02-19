@@ -17,8 +17,8 @@ import org.novasearch.jitter.tasks.SelectionManagerIndexTask;
 import org.novasearch.jitter.tasks.SearchManagerIndexTask;
 import org.novasearch.jitter.tasks.TwitterArchiverLoadTask;
 import org.novasearch.jitter.tasks.TwitterManagerArchiveTask;
-import org.novasearch.jitter.core.twitter.TwitterManager;
-import org.novasearch.jitter.core.twitter_archiver.TwitterArchiver;
+import org.novasearch.jitter.core.twitter.manager.TwitterManager;
+import org.novasearch.jitter.core.twitter.archiver.TwitterArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

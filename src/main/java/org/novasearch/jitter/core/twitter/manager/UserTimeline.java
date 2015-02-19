@@ -1,4 +1,4 @@
-package org.novasearch.jitter.core.twitter;
+package org.novasearch.jitter.core.twitter.manager;
 
 import twitter4j.Status;
 import twitter4j.User;

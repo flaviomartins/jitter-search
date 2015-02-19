@@ -1,4 +1,4 @@
-package org.novasearch.jitter.core.twitter_archiver;
+package org.novasearch.jitter.core.twitter.archiver;
 
 import com.google.common.base.Preconditions;
 

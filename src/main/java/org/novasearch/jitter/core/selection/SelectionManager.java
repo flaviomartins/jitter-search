@@ -1,14 +1,9 @@
 package org.novasearch.jitter.core.selection;
 
 import cc.twittertools.index.IndexStatuses;
-import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import com.google.common.hash.BloomFilter;
-import com.google.common.hash.Funnel;
-import com.google.common.hash.PrimitiveSink;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.log4j.Logger;
-import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -17,17 +12,13 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.LMDirichletSimilarity;
-import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.core.selection.methods.SelectionMethod;
 import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
-import org.novasearch.jitter.core.twitter.TwitterManager;
-import org.novasearch.jitter.core.twitter.UserTimeline;
-import org.novasearch.jitter.core.twitter_archiver.TwitterArchiver;
-import org.novasearch.jitter.core.utils.TweetUtils;
-import twitter4j.Status;
+import org.novasearch.jitter.core.twitter.manager.TwitterManager;
+import org.novasearch.jitter.core.twitter.archiver.TwitterArchiver;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +29,6 @@ public class SelectionManager implements Managed {
 
     private static final QueryParser QUERY_PARSER =
             new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
-    public static final int EXPECTED_COLLECTION_SIZE = 4000;
 
     private DirectoryReader reader;
     private IndexSearcher searcher;
@@ -200,153 +190,12 @@ public class SelectionManager implements Managed {
     public void index() throws IOException {
         if ("archiver".equals(twitterMode)) {
             logger.info("archiver index");
-            indexArchiver();
+            twitterArchiver.index(index, removeDuplicates);
         } else if ("standard".equals(twitterMode)) {
             logger.info("standard index");
-            indexManager();
+            twitterManager.index(index, removeDuplicates);
         } else {
             logger.error("Invalid Twitter mode");
-        }
-    }
-
-    public void indexArchiver() throws IOException {
-        File indexPath = new File(index);
-        Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
-
-        final FieldType textOptions = new FieldType();
-        textOptions.setIndexed(true);
-        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-        textOptions.setStored(true);
-        textOptions.setTokenized(true);
-
-        Funnel<String> tweetFunnel = new Funnel<String>() {
-            @Override
-            public void funnel(String tweetText, PrimitiveSink into) {
-                into.putString(TweetUtils.removeAll(tweetText), Charsets.UTF_8);
-            }
-        };
-
-        int cnt = 0;
-        try (IndexWriter writer = new IndexWriter(dir, config)) {
-            for (String screenName : twitterArchiver.getUsers()) {
-                org.novasearch.jitter.core.twitter_archiver.UserTimeline userTimeline = twitterArchiver.getUserTimeline(screenName);
-                if (userTimeline == null)
-                    break;
-                LinkedHashMap<Long, org.novasearch.jitter.core.twitter_archiver.Status> statuses = userTimeline.getStatuses();
-                if (userTimeline.getStatuses() == null)
-                    break;
-
-                BloomFilter<String> bloomFilter = null;
-                if (removeDuplicates) {
-                    bloomFilter = BloomFilter.create(tweetFunnel, EXPECTED_COLLECTION_SIZE);
-                }
-                for (org.novasearch.jitter.core.twitter_archiver.Status status : statuses.values()) {
-                    org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
-                    doc.add(new LongField(IndexStatuses.StatusField.ID.name, status.getId(), Field.Store.YES));
-                    doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getEpoch(), Field.Store.YES));
-                    doc.add(new TextField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getScreenName(), Field.Store.YES));
-
-                    doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
-
-                    if (removeDuplicates) {
-                        if (bloomFilter.mightContain(status.getText())) {
-//                            logger.debug(status.getScreenName() + " duplicate: " + status.getText());
-                            continue;
-                        }
-                    }
-
-                    cnt++;
-                    writer.addDocument(doc);
-
-                    if (removeDuplicates) {
-                        bloomFilter.put(status.getText());
-                    }
-
-                    if (cnt % 1000 == 0) {
-                        logger.debug(cnt + " statuses indexed");
-                    }
-                }
-                logger.info(String.format("Total of %s statuses added", cnt));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            dir.close();
-        }
-    }
-
-    public void indexManager() throws IOException {
-        File indexPath = new File(index);
-        Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
-
-        final FieldType textOptions = new FieldType();
-        textOptions.setIndexed(true);
-        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-        textOptions.setStored(true);
-        textOptions.setTokenized(true);
-
-        int cnt = 0;
-        try (IndexWriter writer = new IndexWriter(dir, config)) {
-            for (String screenName : twitterManager.getUsers()) {
-                UserTimeline userTimeline = twitterManager.getUserTimeline(screenName);
-                if (userTimeline == null)
-                    break;
-                LinkedHashMap<Long, Status> statuses = userTimeline.getStatuses();
-                if (userTimeline.getStatuses() == null)
-                    break;
-                for (Status status : statuses.values()) {
-                    cnt++;
-                    org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
-                    doc.add(new LongField(IndexStatuses.StatusField.ID.name, status.getId(), Field.Store.YES));
-                    doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getCreatedAt().getTime(), Field.Store.YES));
-                    doc.add(new TextField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), Field.Store.YES));
-
-                    doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
-
-                    doc.add(new IntField(IndexStatuses.StatusField.FRIENDS_COUNT.name, status.getUser().getFollowersCount(), Field.Store.YES));
-                    doc.add(new IntField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name, status.getUser().getFriendsCount(), Field.Store.YES));
-                    doc.add(new IntField(IndexStatuses.StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount(), Field.Store.YES));
-
-                    long inReplyToStatusId = status.getInReplyToStatusId();
-                    if (inReplyToStatusId > 0) {
-                        doc.add(new LongField(IndexStatuses.StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId, Field.Store.YES));
-                        doc.add(new LongField(IndexStatuses.StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId(), Field.Store.YES));
-                    }
-
-                    String lang = status.getLang();
-                    if (!lang.equals("unknown")) {
-                        doc.add(new TextField(IndexStatuses.StatusField.LANG.name, status.getLang(), Field.Store.YES));
-                    }
-
-                    if (status.isRetweet()) {
-                        long retweetStatusId = status.getRetweetedStatus().getId();
-                        if (retweetStatusId > 0) {
-                            doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name, retweetStatusId, Field.Store.YES));
-                            doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_USER_ID.name, status.getRetweetedStatus().getUser().getId(), Field.Store.YES));
-                            doc.add(new IntField(IndexStatuses.StatusField.RETWEET_COUNT.name, status.getRetweetCount(), Field.Store.YES));
-                            if (status.getRetweetCount() < 0 || status.getRetweetedStatus().getId() < 0) {
-                                logger.warn("Error parsing retweet fields of " + status.getId());
-                            }
-                        }
-                    }
-
-                    writer.addDocument(doc);
-                    if (cnt % 1000 == 0) {
-                        logger.debug(cnt + " statuses indexed");
-                    }
-                }
-                logger.info(String.format("Total of %s statuses added", cnt));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            dir.close();
         }
     }
 

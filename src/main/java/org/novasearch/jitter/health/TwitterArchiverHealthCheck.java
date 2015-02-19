@@ -1,7 +1,7 @@
 package org.novasearch.jitter.health;
 
 import com.codahale.metrics.health.HealthCheck;
-import org.novasearch.jitter.core.twitter_archiver.TwitterArchiver;
+import org.novasearch.jitter.core.twitter.archiver.TwitterArchiver;
 
 public class TwitterArchiverHealthCheck extends HealthCheck {
     private final TwitterArchiver twitterArchiver;
