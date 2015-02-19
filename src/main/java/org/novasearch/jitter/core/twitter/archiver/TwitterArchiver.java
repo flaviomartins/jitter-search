@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,17 +34,14 @@ public class TwitterArchiver implements Managed {
     private final String collectionPath;
     private final List<String> screenNames;
 
-    private final Map<String, UserTimeline> userTimelines;
-
     public TwitterArchiver(String collectionPath, List<String> screenNames) {
         this.collectionPath = collectionPath;
         this.screenNames = screenNames;
-        this.userTimelines = new LinkedHashMap<>();
     }
 
     @Override
     public void start() throws Exception {
-        load();
+
     }
 
     @Override
@@ -53,41 +49,12 @@ public class TwitterArchiver implements Managed {
 
     }
 
-    public UserTimeline getUserTimeline(String screenName) {
-        return userTimelines.get(screenName);
-    }
-
-    public void loadFromFile(String screenName) throws IOException {
-        FileStatusReader fileStatusReader = new FileStatusReader(new File(FilenameUtils.concat(collectionPath, screenName.toLowerCase())));
-
-        UserTimeline timeline;
-        if (userTimelines.get(screenName) != null) {
-            timeline = userTimelines.get(screenName);
-        } else {
-            timeline = new UserTimeline(screenName);
-            userTimelines.put(screenName, timeline);
-        }
-
-        Status status;
-        int cnt = 0;
-        while (true) {
-            status = fileStatusReader.next();
-            if (status == null) {
-                break;
-            }
-            if (status.getId() <= timeline.getLatestId()) {
-                continue;
-            }
-            timeline.add(status);
-            cnt++;
-        }
-        fileStatusReader.close();
-        if (cnt > 0) {
-            logger.info("loaded " + cnt + " " + screenName.toLowerCase());
-        }
+    public List<String> getUsers() {
+        return screenNames;
     }
 
     public void index(String index, boolean removeDuplicates) throws IOException {
+        long startTime = System.currentTimeMillis();
         File indexPath = new File(index);
         Directory dir = FSDirectory.open(indexPath);
         IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
@@ -109,18 +76,20 @@ public class TwitterArchiver implements Managed {
         int cnt = 0;
         try (IndexWriter writer = new IndexWriter(dir, config)) {
             for (String screenName : screenNames) {
-                org.novasearch.jitter.core.twitter.archiver.UserTimeline userTimeline = getUserTimeline(screenName);
-                if (userTimeline == null)
-                    break;
-                LinkedHashMap<Long, org.novasearch.jitter.core.twitter.archiver.Status> statuses = userTimeline.getStatuses();
-                if (userTimeline.getStatuses() == null)
-                    break;
+                FileStatusReader fileStatusReader = new FileStatusReader(new File(FilenameUtils.concat(collectionPath, screenName.toLowerCase())));
 
                 BloomFilter<String> bloomFilter = null;
                 if (removeDuplicates) {
                     bloomFilter = BloomFilter.create(tweetFunnel, EXPECTED_COLLECTION_SIZE);
                 }
-                for (org.novasearch.jitter.core.twitter.archiver.Status status : statuses.values()) {
+
+                int ucnt = 0;
+                Status status;
+                while ((status = fileStatusReader.next()) != null) {
+                    if (status.getText() == null) {
+                        continue;
+                    }
+
                     org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
                     doc.add(new LongField(IndexStatuses.StatusField.ID.name, status.getId(), Field.Store.YES));
                     doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getEpoch(), Field.Store.YES));
@@ -135,6 +104,7 @@ public class TwitterArchiver implements Managed {
                         }
                     }
 
+                    ucnt++;
                     cnt++;
                     writer.addDocument(doc);
 
@@ -146,25 +116,18 @@ public class TwitterArchiver implements Managed {
                         logger.debug(cnt + " statuses indexed");
                     }
                 }
-                logger.info(String.format("Total of %s statuses added", cnt));
+
+                logger.info(String.format("Total of %s statuses added for %s", ucnt, screenName));
+                fileStatusReader.close();
             }
+            logger.info(String.format("Total of %s statuses added", cnt));
+            logger.info("Total elapsed time: " + (System.currentTimeMillis() - startTime) + "ms");
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             dir.close();
         }
-    }
-
-    public void load() throws IOException {
-        logger.info("Loading...");
-        for (String screenName : screenNames) {
-            loadFromFile(screenName);
-        }
-    }
-
-    public List<String> getUsers() {
-        return screenNames;
     }
 
 }

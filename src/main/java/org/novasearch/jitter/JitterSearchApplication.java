@@ -15,7 +15,6 @@ import org.novasearch.jitter.resources.TopTermsResource;
 import org.novasearch.jitter.core.selection.SelectionManager;
 import org.novasearch.jitter.tasks.SelectionManagerIndexTask;
 import org.novasearch.jitter.tasks.SearchManagerIndexTask;
-import org.novasearch.jitter.tasks.TwitterArchiverLoadTask;
 import org.novasearch.jitter.tasks.TwitterManagerArchiveTask;
 import org.novasearch.jitter.core.twitter.manager.TwitterManager;
 import org.novasearch.jitter.core.twitter.archiver.TwitterArchiver;
@@ -74,7 +73,6 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TwitterArchiverHealthCheck twitterArchiverHealthCheck =
                 new TwitterArchiverHealthCheck(twitterArchiver);
         environment.healthChecks().register("twitter-archiver", twitterArchiverHealthCheck);
-        environment.admin().addTask(new TwitterArchiverLoadTask(twitterArchiver));
         selectionManager.setTwitterArchiver(twitterArchiver);
 
         final SelectionResource selectionResource = new SelectionResource(selectionManager);

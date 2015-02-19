@@ -196,7 +196,7 @@ public class TwitterManager implements Managed {
 
                 writer.addDocument(doc);
                 if (cnt % 1000 == 0) {
-                    logger.info(cnt + " statuses indexed");
+                    logger.debug(cnt + " statuses indexed");
                 }
             }
 
