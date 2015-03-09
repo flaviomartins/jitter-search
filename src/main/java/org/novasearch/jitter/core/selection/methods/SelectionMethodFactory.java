@@ -15,6 +15,10 @@ public class SelectionMethodFactory {
             return new CRCSISR();
         } else if ("CRCSLOGISR".equalsIgnoreCase(method)) {
             return new CRCSLOGISR();
+        } else if ("RankS".equalsIgnoreCase(method)) {
+            return new RankS();
+        } else if ("Taily".equalsIgnoreCase(method)) {
+            return new Taily();
         }
         // default
         return new Votes();
