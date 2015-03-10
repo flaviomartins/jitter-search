@@ -58,7 +58,7 @@ public class SelectSearchResource {
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        int n = limit.or(1000);
+        int n = limit.or(30);
         long maxId = max_id.or(-1L);
         boolean filterRT = filter_rt.or(false);
         String methodText = method.or(selectionManager.getMethod());
