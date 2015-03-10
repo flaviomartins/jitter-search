@@ -8,14 +8,16 @@ import java.util.Map;
 
 public class RankS extends SelectionMethod {
     // Recommended range for the exponent base is [10, 100]
-    public static final int B = 50;
-    private boolean useScores = true;
+    private final int B;
+    private final boolean useScores;
 
-    protected RankS() {
+    protected RankS(int B, boolean useScores) {
+        this.B = B;
+        this.useScores = useScores;
     }
 
     protected RankS(boolean useScores) {
-        this.useScores = useScores;
+        this(50, useScores);
     }
 
     @Override
