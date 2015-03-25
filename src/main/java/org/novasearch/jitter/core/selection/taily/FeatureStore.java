@@ -127,9 +127,12 @@ public class FeatureStore {
     private Database openDb(String path, boolean readOnly) {
         // Open the database. Create it if it does not already exist.
         DatabaseConfig dbConfig = new DatabaseConfig();
+        dbConfig.setReadOnly(readOnly);
         dbConfig.setAllowCreate(!readOnly);
         // Make it deferred write
-        dbConfig.setDeferredWrite(true);
+        if (!readOnly) {
+            dbConfig.setDeferredWrite(true);
+        }
         return dbEnv.openDatabase(null, path, dbConfig);
     }
 
