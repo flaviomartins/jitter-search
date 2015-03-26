@@ -23,7 +23,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.List;
-import java.util.SortedMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/ss")
@@ -71,7 +71,7 @@ public class SelectSearchResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(methodText);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        SortedMap<String, Float> ranked = selectionManager.getRankedTopics(selectionMethod, selectResults);
+        Map<String, Double> ranked = selectionManager.getRankedTopics(selectionMethod, selectResults);
 
         List<Document> searchResults;
 

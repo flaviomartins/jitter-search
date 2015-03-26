@@ -17,8 +17,6 @@ public class SelectionMethodFactory {
             return new CRCSLOGISR();
         } else if ("RankS".equalsIgnoreCase(method)) {
             return new RankS(true);
-        } else if ("Taily".equalsIgnoreCase(method)) {
-            return new Taily();
         }
         // default
         return new Votes();

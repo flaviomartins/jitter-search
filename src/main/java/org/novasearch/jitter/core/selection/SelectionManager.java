@@ -105,20 +105,20 @@ public class SelectionManager implements Managed {
         this.twitterManager = twitterManager;
     }
 
-    public SortedMap<String, Float> getRanked(List<Document> results) {
+    public SortedMap<String, Double> getRanked(List<Document> results) {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         return getSortedMap(selectionMethod.getRanked(results));
     }
 
-    public SortedMap<String, Float> getRanked(SelectionMethod selectionMethod, List<Document> results) {
+    public SortedMap<String, Double> getRanked(SelectionMethod selectionMethod, List<Document> results) {
         return getSortedMap(selectionMethod.getRanked(results));
     }
 
-    public SortedMap<String, Float> getRankedTopics(SelectionMethod selectionMethod, List<Document> results) {
-        Map<String, Float> ranked = selectionMethod.getRanked(results);
-        Map<String, Float> map = new HashMap<>();
+    public SortedMap<String, Double> getRankedTopics(SelectionMethod selectionMethod, List<Document> results) {
+        Map<String, Double> ranked = selectionMethod.getRanked(results);
+        Map<String, Double> map = new HashMap<>();
         for (String topic : topics.keySet()) {
-            float sum = 0;
+            double sum = 0;
             for (String collection : topics.get(topic)) {
                 for (String col : ranked.keySet()) {
                     if (col.equalsIgnoreCase(collection))
@@ -131,9 +131,9 @@ public class SelectionManager implements Managed {
         return getSortedMap(map);
     }
 
-    private SortedMap<String, Float> getSortedMap(Map<String, Float> map) {
+    private SortedMap<String, Double> getSortedMap(Map<String, Double> map) {
         SelectionComparator comparator = new SelectionComparator(map);
-        TreeMap<String, Float> sortedMap = new TreeMap<>(comparator);
+        TreeMap<String, Double> sortedMap = new TreeMap<>(comparator);
         sortedMap.putAll(map);
         return sortedMap;
     }

@@ -4,14 +4,9 @@ import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.novasearch.jitter.core.search.SearchManager;
-import org.novasearch.jitter.health.SelectionManagerHealthCheck;
-import org.novasearch.jitter.health.SearchManagerHealthCheck;
-import org.novasearch.jitter.health.TwitterArchiverHealthCheck;
-import org.novasearch.jitter.health.TwitterManagerHealthCheck;
-import org.novasearch.jitter.resources.SelectSearchResource;
-import org.novasearch.jitter.resources.SelectionResource;
-import org.novasearch.jitter.resources.SearchResource;
-import org.novasearch.jitter.resources.TopTermsResource;
+import org.novasearch.jitter.core.selection.taily.TailyManager;
+import org.novasearch.jitter.health.*;
+import org.novasearch.jitter.resources.*;
 import org.novasearch.jitter.core.selection.SelectionManager;
 import org.novasearch.jitter.tasks.SelectionManagerIndexTask;
 import org.novasearch.jitter.tasks.SearchManagerIndexTask;
@@ -57,10 +52,15 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.jersey().register(topTermsResource);
 
         final SelectionManager selectionManager = configuration.getSelectionManagerFactory().build(environment);
-        final SelectionManagerHealthCheck healthCheck =
+        final SelectionManagerHealthCheck selectionManagerHealthCheck =
                 new SelectionManagerHealthCheck(selectionManager);
-        environment.healthChecks().register("selection", healthCheck);
+        environment.healthChecks().register("selection", selectionManagerHealthCheck);
         environment.admin().addTask(new SelectionManagerIndexTask(selectionManager));
+
+        final TailyManager tailyManager = configuration.getTailyManagerFactory().build(environment);
+        final TailyManagerHealthCheck tailyManagerHealthCheck =
+                new TailyManagerHealthCheck(tailyManager);
+        environment.healthChecks().register("taily", tailyManagerHealthCheck);
 
         final TwitterManager twitterManager = configuration.getTwitterManagerFactory().build(environment);
         final TwitterManagerHealthCheck twitterManagerHealthCheck =
@@ -74,6 +74,9 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
                 new TwitterArchiverHealthCheck(twitterArchiver);
         environment.healthChecks().register("twitter-archiver", twitterArchiverHealthCheck);
         selectionManager.setTwitterArchiver(twitterArchiver);
+
+        final TailyResource tailyResource = new TailyResource(tailyManager);
+        environment.jersey().register(tailyResource);
 
         final SelectionResource selectionResource = new SelectionResource(selectionManager);
         environment.jersey().register(selectionResource);

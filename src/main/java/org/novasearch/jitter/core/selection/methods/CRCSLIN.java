@@ -12,17 +12,17 @@ public class CRCSLIN extends SelectionMethod {
     }
 
     @Override
-    public Map<String, Float> rank(List<Document> results) {
-        HashMap<String, Float> map = new HashMap<>();
+    public Map<String, Double> rank(List<Document> results) {
+        HashMap<String, Double> map = new HashMap<>();
         int gamma = results.size();
         int j = 1;
         for (Document result : results) {
-            float r = getScore(gamma, j);
+            double r = getScore(gamma, j);
             String screenName = result.getScreen_name();
             if (!map.containsKey(screenName)) {
                 map.put(screenName, r);
             } else {
-                float cur = map.get(screenName);
+                double cur = map.get(screenName);
                 map.put(screenName, cur + r);
             }
             j++;
@@ -30,7 +30,7 @@ public class CRCSLIN extends SelectionMethod {
         return map;
     }
 
-    private float getScore(int gamma, int j) {
+    private double getScore(int gamma, int j) {
         return gamma - j;
     }
 }

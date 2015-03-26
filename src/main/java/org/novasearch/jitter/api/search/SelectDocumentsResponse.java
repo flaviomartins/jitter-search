@@ -4,11 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 
 public class SelectDocumentsResponse {
 
-    private SortedMap<String, Float> collections;
+    private Map<String, Double> collections;
     private String method;
     private int numFound;
     private int start;
@@ -18,7 +17,7 @@ public class SelectDocumentsResponse {
         // Jackson deserialization
     }
 
-    public SelectDocumentsResponse(SortedMap<String, Float> collections, String method, int numFound, int start, List<Document> docs) {
+    public SelectDocumentsResponse(Map<String, Double> collections, String method, int numFound, int start, List<Document> docs) {
         this.collections = collections;
         this.method = method;
         this.numFound = numFound;
@@ -37,7 +36,7 @@ public class SelectDocumentsResponse {
     }
 
     @JsonProperty
-    public Map<String, Float> getCollections() {
+    public Map<String, Double> getCollections() {
         return collections;
     }
 

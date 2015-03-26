@@ -21,22 +21,22 @@ public class RankS extends SelectionMethod {
     }
 
     @Override
-    public Map<String, Float> rank(List<Document> results) {
+    public Map<String, Double> rank(List<Document> results) {
         double minRsv = 0;
         if (useScores) {
             minRsv = getMinRsv(results);
         }
 
-        HashMap<String, Float> map = new HashMap<>();
+        HashMap<String, Double> map = new HashMap<>();
         int j = 1;
         int step = 1;
         for (Document result : results) {
-            float r = getStepFactor(step);
+            double r = getStepFactor(step);
             if (useScores) {
                 if (minRsv < 0) {
-                    r = r * (float)(result.getRsv() + Math.abs(minRsv));
+                    r = r * (result.getRsv() + Math.abs(minRsv));
                 } else {
-                    r = r * (float)(result.getRsv());
+                    r = r * result.getRsv();
                 }
             }
 
@@ -44,7 +44,7 @@ public class RankS extends SelectionMethod {
             if (!map.containsKey(screenName)) {
                 map.put(screenName, r);
             } else {
-                float cur = map.get(screenName);
+                double cur = map.get(screenName);
                 map.put(screenName, cur + r);
             }
 
@@ -66,7 +66,7 @@ public class RankS extends SelectionMethod {
         return minRsv;
     }
 
-    private float getStepFactor(int step) {
-        return (float) Math.pow(B, -step);
+    private double getStepFactor(int step) {
+        return Math.pow(B, -step);
     }
 }

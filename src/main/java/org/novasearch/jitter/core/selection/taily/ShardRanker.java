@@ -6,7 +6,6 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.utils.AnalyzerUtils;
 
-import java.io.File;
 import java.util.*;
 
 public class ShardRanker {
@@ -27,7 +26,9 @@ public class ShardRanker {
     // Taily parameter used in Eq (11)
     private final int _n_c;
 
-
+    public ShardRanker(List<String> _shardIds, String indexPath, int _n_c) {
+        this(_shardIds.toArray(new String[_shardIds.size()]), indexPath, _n_c);
+    }
 
     public ShardRanker(String[] _shardIds, String indexPath, int _n_c) {
         this._shardIds = _shardIds;

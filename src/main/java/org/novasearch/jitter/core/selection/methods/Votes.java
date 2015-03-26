@@ -11,7 +11,7 @@ public class Votes extends SelectionMethod {
     }
 
     @Override
-    public Map<String, Float> rank(List<Document> results) {
+    public Map<String, Double> rank(List<Document> results) {
         return getCounts(results);
     }
 }

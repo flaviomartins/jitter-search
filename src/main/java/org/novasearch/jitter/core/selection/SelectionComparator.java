@@ -4,8 +4,8 @@ import java.util.Comparator;
 import java.util.Map;
 
 public class SelectionComparator implements Comparator<String> {
-    final Map<String, Float> map;
-    public SelectionComparator(Map<String, Float> map) {
+    final Map<String, Double> map;
+    public SelectionComparator(Map<String, Double> map) {
         this.map = map;
     }
 
