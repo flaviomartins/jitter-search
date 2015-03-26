@@ -151,7 +151,7 @@ public class Taily {
             }
 
             // create feature store for shard
-            FeatureStore store = new FeatureStore(dbPath+"/"+shardIdStr, false);
+            FeatureStore store = new FeatureStore(cPath, false);
             stores.put(shardIdStr, store);
 
             // TODO: store the shard size (# of docs) feature
@@ -276,6 +276,8 @@ public class Taily {
         List<String> screenNames = new ArrayList<>();
         screenNames.add("ap");
         screenNames.add("reuters");
+        screenNames.add("bbcworld");
+        screenNames.add("usatoday");
         taily.buildFromMap(screenNames);
     }
 

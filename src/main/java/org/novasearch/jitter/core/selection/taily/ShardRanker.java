@@ -52,13 +52,9 @@ public class ShardRanker {
 
             // create output directory for the feature store dbs
             String cPath = dbPath + "/" + shardIdStr;
-            if (new File(cPath).mkdir() != true) {
-                logger.warn("Error creating output DB dir. Dir may already exist.");
-//                System.exit(-1);
-            }
 
             // create feature store for shard
-            FeatureStore store = new FeatureStore(dbPath + "/" + shardIdStr, false);
+            FeatureStore store = new FeatureStore(cPath, false);
             _stores[i] = store;
         }
     }
@@ -70,7 +66,7 @@ public class ShardRanker {
     }
 
     private List<String> _getStems(String query) {
-        return AnalyzerUtils.analyze(new TweetAnalyzer(Version.LUCENE_43), query);
+        return AnalyzerUtils.analyze(new TweetAnalyzer(Version.LUCENE_43, true), query);
     }
 
     class QueryFeats {
@@ -246,7 +242,7 @@ public class ShardRanker {
             // return the shard with the document with n_i = 1
             for (int i = 1; i < _numShards + 1; i++) {
                 if (hasATerm[i]) {
-                    ranking.put(_shardIds[i], 1d);
+                    ranking.put(_shardIds[i - 1], 1d);
                     break;
                 }
             }
@@ -277,7 +273,7 @@ public class ShardRanker {
 
         // if n_c > all[0], set probability to 1
         if (p_c > 1.0)
-            p_c = 1.0;
+            p_c = 0.99; // ZOMG
 
         GammaDistribution collectionGamma = new GammaDistribution(k[0], theta[0]);
         double s_c = collectionGamma.inverseCumulativeProbability(p_c);
@@ -292,13 +288,13 @@ public class ShardRanker {
             // based on the mean of the shard (which is the score of the single doc), n_i is either 0 or 1
             if (queryVar[i] < 1e-10 && hasATerm[i]) {
                 if (queryMean[i] >= s_c) {
-                    ranking.put(_shardIds[i], 1d);
+                    ranking.put(_shardIds[i - 1], 1d);
                 }
             } else {
                 // do normal Taily stuff pre-normalized Eq (12)
                 GammaDistribution shardGamma = new GammaDistribution(k[i], theta[i]);
                 double p_i = 1.0d - shardGamma.cumulativeProbability(s_c);
-                ranking.put(_shardIds[i], all[i] * p_i);
+                ranking.put(_shardIds[i - 1], all[i] * p_i);
             }
         }
 
@@ -311,31 +307,43 @@ public class ShardRanker {
         double sum = 0.0;
         int i = 0;
         int limit = Math.min(5, ranking.size());
-        for (Map.Entry<String, Double> map : sortedMap.entrySet()) {
-            sum += map.getValue();
+        for (Map.Entry<String, Double> entry : sortedMap.entrySet()) {
+            sum += entry.getValue();
             if (i > limit)
                 break;
         }
         double norm = _n_c / sum;
 
         // normalize shard scores Eq (12)
+        TreeMap<String, Double> normedMap = new TreeMap<>(comparator);
         for (Map.Entry<String, Double> entry : sortedMap.entrySet()) {
-            entry.setValue(entry.getValue() * norm);
+            normedMap.put(entry.getKey(), entry.getValue() * norm);
         }
 
-        return sortedMap;
+        return normedMap;
     }
 
     public static void main(String[] args) {
         List<String> screenNames = new ArrayList<>();
         screenNames.add("ap");
         screenNames.add("reuters");
+        screenNames.add("bbcworld");
+        screenNames.add("usatoday");
         ShardRanker ranker = new ShardRanker(screenNames.toArray(new String[screenNames.size()]), "/home/fmartins/Data/cmu/twitter/collectionindex", 400);
 
 
         Map<String, Double> rank = ranker.rank("chuck hagel");
         for (Map.Entry<String, Double> entry : rank.entrySet()) {
             System.out.println(entry.getKey() + " " + entry.getValue());
+        }
+
+        Scanner sc = new Scanner(System.in);
+        while (sc.hasNext()) {
+            String query = sc.nextLine();
+            rank = ranker.rank(query);
+            for (Map.Entry<String, Double> entry : rank.entrySet()) {
+                System.out.println(entry.getKey() + " " + entry.getValue());
+            }
         }
 
     }
