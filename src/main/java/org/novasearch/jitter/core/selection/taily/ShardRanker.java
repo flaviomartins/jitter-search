@@ -259,7 +259,7 @@ public class ShardRanker {
             // return the shard with the document with n_i = 1
             for (int i = 1; i < _numShards + 1; i++) {
                 if (hasATerm[i]) {
-                    ranking.put(_shardIds[i - 1], 1d);
+                    ranking.put(_shardIds[i - 1], 1.0);
                     break;
                 }
             }
@@ -289,8 +289,8 @@ public class ShardRanker {
         double p_c = _n_c / all[0];
 
         // if n_c > all[0], set probability to 1
-        if (p_c > 1.0)
-            p_c = 0.99; // ZOMG
+        if (p_c >= 1.0)
+            p_c = 1.0 - 1e-10; // ZOMG
 
         GammaDistribution collectionGamma = new GammaDistribution(k[0], theta[0]);
         double s_c = collectionGamma.inverseCumulativeProbability(p_c);
@@ -305,12 +305,12 @@ public class ShardRanker {
             // based on the mean of the shard (which is the score of the single doc), n_i is either 0 or 1
             if (queryVar[i] < 1e-10 && hasATerm[i]) {
                 if (queryMean[i] >= s_c) {
-                    ranking.put(_shardIds[i - 1], 1d);
+                    ranking.put(_shardIds[i - 1], 1.0);
                 }
             } else {
                 // do normal Taily stuff pre-normalized Eq (12)
                 GammaDistribution shardGamma = new GammaDistribution(k[i], theta[i]);
-                double p_i = 1.0d - shardGamma.cumulativeProbability(s_c);
+                double p_i = 1.0 - shardGamma.cumulativeProbability(s_c);
                 ranking.put(_shardIds[i - 1], all[i] * p_i);
             }
         }
