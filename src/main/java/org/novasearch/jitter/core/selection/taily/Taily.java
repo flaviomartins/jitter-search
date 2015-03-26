@@ -21,10 +21,16 @@ public class Taily {
 
     private static final int DEFAULT_MU = 2500;
 
-    private String indexPath;
+    private final String indexPath;
+    private final int mu;
+
+    public Taily(String indexPath, int mu) {
+        this.indexPath = indexPath;
+        this.mu = mu;
+    }
 
     public Taily(String indexPath) {
-        this.indexPath = indexPath;
+        this(indexPath, DEFAULT_MU);
     }
 
     private double calcIndriFeature(double tf, double ctf, double totalTermCount, double docLength, int mu) {
@@ -216,7 +222,7 @@ public class Taily {
                         double tf = docsEnum.freq();
 
                         // calulate Indri score feature and sum it up
-                        double feat = calcIndriFeature(tf, ctf, totalTermCount, length, DEFAULT_MU);
+                        double feat = calcIndriFeature(tf, ctf, totalTermCount, length, mu);
 
                         ShardData currShard = shardDataMap.get(currShardId);
                         if (currShard == null) {

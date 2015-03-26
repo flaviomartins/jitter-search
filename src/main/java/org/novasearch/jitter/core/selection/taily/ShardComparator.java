@@ -5,6 +5,7 @@ import java.util.Map;
 
 public class ShardComparator implements Comparator<String> {
     final Map<String, Double> map;
+
     public ShardComparator(Map<String, Double> map) {
         this.map = map;
     }

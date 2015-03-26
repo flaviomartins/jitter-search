@@ -14,6 +14,9 @@ public class TailyManagerFactory {
     private String index;
 
     @NotNull
+    private int mu;
+
+    @NotNull
     private int nc;
 
     @NotEmpty
@@ -27,6 +30,16 @@ public class TailyManagerFactory {
     @JsonProperty("index")
     public void setIndex(String index) {
         this.index = index;
+    }
+
+    @JsonProperty
+    public int getMu() {
+        return mu;
+    }
+
+    @JsonProperty
+    public void setMu(int mu) {
+        this.mu = mu;
     }
 
     @JsonProperty
@@ -50,7 +63,7 @@ public class TailyManagerFactory {
     }
 
     public TailyManager build(Environment environment) throws IOException {
-        final TailyManager tailyManager = new TailyManager(index, nc, users);
+        final TailyManager tailyManager = new TailyManager(index, mu, nc, users);
         environment.lifecycle().manage(tailyManager);
         return tailyManager;
     }

@@ -73,6 +73,7 @@ public class ShardRanker {
         }
     }
 
+    // tokenizes, stems and stops query term into output vector
     private List<String> _getStems(String query) {
         return AnalyzerUtils.analyze(new TweetAnalyzer(Version.LUCENE_43, true), query);
     }
@@ -90,6 +91,8 @@ public class ShardRanker {
         }
     }
 
+    // retrieves the mean/variance for query terms and fills in the given queryMean/queryVar arrays
+    // and marks shards that have at least one doc for one query term in given bool array
     private QueryFeats _getQueryFeats(List<String> stems) {
         QueryFeats queryFeats = new QueryFeats(_numShards + 1);
         // calculate mean and variances for query for all shards
@@ -110,8 +113,8 @@ public class ShardRanker {
             double globalDf = 0;
 
             // keep track of how many times this term appeared in the shards for minVal later
-            double[] dfCache = new double[_numShards +1];
-            for(int i = 0; i <  + 1; i++) {
+            double[] dfCache = new double[_numShards + 1];
+            for (int i = 0; i < +1; i++) {
                 dfCache[i] = 0;
             }
 
@@ -179,6 +182,7 @@ public class ShardRanker {
         return queryFeats;
     }
 
+    // calculates All from Eq (10)
     private double[] _getAll(List<String> stems) {
         // calculate Any_i & all_i
         double[] all = new double[_numShards + 1];

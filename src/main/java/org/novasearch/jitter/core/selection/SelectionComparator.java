@@ -5,6 +5,7 @@ import java.util.Map;
 
 public class SelectionComparator implements Comparator<String> {
     final Map<String, Double> map;
+
     public SelectionComparator(Map<String, Double> map) {
         this.map = map;
     }

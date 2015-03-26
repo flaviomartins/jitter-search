@@ -11,13 +11,15 @@ public class TailyManager implements Managed {
     private static final Logger logger = Logger.getLogger(TailyManager.class);
 
     private final String index;
+    private final int mu;
     private final int nc;
     private final List<String> users;
 
     private ShardRanker ranker;
 
-    public TailyManager(String index, int nc, List<String> users) {
+    public TailyManager(String index, int mu, int nc, List<String> users) {
         this.index = index;
+        this.mu = mu;
         this.nc = nc;
         this.users = users;
     }
@@ -45,7 +47,7 @@ public class TailyManager implements Managed {
         if (ranker != null)
             ranker.close();
 
-        Taily taily = new Taily(index);
+        Taily taily = new Taily(index, mu);
         taily.buildCorpus();
         taily.buildFromMap(users);
 

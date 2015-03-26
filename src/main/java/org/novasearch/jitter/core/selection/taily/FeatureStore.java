@@ -16,11 +16,10 @@ public class FeatureStore {
     public static final String SIZE_FEAT_SUFFIX = "#d";
     public static final String TERM_SIZE_FEAT_SUFFIX = "#t";
     public static final int FREQUENT_TERMS = 1000; // tf required for a term to be considered "frequent"
-    public static final int MAX_TERM_SIZE = 512;
 
     private Environment dbEnv;
-    private Database freqDb;
-    private Database infreqDb;
+    private Database freqDb; // db storing frequent terms; see FREQUENT_TERMS
+    private Database infreqDb; // db storing frequent terms; see FREQUENT_TERMS
 
     public FeatureStore(String dir, boolean readOnly) {
         String freqPath = dir + "/freq.db";
@@ -52,6 +51,7 @@ public class FeatureStore {
         closeEnv(dbEnv);
     }
 
+    // returns feature; if feature isn't found, returns -1
     public double getFeature(String keyStr) {
         // key
         DatabaseEntry key = new DatabaseEntry();
@@ -96,6 +96,7 @@ public class FeatureStore {
         }
     }
 
+    // add val to the keyStr feature if it exists already; otherwise, create the feature
     public void addValFeature(String keyStr, double val, int frequency) {
         double prevVal;
 
@@ -122,7 +123,7 @@ public class FeatureStore {
             frequency = FREQUENT_TERMS + 1;
         }
 
-        putFeature(keyStr, val+prevVal, frequency);
+        putFeature(keyStr, val + prevVal, frequency);
     }
 
     private Database openDb(String path, boolean readOnly) {
@@ -143,15 +144,6 @@ public class FeatureStore {
 
     private void closeEnv(Environment env) {
         env.close();
-    }
-
-    public static void main(String[] args) {
-        FeatureStore store = new FeatureStore("bdb", false);
-        System.out.println(store.getFeature("wow"));
-        store.putFeature("wow", 1, 100);
-        store.addValFeature("wow", 10, 100);
-        System.out.println(store.getFeature("wow"));
-        store.close();
     }
 
 }
