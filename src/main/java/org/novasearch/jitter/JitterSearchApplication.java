@@ -10,6 +10,7 @@ import org.novasearch.jitter.resources.*;
 import org.novasearch.jitter.core.selection.SelectionManager;
 import org.novasearch.jitter.tasks.SelectionManagerIndexTask;
 import org.novasearch.jitter.tasks.SearchManagerIndexTask;
+import org.novasearch.jitter.tasks.TailyManagerIndexTask;
 import org.novasearch.jitter.tasks.TwitterManagerArchiveTask;
 import org.novasearch.jitter.core.twitter.manager.TwitterManager;
 import org.novasearch.jitter.core.twitter.archiver.TwitterArchiver;
@@ -77,6 +78,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         final TailyResource tailyResource = new TailyResource(tailyManager);
         environment.jersey().register(tailyResource);
+        environment.admin().addTask(new TailyManagerIndexTask(tailyManager));
 
         final SelectionResource selectionResource = new SelectionResource(selectionManager);
         environment.jersey().register(selectionResource);

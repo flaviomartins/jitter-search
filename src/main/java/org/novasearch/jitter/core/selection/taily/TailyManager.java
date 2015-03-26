@@ -1,11 +1,14 @@
 package org.novasearch.jitter.core.selection.taily;
 
 import io.dropwizard.lifecycle.Managed;
+import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class TailyManager implements Managed {
+    private static final Logger logger = Logger.getLogger(TailyManager.class);
 
     private final String index;
     private final int nc;
@@ -25,11 +28,27 @@ public class TailyManager implements Managed {
 
     @Override
     public void start() throws Exception {
-        ranker = new ShardRanker(users, index, nc);
+        try {
+            ranker = new ShardRanker(users, index, nc);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
     }
 
     @Override
     public void stop() throws Exception {
-        ranker.close();
+        if (ranker != null)
+            ranker.close();
+    }
+
+    public void index() throws IOException {
+        if (ranker != null)
+            ranker.close();
+
+        Taily taily = new Taily(index);
+        taily.buildCorpus();
+        taily.buildFromMap(users);
+
+        ranker = new ShardRanker(users, index, nc);
     }
 }

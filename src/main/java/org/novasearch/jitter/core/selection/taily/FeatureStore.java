@@ -49,6 +49,7 @@ public class FeatureStore {
     public void close() {
         closeDb(freqDb);
         closeDb(infreqDb);
+        closeEnv(dbEnv);
     }
 
     public double getFeature(String keyStr) {
@@ -138,6 +139,10 @@ public class FeatureStore {
 
     private void closeDb(Database db) {
         db.close();
+    }
+
+    private void closeEnv(Environment env) {
+        env.close();
     }
 
     public static void main(String[] args) {

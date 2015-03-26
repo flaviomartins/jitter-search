@@ -6,6 +6,7 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.utils.AnalyzerUtils;
 
+import java.io.File;
 import java.util.*;
 
 public class ShardRanker {
@@ -39,10 +40,12 @@ public class ShardRanker {
         // open up all output feature storages for each mapping file we are accessing
         _stores = new FeatureStore[_numShards + 1];
 
-        // read collection feature store
+        // open collection feature store
         String dbPath = "bdb";
-        FeatureStore collectionStore = new FeatureStore(dbPath, true);
-        _stores[0] = collectionStore;
+        if (new File(dbPath).isDirectory()) {
+            FeatureStore collectionStore = new FeatureStore(dbPath, true);
+            _stores[0] = collectionStore;
+        }
 
         dbPath = "bdbmap"; // in this case, this will be a path to a folder
 
@@ -54,15 +57,19 @@ public class ShardRanker {
             // create output directory for the feature store dbs
             String cPath = dbPath + "/" + shardIdStr;
 
-            // create feature store for shard
-            FeatureStore store = new FeatureStore(cPath, false);
-            _stores[i] = store;
+            if (new File(cPath).isDirectory()) {
+                // open feature store for shard
+                FeatureStore store = new FeatureStore(cPath, false);
+                _stores[i] = store;
+            }
         }
     }
 
     public void close() {
         for (FeatureStore store : _stores) {
-            store.close();
+            if (store != null) {
+                store.close();
+            }
         }
     }
 
