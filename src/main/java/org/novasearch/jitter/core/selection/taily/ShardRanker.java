@@ -122,8 +122,13 @@ public class ShardRanker {
                 double df = 0;
                 String dfFeat = stem + FeatureStore.SIZE_FEAT_SUFFIX;
                 df = _stores[i].getFeature(dfFeat);
-                dfCache[i] = df;
-                globalDf += df;
+                // TODO: fix this kludge
+                if (df != -1) {
+                    dfCache[i] = df;
+                    globalDf += df;
+                } else {
+                    df = 0;
+                }
 
                 // if this shard doesn't have this term, skip; otherwise you get nan everywhere
                 if (df == 0)
