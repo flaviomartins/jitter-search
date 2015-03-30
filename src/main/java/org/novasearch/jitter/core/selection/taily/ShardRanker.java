@@ -1,9 +1,8 @@
 package org.novasearch.jitter.core.selection.taily;
 
-import cc.twittertools.index.TweetAnalyzer;
+import cc.twittertools.index.IndexStatuses;
 import org.apache.commons.math3.distribution.GammaDistribution;
 import org.apache.log4j.Logger;
-import org.apache.lucene.util.Version;
 import org.novasearch.jitter.utils.AnalyzerUtils;
 
 import java.io.File;
@@ -27,11 +26,11 @@ public class ShardRanker {
     // Taily parameter used in Eq (11)
     private final int _n_c;
 
-    public ShardRanker(List<String> _shardIds, String indexPath, int _n_c) {
-        this(_shardIds.toArray(new String[_shardIds.size()]), indexPath, _n_c);
+    public ShardRanker(List<String> _shardIds, String indexPath, int _n_c, String dbPath) {
+        this(_shardIds.toArray(new String[_shardIds.size()]), indexPath, _n_c, dbPath);
     }
 
-    public ShardRanker(String[] _shardIds, String indexPath, int _n_c) {
+    public ShardRanker(String[] _shardIds, String indexPath, int _n_c, String shardsDbPath) {
         this._shardIds = _shardIds;
         this.indexPath = indexPath;
         this._n_c = _n_c;
@@ -41,13 +40,13 @@ public class ShardRanker {
         _stores = new FeatureStore[_numShards + 1];
 
         // open collection feature store
-        String dbPath = "bdb";
+        String dbPath = "taily/bdb";
         if (new File(dbPath).isDirectory()) {
             FeatureStore collectionStore = new FeatureStore(dbPath, true);
             _stores[0] = collectionStore;
         }
 
-        dbPath = "bdbmap"; // in this case, this will be a path to a folder
+        dbPath = shardsDbPath; // in this case, this will be a path to a folder
 
         // read in the mapping files given and construct a reverse mapping,
         // i.e. doc -> shard, and create FeatureStore dbs for each shard
@@ -75,7 +74,10 @@ public class ShardRanker {
 
     // tokenizes, stems and stops query term into output vector
     private List<String> _getStems(String query) {
-        return AnalyzerUtils.analyze(new TweetAnalyzer(Version.LUCENE_43, true), query);
+        List<String> stems = AnalyzerUtils.analyze(IndexStatuses.ANALYZER, query);
+        // remove empty stems
+        stems.removeAll(Arrays.asList("", null));
+        return stems;
     }
 
     class QueryFeats {
@@ -125,13 +127,14 @@ public class ShardRanker {
                 double df = 0;
                 String dfFeat = stem + FeatureStore.SIZE_FEAT_SUFFIX;
                 df = _stores[i].getFeature(dfFeat);
+
                 // TODO: fix this kludge
-                if (df != -1) {
-                    dfCache[i] = df;
-                    globalDf += df;
-                } else {
+                if (df == -1) {
                     df = 0;
                 }
+
+                dfCache[i] = df;
+                globalDf += df;
 
                 // if this shard doesn't have this term, skip; otherwise you get nan everywhere
                 if (df == 0)
@@ -230,20 +233,16 @@ public class ShardRanker {
     }
 
     public Map<String, Double> rank(String query) {
-        // +1 because 0 stands for central db
-        // query total means and variances for each shard
-        double[] queryMean;
-        double[] queryVar;
-        boolean[] hasATerm; // to mark shards that have at least one doc for one query term
-
         Map<String, Double> ranking = new HashMap<>();
 
         List<String> stems = _getStems(query);
 
         QueryFeats queryFeats = _getQueryFeats(stems);
-        queryMean = queryFeats.queryMean;
-        queryVar = queryFeats.queryVar;
-        hasATerm = queryFeats.hasATerm;
+        // query total means and variances for each shard
+        double[] queryMean = queryFeats.queryMean;
+        double[] queryVar = queryFeats.queryVar;
+        // to mark shards that have at least one doc for one query term
+        boolean[] hasATerm = queryFeats.hasATerm;
 
         // fast fall-through for 2 degenerate cases
         if (!hasATerm[0]) {
@@ -340,28 +339,4 @@ public class ShardRanker {
         return normedMap;
     }
 
-    public static void main(String[] args) {
-        List<String> screenNames = new ArrayList<>();
-        screenNames.add("ap");
-        screenNames.add("reuters");
-        screenNames.add("bbcworld");
-        screenNames.add("usatoday");
-        ShardRanker ranker = new ShardRanker(screenNames.toArray(new String[screenNames.size()]), "/home/fmartins/Data/cmu/twitter/collectionindex", 400);
-
-
-        Map<String, Double> rank = ranker.rank("chuck hagel");
-        for (Map.Entry<String, Double> entry : rank.entrySet()) {
-            System.out.println(entry.getKey() + " " + entry.getValue());
-        }
-
-        Scanner sc = new Scanner(System.in);
-        while (sc.hasNext()) {
-            String query = sc.nextLine();
-            rank = ranker.rank(query);
-            for (Map.Entry<String, Double> entry : rank.entrySet()) {
-                System.out.println(entry.getKey() + " " + entry.getValue());
-            }
-        }
-
-    }
 }

@@ -7,6 +7,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public class TailyManagerFactory {
 
@@ -21,6 +22,8 @@ public class TailyManagerFactory {
 
     @NotEmpty
     private List<String> users;
+
+    private Map<String, List<String>> topics;
 
     @JsonProperty("index")
     public String getIndex() {
@@ -62,8 +65,18 @@ public class TailyManagerFactory {
         this.users = users;
     }
 
+    @JsonProperty
+    public Map<String, List<String>> getTopics() {
+        return topics;
+    }
+
+    @JsonProperty
+    public void setTopics(Map<String, List<String>> topics) {
+        this.topics = topics;
+    }
+
     public TailyManager build(Environment environment) throws IOException {
-        final TailyManager tailyManager = new TailyManager(index, mu, nc, users);
+        final TailyManager tailyManager = new TailyManager(index, mu, nc, users, topics);
         environment.lifecycle().manage(tailyManager);
         return tailyManager;
     }

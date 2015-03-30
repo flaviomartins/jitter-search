@@ -42,15 +42,24 @@ public class TailyResource {
     @Timed
     public SelectionResponse search(@QueryParam("q") Optional<String> q,
                                     @QueryParam("v") Optional<Integer> v,
+                                    @QueryParam("topics") Optional<Boolean> topics,
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
         String query = URLDecoder.decode(q.or(""), "UTF-8");
         int taily_v = v.or(50);
+        boolean retTopics = topics.or(false);
 
         long startTime = System.currentTimeMillis();
 
-        Map<String, Double> ranking = tailyManager.getRanked(query);
+        Map<String, Double> ranking;
+        if (retTopics) {
+            ranking = tailyManager.getRankedTopics(query);
+        } else {
+            ranking = tailyManager.getRanked(query);
+        }
+
+
         Map<String, Double> map = new LinkedHashMap<>();
         for (Map.Entry<String, Double> entry : ranking.entrySet()) {
             if (entry.getValue() >= taily_v) {
