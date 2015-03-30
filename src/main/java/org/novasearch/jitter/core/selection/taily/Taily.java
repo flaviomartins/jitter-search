@@ -210,7 +210,7 @@ public class Taily {
             }
 
             // add term info to correct shard dbs
-            for(String screenName: screenNames) {
+            for (String screenName : screenNames) {
                 String shardIdStr = screenName.toLowerCase();
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
@@ -268,7 +268,7 @@ public class Taily {
 
         // read in the mapping files given and construct a reverse mapping,
         // i.e. doc -> shard, and create FeatureStore dbs for each shard
-        for(String topic: topics.keySet()) {
+        for (String topic : topics.keySet()) {
             String shardIdStr = topic.toLowerCase();
             String cPath = dbPath + "/" + TOPICS_DBENV + "/" + shardIdStr;
 
@@ -367,7 +367,7 @@ public class Taily {
             }
 
             // add term info to correct shard dbs
-            for(String topic: topics.keySet()) {
+            for (String topic : topics.keySet()) {
                 String shardIdStr = topic.toLowerCase();
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
