@@ -26,11 +26,11 @@ public class ShardRanker {
     // Taily parameter used in Eq (11)
     private final int _n_c;
 
-    public ShardRanker(List<String> _shardIds, String indexPath, int _n_c, String dbPath) {
-        this(_shardIds.toArray(new String[_shardIds.size()]), indexPath, _n_c, dbPath);
+    public ShardRanker(List<String> _shardIds, String indexPath, int _n_c, String dbPath, String shardsDbPath) {
+        this(_shardIds.toArray(new String[_shardIds.size()]), indexPath, _n_c, dbPath, shardsDbPath);
     }
 
-    public ShardRanker(String[] _shardIds, String indexPath, int _n_c, String shardsDbPath) {
+    public ShardRanker(String[] _shardIds, String indexPath, int _n_c, String dbPath, String shardsDbPath) {
         this._shardIds = _shardIds;
         this.indexPath = indexPath;
         this._n_c = _n_c;
@@ -40,13 +40,10 @@ public class ShardRanker {
         _stores = new FeatureStore[_numShards + 1];
 
         // open collection feature store
-        String dbPath = "taily/bdb";
         if (new File(dbPath).isDirectory()) {
             FeatureStore collectionStore = new FeatureStore(dbPath, true);
             _stores[0] = collectionStore;
         }
-
-        dbPath = shardsDbPath; // in this case, this will be a path to a folder
 
         // read in the mapping files given and construct a reverse mapping,
         // i.e. doc -> shard, and create FeatureStore dbs for each shard
@@ -54,7 +51,7 @@ public class ShardRanker {
             String shardIdStr = _shardIds[i - 1];
 
             // create output directory for the feature store dbs
-            String cPath = dbPath + "/" + shardIdStr;
+            String cPath = shardsDbPath + "/" + shardIdStr;
 
             if (new File(cPath).isDirectory()) {
                 // open feature store for shard

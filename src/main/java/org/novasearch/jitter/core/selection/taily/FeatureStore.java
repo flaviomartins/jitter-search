@@ -15,6 +15,9 @@ public class FeatureStore {
     public static final String MIN_FEAT_SUFFIX = "#m";
     public static final String SIZE_FEAT_SUFFIX = "#d";
     public static final String TERM_SIZE_FEAT_SUFFIX = "#t";
+
+    public static final String FREQ_DB_NAME = "freq.db";
+    public static final String INFREQ_DB_NAME = "infreq.db";
     public static final int FREQUENT_TERMS = 1000; // tf required for a term to be considered "frequent"
 
     private Environment dbEnv;
@@ -22,8 +25,8 @@ public class FeatureStore {
     private Database infreqDb; // db storing frequent terms; see FREQUENT_TERMS
 
     public FeatureStore(String dir, boolean readOnly) {
-        String freqPath = dir + "/freq.db";
-        String infreqPath = dir + "/infreq.db";
+        String freqPath = dir + "/" + FREQ_DB_NAME;
+        String infreqPath = dir + "/" + INFREQ_DB_NAME;
 
         try {
             // Instantiate an environment configuration object
@@ -34,9 +37,16 @@ public class FeatureStore {
             // If the environment is opened for write, then we want to be
             // able to create the environment if it does not exist.
             envConfig.setAllowCreate(!readOnly);
+
+            File dirFile = new File(dir);
+            boolean isDirectory = dirFile.isDirectory();
+            if (!isDirectory) {
+                isDirectory = dirFile.mkdirs();
+            }
+
             // Instantiate the Environment. This opens it and also possibly
             // creates it.
-            dbEnv = new Environment(new File(dir), envConfig);
+            dbEnv = new Environment(dirFile, envConfig);
         } catch (DatabaseException dbe) {
             logger.error(dbe.getMessage());
         }

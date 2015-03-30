@@ -14,6 +14,9 @@ public class TailyManagerFactory {
     @NotEmpty
     private String index;
 
+    @NotEmpty
+    private String dbPath;
+
     @NotNull
     private int mu;
 
@@ -33,6 +36,16 @@ public class TailyManagerFactory {
     @JsonProperty("index")
     public void setIndex(String index) {
         this.index = index;
+    }
+
+    @JsonProperty("db")
+    public String getDbPath() {
+        return dbPath;
+    }
+
+    @JsonProperty("db")
+    public void setDbPath(String dbPath) {
+        this.dbPath = dbPath;
     }
 
     @JsonProperty
@@ -76,7 +89,7 @@ public class TailyManagerFactory {
     }
 
     public TailyManager build(Environment environment) throws IOException {
-        final TailyManager tailyManager = new TailyManager(index, mu, nc, users, topics);
+        final TailyManager tailyManager = new TailyManager(dbPath, index, mu, nc, users, topics);
         environment.lifecycle().manage(tailyManager);
         return tailyManager;
     }

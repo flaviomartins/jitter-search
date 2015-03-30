@@ -11,7 +11,6 @@ import org.apache.lucene.util.BytesRef;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,10 +76,7 @@ public class Taily {
         store.putFeature(squaredFeatKey, f2, ctf);
     }
 
-    public void buildCorpus() throws IOException {
-        //TODO: read db path
-        String dbPath = "taily/bdb";
-
+    public void buildCorpus(String dbPath) throws IOException {
         // TODO: read terms list
 
         FeatureStore store = new FeatureStore(dbPath, false);
@@ -121,23 +117,22 @@ public class Taily {
 
     // innards of buildcorpus
     private void collectCorpusStats(TermsEnum termEnum, FeatureStore store) throws IOException {
+        String term = termEnum.term().utf8ToString();
         double ctf = termEnum.totalTermFreq();
         double df = termEnum.docFreq();
 
-        // store df feature for term
-        String dfFeatKey = termEnum.term().utf8ToString() + FeatureStore.SIZE_FEAT_SUFFIX;
-        store.addValFeature(dfFeatKey, df, (int) ctf);
-        logger.debug(dfFeatKey + " " + df);
+        logger.debug(String.format("term: %s ctf: %d df: %d", term, (int) ctf, (int) df));
 
         // store ctf feature for term
-        String ctfFeatKey = termEnum.term().utf8ToString() + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
+        String ctfFeatKey = term + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
         store.addValFeature(ctfFeatKey, ctf, (int) ctf);
-        logger.debug(ctfFeatKey + " " + ctf);
+
+        // store df feature for term
+        String dfFeatKey = term + FeatureStore.SIZE_FEAT_SUFFIX;
+        store.addValFeature(dfFeatKey, df, (int) ctf);
     }
 
-    public void buildFromMap(List<String> screenNames) throws IOException {
-        String dbPath = "taily/bdbmap"; // in this case, this will be a path to a folder
-
+    public void buildFromMap(String dbPath, List<String> screenNames) throws IOException {
         // TODO: read terms list
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
@@ -148,13 +143,7 @@ public class Taily {
         // read in the mapping files given and construct a reverse mapping,
         // i.e. doc -> shard, and create FeatureStore dbs for each shard
         for(String shardIdStr: screenNames) {
-
-            // create output directory for the feature store dbs
             String cPath = dbPath+"/"+shardIdStr;
-            if (new File(cPath).mkdir() != true) {
-                logger.warn("Error creating output DB dir. Dir may already exist.");
-//                System.exit(-1);
-            }
 
             // create feature store for shard
             FeatureStore store = new FeatureStore(cPath, false);
@@ -189,9 +178,11 @@ public class Taily {
         termCnt = 0;
         while ((bytesRef = termEnum.next()) != null) {
             termCnt++;
-            if (termCnt % 100 == 0) {
+            if (termCnt % 1000 == 0) {
                 logger.info("  Finished " + termCnt + " terms");
             }
+
+            String term = bytesRef.utf8ToString();
 
             // get term ctf
             double ctf = 0;
@@ -246,10 +237,10 @@ public class Taily {
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
                     if (shardDataMap.get(shardIdStr).shardDf != 0) {
-                        logger.debug(String.format("shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, bytesRef.utf8ToString(), (int) ctf, shardDataMap.get(shardIdStr).min,
+                        logger.debug(String.format("shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, term, (int) ctf, shardDataMap.get(shardIdStr).min,
                                 (long) shardDataMap.get(shardIdStr).shardDf, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2));
-                        storeTermStats(stores.get(shardIdStr), bytesRef.utf8ToString(), (int) ctf, shardDataMap.get(shardIdStr).min,
+                        storeTermStats(stores.get(shardIdStr), term, (int) ctf, shardDataMap.get(shardIdStr).min,
                                 shardDataMap.get(shardIdStr).shardDf, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2);
                     }
@@ -269,15 +260,13 @@ public class Taily {
         indexReader.close();
     }
 
-    public void buildFromMapTopics(Map<String, List<String>> topics) throws IOException {
+    public void buildFromMapTopics(String dbPath, Map<String, List<String>> topics) throws IOException {
         Map<String, String> sourceTopicMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : topics.entrySet()) {
             for (String source : entry.getValue()) {
                 sourceTopicMap.put(source.toLowerCase(), entry.getKey());
             }
         }
-
-        String dbPath = "taily/bdbmaptopics"; // in this case, this will be a path to a folder
 
         // TODO: read terms list
 
@@ -290,13 +279,7 @@ public class Taily {
         // i.e. doc -> shard, and create FeatureStore dbs for each shard
         for(String topic: topics.keySet()) {
             String shardIdStr = topic.toLowerCase();
-
-            // create output directory for the feature store dbs
             String cPath = dbPath+"/"+shardIdStr;
-            if (new File(cPath).mkdir() != true) {
-                logger.warn("Error creating output DB dir. Dir may already exist.");
-//                System.exit(-1);
-            }
 
             // create feature store for shard
             FeatureStore store = new FeatureStore(cPath, false);
@@ -331,9 +314,11 @@ public class Taily {
         termCnt = 0;
         while ((bytesRef = termEnum.next()) != null) {
             termCnt++;
-            if (termCnt % 100 == 0) {
+            if (termCnt % 1000 == 0) {
                 logger.info("  Finished " + termCnt + " terms");
             }
+
+            String term = bytesRef.utf8ToString();
 
             // get term ctf
             double ctf = 0;
@@ -388,10 +373,10 @@ public class Taily {
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
                     if (shardDataMap.get(shardIdStr).shardDf != 0) {
-                        logger.debug(String.format("shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, bytesRef.utf8ToString(), (int) ctf, shardDataMap.get(shardIdStr).min,
+                        logger.debug(String.format("shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, term, (int) ctf, shardDataMap.get(shardIdStr).min,
                                 (long) shardDataMap.get(shardIdStr).shardDf, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2));
-                        storeTermStats(stores.get(shardIdStr), bytesRef.utf8ToString(), (int) ctf, shardDataMap.get(shardIdStr).min,
+                        storeTermStats(stores.get(shardIdStr), term, (int) ctf, shardDataMap.get(shardIdStr).min,
                                 shardDataMap.get(shardIdStr).shardDf, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2);
                     }

@@ -10,6 +10,11 @@ import java.util.Map;
 public class TailyManager implements Managed {
     private static final Logger logger = Logger.getLogger(TailyManager.class);
 
+    public static final String CORPUS_DBENV = "corpus";
+    public static final String SOURCES_DBENV = "sources";
+    public static final String TOPICS_DBENV = "topics";
+
+    private String dbPath;
     private final String index;
     private final int mu;
     private final int nc;
@@ -19,15 +24,16 @@ public class TailyManager implements Managed {
     private ShardRanker ranker;
     private ShardRanker topicsRanker;
 
-    public TailyManager(String index, int mu, int nc, List<String> users) {
+    public TailyManager(String dbPath, String index, int mu, int nc, List<String> users) {
+        this.dbPath = dbPath;
         this.index = index;
         this.mu = mu;
         this.nc = nc;
         this.users = users;
     }
 
-    public TailyManager(String index, int mu, int nc, List<String> users, Map<String, List<String>> topics) {
-        this(index, mu, nc, users);
+    public TailyManager(String dbPath, String index, int mu, int nc, List<String> users, Map<String, List<String>> topics) {
+        this(dbPath, index, mu, nc, users);
         this.topics = topics;
     }
 
@@ -42,8 +48,8 @@ public class TailyManager implements Managed {
     @Override
     public void start() throws Exception {
         try {
-            ranker = new ShardRanker(users, index, nc, "taily/bdbmap");
-            topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, nc, "taily/bdbmaptopics");
+            ranker = new ShardRanker(users, index, nc, dbPath + "/" + CORPUS_DBENV, dbPath + "/" + SOURCES_DBENV);
+            topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, nc, dbPath + "/" + CORPUS_DBENV, dbPath + "/" + TOPICS_DBENV);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -64,12 +70,12 @@ public class TailyManager implements Managed {
         }
 
         Taily taily = new Taily(index, mu);
-        taily.buildCorpus();
-        taily.buildFromMap(users);
-        taily.buildFromMapTopics(topics);
+        taily.buildCorpus(dbPath + "/" + CORPUS_DBENV);
+        taily.buildFromMap(dbPath + "/" + SOURCES_DBENV, users);
+        taily.buildFromMapTopics(dbPath + "/" + TOPICS_DBENV, topics);
 
-        ranker = new ShardRanker(users, index, nc, "taily/bdbmap");
-        topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, nc, "taily/bdbmaptopics");
+        ranker = new ShardRanker(users, index, nc, dbPath + "/" + CORPUS_DBENV, dbPath + "/" + SOURCES_DBENV);
+        topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, nc, dbPath + "/" + CORPUS_DBENV, dbPath + "/" + TOPICS_DBENV);
     }
 
 }
