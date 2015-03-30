@@ -18,8 +18,6 @@ import java.util.Map;
 public class Taily {
     private static final Logger logger = Logger.getLogger(Taily.class);
 
-    private static final int DEFAULT_MU = 2500;
-
     private final String indexPath;
     private final int mu;
 
@@ -29,32 +27,7 @@ public class Taily {
     }
 
     public Taily(String indexPath) {
-        this(indexPath, DEFAULT_MU);
-    }
-
-    private double calcIndriFeature(double tf, double ctf, double totalTermCount, double docLength, int mu) {
-        return Math.log((tf + mu * (ctf / totalTermCount)) / (docLength + mu));
-    }
-
-    class ShardData {
-        double min;
-        double shardDf;
-        double f;
-        double f2;
-
-        public ShardData() {
-            min = Double.MAX_VALUE;
-            shardDf = 0;
-            f = 0;
-            f2 = 0;
-        }
-
-        public ShardData(double min, double shardDf, double f, double f2) {
-            this.min = min;
-            this.shardDf = shardDf;
-            this.f = f;
-            this.f2 = f2;
-        }
+        this(indexPath, IndriFeature.DEFAULT_MU);
     }
 
     public void storeTermStats(FeatureStore store, String term, int ctf, double min,
@@ -170,6 +143,8 @@ public class Taily {
         // add the total term length of shard
         totalTermCount += termCnt;
 
+        IndriFeature indriFeature = new IndriFeature(mu);
+
         // TODO: only create shard statistics for specified terms
 
         Bits liveDocs = MultiFields.getLiveDocs(indexReader);
@@ -213,7 +188,7 @@ public class Taily {
                         double tf = docsEnum.freq();
 
                         // calulate Indri score feature and sum it up
-                        double feat = calcIndriFeature(tf, ctf, totalTermCount, length, mu);
+                        double feat = indriFeature.value(tf, ctf, totalTermCount, length);
 
                         ShardData currShard = shardDataMap.get(currShardId);
                         if (currShard == null) {
@@ -222,7 +197,7 @@ public class Taily {
                         }
                         currShard.f += feat;
                         currShard.f2 += Math.pow(feat, 2);
-                        currShard.shardDf += 1;
+                        currShard.df += 1;
 
                         if (feat < currShard.min) {
                             currShard.min = feat;
@@ -236,12 +211,12 @@ public class Taily {
                 String shardIdStr = screenName.toLowerCase();
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
-                    if (shardDataMap.get(shardIdStr).shardDf != 0) {
+                    if (shardDataMap.get(shardIdStr).df != 0) {
                         logger.debug(String.format("shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, term, (int) ctf, shardDataMap.get(shardIdStr).min,
-                                (long) shardDataMap.get(shardIdStr).shardDf, shardDataMap.get(shardIdStr).f,
+                                (long) shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2));
                         storeTermStats(stores.get(shardIdStr), term, (int) ctf, shardDataMap.get(shardIdStr).min,
-                                shardDataMap.get(shardIdStr).shardDf, shardDataMap.get(shardIdStr).f,
+                                shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2);
                     }
                 }
@@ -306,6 +281,8 @@ public class Taily {
         // add the total term length of shard
         totalTermCount += termCnt;
 
+        IndriFeature indriFeature = new IndriFeature(mu);
+
         // TODO: only create shard statistics for specified terms
 
         Bits liveDocs = MultiFields.getLiveDocs(indexReader);
@@ -349,7 +326,7 @@ public class Taily {
                         double tf = docsEnum.freq();
 
                         // calulate Indri score feature and sum it up
-                        double feat = calcIndriFeature(tf, ctf, totalTermCount, length, mu);
+                        double feat = indriFeature.value(tf, ctf, totalTermCount, length);
 
                         ShardData currShard = shardDataMap.get(currShardId);
                         if (currShard == null) {
@@ -358,7 +335,7 @@ public class Taily {
                         }
                         currShard.f += feat;
                         currShard.f2 += Math.pow(feat, 2);
-                        currShard.shardDf += 1;
+                        currShard.df += 1;
 
                         if (feat < currShard.min) {
                             currShard.min = feat;
@@ -372,12 +349,12 @@ public class Taily {
                 String shardIdStr = topic.toLowerCase();
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
-                    if (shardDataMap.get(shardIdStr).shardDf != 0) {
+                    if (shardDataMap.get(shardIdStr).df != 0) {
                         logger.debug(String.format("shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, term, (int) ctf, shardDataMap.get(shardIdStr).min,
-                                (long) shardDataMap.get(shardIdStr).shardDf, shardDataMap.get(shardIdStr).f,
+                                (long) shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2));
                         storeTermStats(stores.get(shardIdStr), term, (int) ctf, shardDataMap.get(shardIdStr).min,
-                                shardDataMap.get(shardIdStr).shardDf, shardDataMap.get(shardIdStr).f,
+                                shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2);
                     }
                 }
