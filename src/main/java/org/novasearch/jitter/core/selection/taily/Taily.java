@@ -4,7 +4,7 @@ import cc.twittertools.index.IndexStatuses;
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
-import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
@@ -18,27 +18,33 @@ import java.util.Map;
 public class Taily {
     private static final Logger logger = Logger.getLogger(Taily.class);
 
+    public static final String CORPUS_DBENV = "corpus";
+    public static final String SOURCES_DBENV = "sources";
+    public static final String TOPICS_DBENV = "topics";
+
+    private final String dbPath;
     private final String indexPath;
     private final int mu;
 
-    public Taily(String indexPath, int mu) {
+    public Taily(String dbPath, String indexPath, int mu) {
+        this.dbPath = dbPath;
         this.indexPath = indexPath;
         this.mu = mu;
     }
 
-    public Taily(String indexPath) {
-        this(indexPath, IndriFeature.DEFAULT_MU);
+    public Taily(String dbPath, String indexPath) {
+        this(dbPath, indexPath, IndriFeature.DEFAULT_MU);
     }
 
     public void storeTermStats(FeatureStore store, String term, int ctf, double min,
-                        double shardDf, double f, double f2) {
+                               double df, double f, double f2) {
         // store min feature for term (for this shard; will later be merged into corpus-wide Db)
         String minFeatKey = term + FeatureStore.MIN_FEAT_SUFFIX;
         store.putFeature(minFeatKey, min, ctf);
 
         // get and store shard df feature for term
         String dfFeatKey = term + FeatureStore.SIZE_FEAT_SUFFIX;
-        store.putFeature(dfFeatKey, shardDf, ctf);
+        store.putFeature(dfFeatKey, df, ctf);
 
         // store sum f
         String featKey = term + FeatureStore.FEAT_SUFFIX;
@@ -49,50 +55,11 @@ public class Taily {
         store.putFeature(squaredFeatKey, f2, ctf);
     }
 
-    public void buildCorpus(String dbPath) throws IOException {
-        // TODO: read terms list
-
-        FeatureStore store = new FeatureStore(dbPath, false);
-
-        DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
-
-        // go through all indexes and collect ctf and df statistics.
-        long totalTermCount = 0;
-        long totalDocCount = 0;
-
-        logger.info("Starting index");
-
-        // TODO: field list?
-        Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
-        TermsEnum termEnum = terms.iterator(null);
-
-        int termCnt = 0;
-        BytesRef bytesRef;
-        while ((bytesRef = termEnum.next()) != null) {
-            collectCorpusStats(termEnum, store);
-            termCnt++;
-        }
-
-        // add the total term length of shard
-        totalTermCount += termCnt;
-        // add the shard size (# of docs)
-        totalDocCount += indexReader.numDocs();
-
-        // add collection global features needed for shard ranking
-        store.putFeature(FeatureStore.TERM_SIZE_FEAT_SUFFIX, totalTermCount, FeatureStore.FREQUENT_TERMS+1);
-        logger.debug(FeatureStore.TERM_SIZE_FEAT_SUFFIX + " " + totalTermCount);
-        store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, FeatureStore.FREQUENT_TERMS + 1);
-        logger.debug(FeatureStore.SIZE_FEAT_SUFFIX + " " + totalDocCount);
-
-        store.close();
-        indexReader.close();
-    }
-
     // innards of buildcorpus
-    private void collectCorpusStats(TermsEnum termEnum, FeatureStore store) throws IOException {
-        String term = termEnum.term().utf8ToString();
-        double ctf = termEnum.totalTermFreq();
-        double df = termEnum.docFreq();
+    private void collectCorpusStats(TermsEnum termsEnum, FeatureStore store) throws IOException {
+        String term = termsEnum.term().utf8ToString();
+        double ctf = termsEnum.totalTermFreq();
+        double df = termsEnum.docFreq();
 
         logger.debug(String.format("term: %s ctf: %d df: %d", term, (int) ctf, (int) df));
 
@@ -105,31 +72,17 @@ public class Taily {
         store.addValFeature(dfFeatKey, df, (int) ctf);
     }
 
-    public void buildFromMap(String dbPath, List<String> screenNames) throws IOException {
-        // TODO: read terms list
+    public void buildCorpus() throws IOException {
+        logger.info("build corpus start");
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+        FeatureStore store = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
 
-        // open up all output feature storages for each mapping file we are accessing
-        Map<String, FeatureStore> stores = new HashMap<>();
+        // go through all indexes and collect ctf and df statistics.
+        long totalTermCount = 0;
+        long totalDocCount = 0;
 
-        // read in the mapping files given and construct a reverse mapping,
-        // i.e. doc -> shard, and create FeatureStore dbs for each shard
-        for(String shardIdStr: screenNames) {
-            String cPath = dbPath+"/"+shardIdStr;
-
-            // create feature store for shard
-            FeatureStore store = new FeatureStore(cPath, false);
-            stores.put(shardIdStr, store);
-
-            // TODO: store the shard size (# of docs) feature
-//            store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, (double) totalDocCount, totalDocCount);
-        }
-
-        logger.info("Finished reading shard map.");
-
-        // get the total term length of the collection (for Indri scoring)
-        double totalTermCount = 0;
+        // TODO: read terms list
         // TODO: field list?
         Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
         TermsEnum termEnum = terms.iterator(null);
@@ -137,20 +90,72 @@ public class Taily {
         int termCnt = 0;
         BytesRef bytesRef;
         while ((bytesRef = termEnum.next()) != null) {
+            String term = bytesRef.utf8ToString();
+            if (term.isEmpty()) {
+                continue;
+            }
+            collectCorpusStats(termEnum, store);
             termCnt++;
         }
 
         // add the total term length of shard
         totalTermCount += termCnt;
+        // add the shard size (# of docs)
+        totalDocCount += indexReader.numDocs();
+
+        logger.debug(String.format("build corpus %s = %d", FeatureStore.TERM_SIZE_FEAT_SUFFIX, totalTermCount));
+        logger.debug(String.format("build corpus %s = %d", FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount));
+
+        // add collection global features needed for shard ranking
+        store.putFeature(FeatureStore.TERM_SIZE_FEAT_SUFFIX, totalTermCount, FeatureStore.FREQUENT_TERMS + 1);
+        store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, FeatureStore.FREQUENT_TERMS + 1);
+
+        store.close();
+        indexReader.close();
+
+        logger.info("build corpus end");
+    }
+
+    public void buildFromSources(List<String> screenNames) throws IOException {
+        logger.info("build sources start");
+
+        DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+        IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+
+        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
+        Map<String, FeatureStore> stores = new HashMap<>();
+
+        // read in the mapping files given and construct a reverse mapping,
+        // i.e. doc -> shard, and create FeatureStore dbs for each shard
+        for (String shardIdStr : screenNames) {
+            String cPath = dbPath + "/" + SOURCES_DBENV + "/" + shardIdStr;
+
+            // create feature store for shard
+            FeatureStore store = new FeatureStore(cPath, false);
+            stores.put(shardIdStr, store);
+
+            // store the shard size (# of docs) feature
+            Query q = new TermQuery(new Term(IndexStatuses.StatusField.SCREEN_NAME.name, shardIdStr));
+            TopDocs topDocs = indexSearcher.search(q, 10);
+            double totalDocCount = topDocs.totalHits;
+            store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
+        }
+
+        // get the total term length of the collection (for Indri scoring)
+        String totalTermCountKey = FeatureStore.TERM_SIZE_FEAT_SUFFIX;
+        double totalTermCount = corpusStore.getFeature(totalTermCountKey);
 
         IndriFeature indriFeature = new IndriFeature(mu);
 
-        // TODO: only create shard statistics for specified terms
-
         Bits liveDocs = MultiFields.getLiveDocs(indexReader);
-        termEnum = terms.iterator(null);
+        // TODO: read terms list
+        // TODO: field list?
+        // TODO: only create shard statistics for specified terms
+        Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
+        TermsEnum termEnum = terms.iterator(null);
 
-        termCnt = 0;
+        int termCnt = 0;
+        BytesRef bytesRef;
         while ((bytesRef = termEnum.next()) != null) {
             termCnt++;
             if (termCnt % 1000 == 0) {
@@ -158,14 +163,12 @@ public class Taily {
             }
 
             String term = bytesRef.utf8ToString();
+            if (term.isEmpty()) {
+                continue;
+            }
 
             // get term ctf
-            double ctf = 0;
-//    string ctfKey(stem);
-//    ctfKey.append(FeatureStore::TERM_SIZE_FEAT_SUFFIX);
-//    corpusStats.getFeature((char*) ctfKey.c_str(), &ctf);
-
-            ctf += termEnum.totalTermFreq();
+            double ctf = termEnum.totalTermFreq();
 
             //track df for this term for each shard; initialize
             Map<String, ShardData> shardDataMap = new HashMap<>();
@@ -221,21 +224,24 @@ public class Taily {
                     }
                 }
             }
-
-            // add the total term length of the collection
-            totalTermCount += termCnt;
-//        totalTermCount = corpusStats.getFeature(FeatureStore.TERM_SIZE_FEAT_SUFFIX);
         } // end term iter
 
         // clean up
+        corpusStore.close();
+
         for (FeatureStore store : stores.values()) {
             store.close();
         }
 
         indexReader.close();
+
+        logger.info("build sources end");
     }
 
-    public void buildFromMapTopics(String dbPath, Map<String, List<String>> topics) throws IOException {
+    public void buildFromTopics(Map<String, List<String>> topics) throws IOException {
+        logger.info("build topics start");
+
+        // Reverse map sources -> topic
         Map<String, String> sourceTopicMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : topics.entrySet()) {
             for (String source : entry.getValue()) {
@@ -243,25 +249,39 @@ public class Taily {
             }
         }
 
-        // TODO: read terms list
-
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+        IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
-        // open up all output feature storages for each mapping file we are accessing
+        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
+        Map<String, FeatureStore> sourcesStores = new HashMap<>();
         Map<String, FeatureStore> stores = new HashMap<>();
+
+        // read in the mapping files given and construct a reverse mapping,
+        // i.e. doc -> shard, and create FeatureStore dbs for each shard
+        for (String shardIdStr : sourceTopicMap.keySet()) {
+            String cPath = dbPath + "/" + SOURCES_DBENV + "/" + shardIdStr;
+
+            // create feature store for shard
+            FeatureStore store = new FeatureStore(cPath, true);
+            sourcesStores.put(shardIdStr, store);
+        }
 
         // read in the mapping files given and construct a reverse mapping,
         // i.e. doc -> shard, and create FeatureStore dbs for each shard
         for(String topic: topics.keySet()) {
             String shardIdStr = topic.toLowerCase();
-            String cPath = dbPath+"/"+shardIdStr;
+            String cPath = dbPath + "/" + TOPICS_DBENV + "/" + shardIdStr;
 
             // create feature store for shard
             FeatureStore store = new FeatureStore(cPath, false);
             stores.put(shardIdStr, store);
 
-            // TODO: store the shard size (# of docs) feature
-//            store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, (double) totalDocCount, totalDocCount);
+            // store the shard size (# of docs) feature
+            double totalDocCount = 0;
+            for (String source : topics.get(topic)) {
+                totalDocCount += sourcesStores.get(source).getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
+            }
+            store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
         }
 
         logger.info("Finished reading shard map.");
@@ -275,6 +295,10 @@ public class Taily {
         int termCnt = 0;
         BytesRef bytesRef;
         while ((bytesRef = termEnum.next()) != null) {
+            String term = bytesRef.utf8ToString();
+            if (term.isEmpty()) {
+                continue;
+            }
             termCnt++;
         }
 
@@ -296,14 +320,12 @@ public class Taily {
             }
 
             String term = bytesRef.utf8ToString();
+            if (term.isEmpty()) {
+                continue;
+            }
 
             // get term ctf
-            double ctf = 0;
-//    string ctfKey(stem);
-//    ctfKey.append(FeatureStore::TERM_SIZE_FEAT_SUFFIX);
-//    corpusStats.getFeature((char*) ctfKey.c_str(), &ctf);
-
-            ctf += termEnum.totalTermFreq();
+            double ctf = termEnum.totalTermFreq();
 
             //track df for this term for each shard; initialize
             Map<String, ShardData> shardDataMap = new HashMap<>();
@@ -366,11 +388,19 @@ public class Taily {
         } // end term iter
 
         // clean up
+        corpusStore.close();
+
+        for (FeatureStore store : sourcesStores.values()) {
+            store.close();
+        }
+
         for (FeatureStore store : stores.values()) {
             store.close();
         }
 
         indexReader.close();
+
+        logger.info("build sources end");
     }
 
 }
