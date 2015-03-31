@@ -125,9 +125,9 @@ public class Taily {
         FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
         Map<String, FeatureStore> stores = new HashMap<>();
 
-        // read in the mapping files given and construct a reverse mapping,
-        // i.e. doc -> shard, and create FeatureStore dbs for each shard
-        for (String shardIdStr : screenNames) {
+        // create FeatureStore dbs for each shard
+        for (String screenName : screenNames) {
+            String shardIdStr = screenName.toLowerCase();
             String cPath = dbPath + "/" + SOURCES_DBENV + "/" + shardIdStr;
 
             // create feature store for shard
@@ -157,20 +157,20 @@ public class Taily {
         int termCnt = 0;
         BytesRef bytesRef;
         while ((bytesRef = termEnum.next()) != null) {
-            termCnt++;
-            if (termCnt % 1000 == 0) {
-                logger.info("  Finished " + termCnt + " terms");
-            }
-
             String term = bytesRef.utf8ToString();
             if (term.isEmpty()) {
                 continue;
             }
 
+            termCnt++;
+            if (termCnt % 1000 == 0) {
+                logger.info("  Finished " + termCnt + " terms");
+            }
+
             // get term ctf
             double ctf = termEnum.totalTermFreq();
 
-            //track df for this term for each shard; initialize
+            // track df for this term for each shard; initialize
             Map<String, ShardData> shardDataMap = new HashMap<>();
 
             if (termEnum.seekExact(bytesRef, true)) {
@@ -190,7 +190,7 @@ public class Taily {
                         double length = doc.getValues(IndexStatuses.StatusField.TEXT.name).length;
                         double tf = docsEnum.freq();
 
-                        // calulate Indri score feature and sum it up
+                        // calculate Indri score feature and sum it up
                         double feat = indriFeature.value(tf, ctf, totalTermCount, length);
 
                         ShardData currShard = shardDataMap.get(currShardId);
@@ -245,29 +245,26 @@ public class Taily {
         Map<String, String> sourceTopicMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : topics.entrySet()) {
             for (String source : entry.getValue()) {
-                sourceTopicMap.put(source.toLowerCase(), entry.getKey());
+                sourceTopicMap.put(source.toLowerCase(), entry.getKey().toLowerCase());
             }
         }
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
-        IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
         FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
-        Map<String, FeatureStore> sourcesStores = new HashMap<>();
+        Map<String, FeatureStore> sourceStores = new HashMap<>();
         Map<String, FeatureStore> stores = new HashMap<>();
 
-        // read in the mapping files given and construct a reverse mapping,
-        // i.e. doc -> shard, and create FeatureStore dbs for each shard
+        // open FeatureStore dbs for each source
         for (String shardIdStr : sourceTopicMap.keySet()) {
             String cPath = dbPath + "/" + SOURCES_DBENV + "/" + shardIdStr;
 
             // create feature store for shard
             FeatureStore store = new FeatureStore(cPath, true);
-            sourcesStores.put(shardIdStr, store);
+            sourceStores.put(shardIdStr, store);
         }
 
-        // read in the mapping files given and construct a reverse mapping,
-        // i.e. doc -> shard, and create FeatureStore dbs for each shard
+        // create FeatureStore dbs for each shard
         for (String topic : topics.keySet()) {
             String shardIdStr = topic.toLowerCase();
             String cPath = dbPath + "/" + TOPICS_DBENV + "/" + shardIdStr;
@@ -279,16 +276,21 @@ public class Taily {
             // store the shard size (# of docs) feature
             double totalDocCount = 0;
             for (String source : topics.get(topic)) {
-                totalDocCount += sourcesStores.get(source).getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
+                totalDocCount += sourceStores.get(source.toLowerCase()).getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
             }
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
         }
 
-        logger.info("Finished reading shard map.");
-
         // get the total term length of the collection (for Indri scoring)
-        double totalTermCount = 0;
+        String totalTermCountKey = FeatureStore.TERM_SIZE_FEAT_SUFFIX;
+        double totalTermCount = corpusStore.getFeature(totalTermCountKey);
+
+        IndriFeature indriFeature = new IndriFeature(mu);
+
+        Bits liveDocs = MultiFields.getLiveDocs(indexReader);
+        // TODO: read terms list
         // TODO: field list?
+        // TODO: only create shard statistics for specified terms
         Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
         TermsEnum termEnum = terms.iterator(null);
 
@@ -299,35 +301,16 @@ public class Taily {
             if (term.isEmpty()) {
                 continue;
             }
-            termCnt++;
-        }
 
-        // add the total term length of shard
-        totalTermCount += termCnt;
-
-        IndriFeature indriFeature = new IndriFeature(mu);
-
-        // TODO: only create shard statistics for specified terms
-
-        Bits liveDocs = MultiFields.getLiveDocs(indexReader);
-        termEnum = terms.iterator(null);
-
-        termCnt = 0;
-        while ((bytesRef = termEnum.next()) != null) {
             termCnt++;
             if (termCnt % 1000 == 0) {
                 logger.info("  Finished " + termCnt + " terms");
             }
 
-            String term = bytesRef.utf8ToString();
-            if (term.isEmpty()) {
-                continue;
-            }
-
             // get term ctf
             double ctf = termEnum.totalTermFreq();
 
-            //track df for this term for each shard; initialize
+            // track df for this term for each shard; initialize
             Map<String, ShardData> shardDataMap = new HashMap<>();
 
             if (termEnum.seekExact(bytesRef, true)) {
@@ -381,16 +364,12 @@ public class Taily {
                     }
                 }
             }
-
-            // add the total term length of the collection
-            totalTermCount += termCnt;
-//        totalTermCount = corpusStats.getFeature(FeatureStore.TERM_SIZE_FEAT_SUFFIX);
         } // end term iter
 
         // clean up
         corpusStore.close();
 
-        for (FeatureStore store : sourcesStores.values()) {
+        for (FeatureStore store : sourceStores.values()) {
             store.close();
         }
 
