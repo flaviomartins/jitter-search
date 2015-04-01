@@ -11,11 +11,13 @@ search:
   index: index/
   database: collectdb.db
 
+
 selection:
   index: index1/
   method: crcslin
   twitter: archiver
   removeDuplicates: true
+
 
 taily:
   db: taily
@@ -31,6 +33,7 @@ taily:
     breaking:
       - reuters
 
+
 twitter:
   database: twitter.db
   collection: collection/
@@ -38,11 +41,13 @@ twitter:
     - ap
     - reuters
 
+
 twitterArchiver:
   collection: twitter-archiver/
   users:
     - ap
     - reuters
+
 
 logging:
 
