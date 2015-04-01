@@ -17,6 +17,20 @@ selection:
   twitter: archiver
   removeDuplicates: true
 
+taily:
+  db: taily
+  index: index1/
+  mu: 2500
+  nc: 400
+  users:
+    - ap
+    - reuters
+  topics:
+    news:
+      - ap
+    breaking:
+      - reuters
+
 twitter:
   database: twitter.db
   collection: collection/
