@@ -10,6 +10,7 @@ import org.novasearch.jitter.api.selection.SelectionDocumentsResponse;
 import org.novasearch.jitter.api.selection.SelectionResponse;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.core.selection.SelectionManager;
+import org.novasearch.jitter.core.selection.methods.RankS;
 import org.novasearch.jitter.core.selection.methods.SelectionMethod;
 import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
 
@@ -23,6 +24,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -47,12 +49,16 @@ public class SelectionResource {
     public SelectionResponse search(@QueryParam("q") Optional<String> q,
                                     @QueryParam("method") Optional<String> method,
                                     @QueryParam("limit") Optional<Integer> limit,
+                                    @QueryParam("max_col") Optional<Integer> max_col,
+                                    @QueryParam("min_ranks") Optional<Double> min_ranks,
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
         String query = URLDecoder.decode(q.or(""), "UTF-8");
         String methodText = method.or(selectionManager.getMethod());
         int n = limit.or(50);
+        int col_max = max_col.or(3);
+        double ranks_min = min_ranks.or(1e-5);
 
         long startTime = System.currentTimeMillis();
 
@@ -62,13 +68,31 @@ public class SelectionResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(methodText);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> ranked = selectionManager.getRanked(selectionMethod, results);
+        Map<String, Double> ranking = selectionManager.getRanked(selectionMethod, results);
+
+        Map<String, Double> map = new LinkedHashMap<>();
+        // rankS has its own limit mechanism
+        if (RankS.class.getSimpleName().equals(methodName)) {
+            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
+                if (entry.getValue() < ranks_min)
+                    break;
+                map.put(entry.getKey(), entry.getValue());
+            }
+        } else { // hard limit
+            int i = 0;
+            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
+                i++;
+                if (i > col_max)
+                    break;
+                map.put(entry.getKey(), entry.getValue());
+            }
+        }
 
         long endTime = System.currentTimeMillis();
         logger.info(String.format("%4dms %s", (endTime - startTime), query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(ranked, methodName, totalHits, 0, results);
+        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(map, methodName, totalHits, 0, results);
         return new SelectionResponse(responseHeader, documentsResponse);
     }
 }
