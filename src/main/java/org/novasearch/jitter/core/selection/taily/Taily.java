@@ -4,10 +4,13 @@ import cc.twittertools.index.IndexStatuses;
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.Version;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,8 +82,8 @@ public class Taily {
         FeatureStore store = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
 
         // go through all indexes and collect ctf and df statistics.
-        long totalTermCount = 0;
-        long totalDocCount = 0;
+        int totalTermCount = 0;
+        int totalDocCount = 0;
 
         // TODO: read terms list
         // TODO: field list?
@@ -103,12 +106,12 @@ public class Taily {
         // add the shard size (# of docs)
         totalDocCount += indexReader.numDocs();
 
-        logger.debug(String.format("build corpus %s = %d", FeatureStore.TERM_SIZE_FEAT_SUFFIX, totalTermCount));
-        logger.debug(String.format("build corpus %s = %d", FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount));
-
         // add collection global features needed for shard ranking
-        store.putFeature(FeatureStore.TERM_SIZE_FEAT_SUFFIX, totalTermCount, FeatureStore.FREQUENT_TERMS + 1);
         store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, FeatureStore.FREQUENT_TERMS + 1);
+        store.putFeature(FeatureStore.TERM_SIZE_FEAT_SUFFIX, totalTermCount, FeatureStore.FREQUENT_TERMS + 1);
+
+        logger.info(String.format("build corpus %s = %d", FeatureStore.TERM_SIZE_FEAT_SUFFIX, totalTermCount));
+        logger.info(String.format("build corpus %s = %d", FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount));
 
         store.close();
         indexReader.close();
@@ -116,7 +119,7 @@ public class Taily {
         logger.info("build corpus end");
     }
 
-    public void buildFromSources(List<String> screenNames) throws IOException {
+    public void buildFromSources(List<String> screenNames) throws IOException, ParseException {
         logger.info("build sources start");
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
@@ -135,10 +138,14 @@ public class Taily {
             stores.put(shardIdStr, store);
 
             // store the shard size (# of docs) feature
-            Query q = new TermQuery(new Term(IndexStatuses.StatusField.SCREEN_NAME.name, shardIdStr));
+//            Term t = new Term(IndexStatuses.StatusField.SCREEN_NAME.name, shardIdStr);
+//            Query q = new TermQuery(t);
+            Query q = (new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER)).parse(IndexStatuses.StatusField.SCREEN_NAME.name + ":" + shardIdStr);
             TopDocs topDocs = indexSearcher.search(q, 10);
             double totalDocCount = topDocs.totalHits;
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
+
+            logger.info(String.format("build sources %s: %s = %d", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, (int) totalDocCount));
         }
 
         // get the total term length of the collection (for Indri scoring)
@@ -279,6 +286,8 @@ public class Taily {
                 totalDocCount += sourceStores.get(source.toLowerCase()).getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
             }
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
+
+            logger.info(String.format("build topics %s: %s = %d", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, (int) totalDocCount));
         }
 
         // get the total term length of the collection (for Indri scoring)

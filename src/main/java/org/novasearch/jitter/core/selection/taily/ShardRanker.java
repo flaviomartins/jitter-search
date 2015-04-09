@@ -97,12 +97,12 @@ public class ShardRanker {
         // calculate mean and variances for query for all shards
         for (String stem : stems) {
             // get minimum doc feature value for this stem
-            double minVal = Double.MAX_VALUE;
             String minFeat = stem + FeatureStore.MIN_FEAT_SUFFIX;
-            minVal = _stores[0].getFeature(minFeat);
+            double minVal = _stores[0].getFeature(minFeat);
 
             boolean calcMin = false;
             if (minVal == -1) {
+                minVal = Double.MAX_VALUE;
                 calcMin = true;
             }
 
@@ -113,17 +113,13 @@ public class ShardRanker {
 
             // keep track of how many times this term appeared in the shards for minVal later
             double[] dfCache = new double[_numShards + 1];
-            for (int i = 0; i < +1; i++) {
-                dfCache[i] = 0;
-            }
 
             // for each shard (not including whole corpus db), calculate mean/var
             // keep track of totals to use in the corpus-wide features
             for (int i = 1; i < _numShards + 1; i++) {
                 // get current term's shard df
-                double df = 0;
                 String dfFeat = stem + FeatureStore.SIZE_FEAT_SUFFIX;
-                df = _stores[i].getFeature(dfFeat);
+                double df = _stores[i].getFeature(dfFeat);
 
                 // TODO: fix this kludge
                 if (df == -1) {
@@ -136,27 +132,25 @@ public class ShardRanker {
                 // if this shard doesn't have this term, skip; otherwise you get nan everywhere
                 if (df == 0)
                     continue;
+
                 queryFeats.hasATerm[i] = true;
 
                 // add current term's mean to shard; also shift by min feat value Eq (5)
-                double fSum = 0;
                 String meanFeat = stem + FeatureStore.FEAT_SUFFIX;
-                fSum = _stores[i].getFeature(meanFeat);
-                //queryMean[i] += fSum/df - minVal;
+                double fSum = _stores[i].getFeature(meanFeat);
+                //queryFeats.queryMean[i] += fSum / df - minVal;
                 queryFeats.queryMean[i] += fSum / df; // handle min values separately afterwards
                 globalFSum += fSum;
 
                 // add current term's variance to shard Eq (6)
-                double f2Sum = 0;
                 String f2Feat = stem + FeatureStore.SQUARED_FEAT_SUFFIX;
-                f2Sum = _stores[i].getFeature(f2Feat);
+                double f2Sum = _stores[i].getFeature(f2Feat);
                 queryFeats.queryVar[i] += f2Sum / df - Math.pow(fSum / df, 2);
                 globalF2Sum += f2Sum;
 
                 // if there is no global min stored, figure out the minimum from shards
                 if (calcMin) {
-                    double currMin;
-                    currMin = _stores[i].getFeature(minFeat);
+                    double currMin = _stores[i].getFeature(minFeat);
                     if (currMin < minVal) {
                         minVal = currMin;
                     }
@@ -203,8 +197,7 @@ public class ShardRanker {
             int dfCnt = 0;
             for (String stem : stems) {
                 String stemKey = stem + FeatureStore.SIZE_FEAT_SUFFIX;
-                double df;
-                df = _stores[i].getFeature(stemKey);
+                double df = _stores[i].getFeature(stemKey);
 
                 // smooth it
                 if (df < 5)
@@ -247,15 +240,17 @@ public class ShardRanker {
             // return empty ranking
             return ranking;
         } else if (queryVar[0] < 1e-10) {
+            // TODO: why am i getting negative variance?!
             // FIXME: these var ~= 0 cases should really be handled more carefully; instead of
             // n_i = 1, it could be there are two or more very similarly scoring docs; I should keep
             // track of the df of these shards and use that instead of n_i = 1...
 
             // case 2: there is only 1 document in entire collection that matches any query term
             // return the shard with the document with n_i = 1
+            int norm = _n_c;
             for (int i = 1; i < _numShards + 1; i++) {
                 if (hasATerm[i]) {
-                    ranking.put(_shardIds[i - 1], 1.0);
+                    ranking.put(_shardIds[i - 1], 1.0 * norm);
                     break;
                 }
             }

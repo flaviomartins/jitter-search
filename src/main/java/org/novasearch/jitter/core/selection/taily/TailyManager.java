@@ -2,6 +2,7 @@ package org.novasearch.jitter.core.selection.taily;
 
 import io.dropwizard.lifecycle.Managed;
 import org.apache.log4j.Logger;
+import org.apache.lucene.queryparser.classic.ParseException;
 
 import java.io.IOException;
 import java.util.List;
@@ -59,7 +60,7 @@ public class TailyManager implements Managed {
         }
     }
 
-    public void index() throws IOException {
+    public void index() throws IOException, ParseException {
         if (ranker != null) {
             ranker.close();
             topicsRanker.close();
