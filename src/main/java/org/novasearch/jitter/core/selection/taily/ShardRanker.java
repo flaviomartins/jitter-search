@@ -138,6 +138,9 @@ public class ShardRanker {
                 // add current term's mean to shard; also shift by min feat value Eq (5)
                 String meanFeat = stem + FeatureStore.FEAT_SUFFIX;
                 double fSum = _stores[i].getFeature(meanFeat);
+                if (fSum == -1) {
+                    logger.error("BAD fSum");
+                }
                 //queryFeats.queryMean[i] += fSum / df - minVal;
                 queryFeats.queryMean[i] += fSum / df; // handle min values separately afterwards
                 globalFSum += fSum;
@@ -145,7 +148,13 @@ public class ShardRanker {
                 // add current term's variance to shard Eq (6)
                 String f2Feat = stem + FeatureStore.SQUARED_FEAT_SUFFIX;
                 double f2Sum = _stores[i].getFeature(f2Feat);
-                queryFeats.queryVar[i] += f2Sum / df - Math.pow(fSum / df, 2);
+                if (f2Sum < 0) {
+                    logger.error("BAD f2Sum");
+                }
+                queryFeats.queryVar[i] += (float) (f2Sum / df) - (float) Math.pow(fSum / df, 2);
+                if (queryFeats.queryVar[i] < 0) {
+                    logger.error("BAD var");
+                }
                 globalF2Sum += f2Sum;
 
                 // if there is no global min stored, figure out the minimum from shards
@@ -251,7 +260,7 @@ public class ShardRanker {
             for (int i = 1; i < _numShards + 1; i++) {
                 if (hasATerm[i]) {
                     ranking.put(_shardIds[i - 1], 1.0 * norm);
-                    break;
+//                    break;
                 }
             }
             return ranking;
@@ -282,6 +291,9 @@ public class ShardRanker {
         // if n_c > all[0], set probability to 1
         if (p_c >= 1.0)
             p_c = 1.0 - 1e-10; // ZOMG
+
+        if (p_c <= 1e-10)
+            p_c = 1e-10;
 
         GammaDistribution collectionGamma = new GammaDistribution(k[0], theta[0]);
         double s_c = collectionGamma.inverseCumulativeProbability(p_c);

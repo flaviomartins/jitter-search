@@ -125,7 +125,7 @@ public class Taily {
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
         IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
-        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
+        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
         Map<String, FeatureStore> stores = new HashMap<>();
 
         // create FeatureStore dbs for each shard
@@ -228,6 +228,13 @@ public class Taily {
                         storeTermStats(stores.get(shardIdStr), term, (int) ctf, shardDataMap.get(shardIdStr).min,
                                 shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2);
+
+                        // store min feature for term (for corpus)
+//                        String minFeatKey = term + FeatureStore.MIN_FEAT_SUFFIX;
+//                        double min = corpusStore.getFeature(minFeatKey);
+//                        if (min > shardDataMap.get(shardIdStr).min) {
+//                            corpusStore.putFeature(minFeatKey, shardDataMap.get(shardIdStr).min, FeatureStore.FREQUENT_TERMS + 1);
+//                        }
                     }
                 }
             }
@@ -258,7 +265,7 @@ public class Taily {
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
 
-        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
+        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
         Map<String, FeatureStore> sourceStores = new HashMap<>();
         Map<String, FeatureStore> stores = new HashMap<>();
 
@@ -370,6 +377,13 @@ public class Taily {
                         storeTermStats(stores.get(shardIdStr), term, (int) ctf, shardDataMap.get(shardIdStr).min,
                                 shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2);
+
+                        // store min feature for term (for corpus)
+//                        String minFeatKey = term + FeatureStore.MIN_FEAT_SUFFIX;
+//                        double min = corpusStore.getFeature(minFeatKey);
+//                        if (min > shardDataMap.get(shardIdStr).min) {
+//                            corpusStore.putFeature(minFeatKey, shardDataMap.get(shardIdStr).min, FeatureStore.FREQUENT_TERMS + 1);
+//                        }
                     }
                 }
             }
@@ -388,7 +402,7 @@ public class Taily {
 
         indexReader.close();
 
-        logger.info("build sources end");
+        logger.info("build topics end");
     }
 
 }
