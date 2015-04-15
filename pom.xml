@@ -6,13 +6,18 @@
 
     <groupId>org.novasearch.jitter</groupId>
     <artifactId>jitter-search</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
             <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-sse</artifactId>
+            <version>2.16</version>
         </dependency>
         <!-- Guava 18 is required by Dropwizard -->
         <dependency>
@@ -110,9 +115,11 @@
     </repositories>
 
     <properties>
-        <dropwizard.version>0.8.0</dropwizard.version>
+        <!-- compile for Java 1.7 -->
+        <source.version>1.7</source.version>
+        <dropwizard.version>0.8.1</dropwizard.version>
         <lucene.version>4.3.1</lucene.version>
-        <twitter4j.version>4.0.2</twitter4j.version>
+        <twitter4j.version>4.0.3</twitter4j.version>
         <!-- use UTF-8 for everything -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -124,10 +131,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
-                <!-- compile for Java 1.7 -->
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>${source.version}</source>
+                    <target>${source.version}</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
