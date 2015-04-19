@@ -1,5 +1,6 @@
 package org.novasearch.jitter;
 
+import com.google.common.collect.Lists;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -19,6 +20,7 @@ import org.novasearch.jitter.core.twitter.manager.TwitterManager;
 import org.novasearch.jitter.core.twitter.archiver.TwitterArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import twitter4j.UserStreamListener;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -109,21 +111,21 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build(environment);
 
-        final UserStream userStream = new UserStream(oAuth1);
+
+        final TimelineSseResource timelineSseResource = new TimelineSseResource();
+
+        final UserStream userStream = new UserStream(oAuth1, Lists.<UserStreamListener>newArrayList(timelineSseResource));
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    userStream.run();
-                } catch (InterruptedException e) {
+                    userStream.start();
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }).start();
 
-        final TimelineSseResource timelineSseResource = new TimelineSseResource();
         environment.jersey().register(timelineSseResource);
-
-        userStream.addEventListener(timelineSseResource);
     }
 }
