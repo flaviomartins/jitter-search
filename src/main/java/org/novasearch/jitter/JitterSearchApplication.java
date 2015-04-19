@@ -3,8 +3,11 @@ package org.novasearch.jitter;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.novasearch.jitter.core.search.SearchManager;
 import org.novasearch.jitter.core.selection.taily.TailyManager;
+import org.novasearch.jitter.core.stream.UserStream;
+import org.novasearch.jitter.core.twitter.OAuth1;
 import org.novasearch.jitter.health.*;
 import org.novasearch.jitter.resources.*;
 import org.novasearch.jitter.core.selection.SelectionManager;
@@ -17,7 +20,10 @@ import org.novasearch.jitter.core.twitter.archiver.TwitterArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
 import java.io.IOException;
+import java.util.EnumSet;
 
 public class JitterSearchApplication extends Application<JitterSearchConfiguration> {
     final static Logger logger = LoggerFactory.getLogger(JitterSearchApplication.class);
@@ -38,7 +44,19 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
     @Override
     public void run(JitterSearchConfiguration configuration,
-                    Environment environment) throws IOException {
+                    Environment environment) throws IOException, InterruptedException {
+        // Enable CORS headers
+        final FilterRegistration.Dynamic cors =
+                environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+
+        // Configure CORS parameters
+        cors.setInitParameter("allowedOrigins", "*");
+        cors.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin");
+        cors.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+
+        // Add URL mapping
+        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+
 
         final SearchManager searchManager = configuration.getSearchManagerFactory().build(environment);
         final SearchManagerHealthCheck searchManagerHealthCheck =
@@ -85,5 +103,27 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         final SelectSearchResource selectSearchResource = new SelectSearchResource(searchManager, selectionManager);
         environment.jersey().register(selectSearchResource);
+
+        final SseResource sseResource = new SseResource();
+        environment.jersey().register(sseResource);
+
+        OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build(environment);
+
+        final UserStream userStream = new UserStream(oAuth1);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    userStream.run();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
+        final TimelineSseResource timelineSseResource = new TimelineSseResource();
+        environment.jersey().register(timelineSseResource);
+
+        userStream.addEventListener(timelineSseResource);
     }
 }

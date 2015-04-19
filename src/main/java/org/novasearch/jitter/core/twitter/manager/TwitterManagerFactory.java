@@ -3,10 +3,17 @@ package org.novasearch.jitter.core.twitter.manager;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.novasearch.jitter.core.twitter.OAuth1Factory;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 public class TwitterManagerFactory {
+
+    @Valid
+    @NotNull
+    private OAuth1Factory oAuth1Factory = new OAuth1Factory();
 
     @NotEmpty
     private String databasePath;
@@ -16,6 +23,16 @@ public class TwitterManagerFactory {
 
     @NotEmpty
     private List<String> users;
+
+    @JsonProperty("oauth")
+    public OAuth1Factory getoAuth1Factory() {
+        return oAuth1Factory;
+    }
+
+    @JsonProperty("oauth")
+    public void setoAuth1Factory(OAuth1Factory oAuth1Factory) {
+        this.oAuth1Factory = oAuth1Factory;
+    }
 
     @JsonProperty("database")
     public String getDatabasePath() {
