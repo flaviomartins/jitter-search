@@ -111,20 +111,10 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build(environment);
 
-
         final TimelineSseResource timelineSseResource = new TimelineSseResource();
 
         final UserStream userStream = new UserStream(oAuth1, Lists.<UserStreamListener>newArrayList(timelineSseResource));
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    userStream.start();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        environment.lifecycle().manage(userStream);
 
         environment.jersey().register(timelineSseResource);
     }
