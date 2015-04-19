@@ -7,6 +7,7 @@ import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.BasicClient;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
+import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.Twitter;
@@ -20,7 +21,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class UserStream {
+public class UserStream implements Managed {
     final static Logger logger = LoggerFactory.getLogger(UserStream.class);
 
 
@@ -61,12 +62,7 @@ public class UserStream {
         client.connect();
 
         // Do whatever needs to be done with messages
-        for (int msgRead = 0; msgRead < 1000; msgRead++) {
-            if (client.isDone()) {
-                logger.error("Client connection closed unexpectedly: " + client.getExitEvent().getMessage());
-                break;
-            }
-
+        while (!client.isDone()) {
             String msg = queue.poll(5, TimeUnit.SECONDS);
             if (msg == null) {
                 logger.debug("Did not receive a message in 5 seconds");
@@ -77,9 +73,19 @@ public class UserStream {
         }
 
         client.stop();
-
+        logger.error("Client connection closed unexpectedly: " + client.getExitEvent().getMessage());
         // Print some stats
         logger.info(String.format("The client read %d messages!", client.getStatsTracker().getNumMessages()));
+    }
+
+    @Override
+    public void start() throws Exception {
+
+    }
+
+    @Override
+    public void stop() throws Exception {
+
     }
 
     private void notifyOnMsg(String msg) {
@@ -104,6 +110,9 @@ public class UserStream {
             userStream.run();
         } catch (InterruptedException e) {
             System.out.println(e);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
+
 }
