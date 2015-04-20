@@ -42,13 +42,6 @@ twitter:
     - reuters
 
 
-twitterArchiver:
-  collection: twitter-archiver/
-  users:
-    - ap
-    - reuters
-
-
 logging:
 
   # Permit DEBUG, INFO, WARN and ERROR messages to be logged by appenders.

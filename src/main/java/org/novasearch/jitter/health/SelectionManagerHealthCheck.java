@@ -34,14 +34,7 @@ public class SelectionManagerHealthCheck extends HealthCheck {
         }
 
         Set<String> twitterAccounts = new TreeSet<>();
-        String twitterMode = selectionManager.getTwitterMode();
-        if ("archiver".equals(twitterMode)) {
-            twitterAccounts.addAll(selectionManager.getTwitterArchiver().getUsers());
-        } else if ("standard".equals(twitterMode)) {
-            twitterAccounts.addAll(selectionManager.getTwitterManager().getUsers());
-        } else {
-            return Result.unhealthy("Invalid Twitter mode");
-        }
+        twitterAccounts.addAll(selectionManager.getTwitterManager().getUsers());
 
         Sets.SetView<String> diff1 = Sets.difference(twitterAccounts, topicAccounts);
         if (diff1.size() > 0) {

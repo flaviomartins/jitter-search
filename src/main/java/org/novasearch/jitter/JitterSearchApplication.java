@@ -18,7 +18,6 @@ import org.novasearch.jitter.tasks.SearchManagerIndexTask;
 import org.novasearch.jitter.tasks.TailyManagerIndexTask;
 import org.novasearch.jitter.tasks.TwitterManagerArchiveTask;
 import org.novasearch.jitter.core.twitter.manager.TwitterManager;
-import org.novasearch.jitter.core.twitter.archiver.TwitterArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
@@ -92,11 +91,6 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.admin().addTask(new TwitterManagerArchiveTask(twitterManager));
         selectionManager.setTwitterManager(twitterManager);
 
-        final TwitterArchiver twitterArchiver = configuration.getTwitterArchiverFactory().build(environment);
-        final TwitterArchiverHealthCheck twitterArchiverHealthCheck =
-                new TwitterArchiverHealthCheck(twitterArchiver);
-        environment.healthChecks().register("twitter-archiver", twitterArchiverHealthCheck);
-        selectionManager.setTwitterArchiver(twitterArchiver);
 
         final TailyResource tailyResource = new TailyResource(tailyManager);
         environment.jersey().register(tailyResource);

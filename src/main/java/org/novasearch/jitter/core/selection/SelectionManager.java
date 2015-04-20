@@ -13,13 +13,11 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.NoSuchDirectoryException;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.core.selection.methods.SelectionMethod;
 import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
 import org.novasearch.jitter.core.twitter.manager.TwitterManager;
-import org.novasearch.jitter.core.twitter.archiver.TwitterArchiver;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,16 +34,13 @@ public class SelectionManager implements Managed {
 
     private final String indexPath;
     private final String method;
-    private final String twitterMode;
     private final boolean removeDuplicates;
     private Map<String, List<String>> topics;
-    private TwitterArchiver twitterArchiver;
     private TwitterManager twitterManager;
 
-    public SelectionManager(String indexPath, String method, String twitterMode, boolean removeDuplicates, Map<String, List<String>> topics) {
+    public SelectionManager(String indexPath, String method, boolean removeDuplicates, Map<String, List<String>> topics) {
         this.indexPath = indexPath;
         this.method = method;
-        this.twitterMode = twitterMode;
         this.removeDuplicates = removeDuplicates;
         this.topics = topics;
     }
@@ -73,16 +68,8 @@ public class SelectionManager implements Managed {
         return indexPath;
     }
 
-    public TwitterArchiver getTwitterArchiver() {
-        return twitterArchiver;
-    }
-
     public TwitterManager getTwitterManager() {
         return twitterManager;
-    }
-
-    public String getTwitterMode() {
-        return twitterMode;
     }
 
     public Map<String, List<String>> getTopics() {
@@ -95,10 +82,6 @@ public class SelectionManager implements Managed {
 
     public boolean isRemoveDuplicates() {
         return removeDuplicates;
-    }
-
-    public void setTwitterArchiver(TwitterArchiver twitterArchiver) {
-        this.twitterArchiver = twitterArchiver;
     }
 
     public void setTwitterManager(TwitterManager twitterManager) {
@@ -193,15 +176,8 @@ public class SelectionManager implements Managed {
     }
 
     public void index() throws IOException {
-        if ("archiver".equals(twitterMode)) {
-            logger.info("archiver index");
-            twitterArchiver.index(indexPath, removeDuplicates);
-        } else if ("standard".equals(twitterMode)) {
-            logger.info("standard index");
-            twitterManager.index(indexPath, removeDuplicates);
-        } else {
-            logger.error("Invalid Twitter mode");
-        }
+        logger.info("standard index");
+        twitterManager.index(indexPath, removeDuplicates);
     }
 
     public IndexSearcher getSearcher() throws IOException {

@@ -6,7 +6,6 @@ import org.novasearch.jitter.core.search.SearchManagerFactory;
 import org.novasearch.jitter.core.selection.SelectionManagerFactory;
 import org.novasearch.jitter.core.selection.taily.TailyManagerFactory;
 import org.novasearch.jitter.core.twitter.manager.TwitterManagerFactory;
-import org.novasearch.jitter.core.twitter.archiver.TwitterArchiverFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -20,10 +19,6 @@ public class JitterSearchConfiguration extends Configuration {
     @Valid
     @NotNull
     private TwitterManagerFactory twitterManagerFactory = new TwitterManagerFactory();
-
-    @Valid
-    @NotNull
-    private TwitterArchiverFactory twitterArchiverFactory = new TwitterArchiverFactory();
 
     @Valid
     @NotNull
@@ -51,16 +46,6 @@ public class JitterSearchConfiguration extends Configuration {
     @JsonProperty("twitter")
     public void setTwitterManagerFactory(TwitterManagerFactory twitterManagerFactory) {
         this.twitterManagerFactory = twitterManagerFactory;
-    }
-
-    @JsonProperty("twitterArchiver")
-    public TwitterArchiverFactory getTwitterArchiverFactory() {
-        return twitterArchiverFactory;
-    }
-
-    @JsonProperty("twitterArchiver")
-    public void setTwitterArchiverFactory(TwitterArchiverFactory twitterArchiverFactory) {
-        this.twitterArchiverFactory = twitterArchiverFactory;
     }
 
     @JsonProperty("selection")

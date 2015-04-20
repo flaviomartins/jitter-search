@@ -78,7 +78,7 @@ public class SelectionManagerFactory {
     }
 
     public SelectionManager build(Environment environment) throws IOException {
-        final SelectionManager selectionManager = new SelectionManager(index, method, twitterMode, removeDuplicates, topics);
+        final SelectionManager selectionManager = new SelectionManager(index, method, removeDuplicates, topics);
         environment.lifecycle().manage(selectionManager);
         return selectionManager;
     }
