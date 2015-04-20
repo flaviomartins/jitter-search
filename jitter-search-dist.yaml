@@ -1,12 +1,3 @@
-server:
-  applicationConnectors:
-  - type: http
-    port: 8080
-  adminConnectors:
-  - type: http
-    port: 8081
-
-
 search:
   index: index/
   database: collectdb.db
@@ -40,6 +31,32 @@ twitter:
   users:
     - ap
     - reuters
+
+
+server:
+  applicationConnectors:
+  - type: http
+    port: 8080
+  adminConnectors:
+  - type: http
+    port: 8081
+  gzip:
+    enabled: false
+    minimumEntitySize: 256B
+    bufferSize: 8KiB
+  requestLog:
+    timeZone: UTC
+    appenders:
+      - type: console
+        threshold: ALL
+        target: stdout
+        timeZone: UTC
+      - type: file
+        threshold: ALL
+        currentLogFilename: ./logs/access.log
+        archivedLogFilenamePattern: ./logs/access.%d.log.gz
+        archivedFileCount: 14
+        timeZone: UTC
 
 
 logging:
