@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
-import java.io.IOException;
-
 public class SearchManagerFactory {
 
     @NotEmpty
@@ -34,7 +32,7 @@ public class SearchManagerFactory {
         this.databasePath = databasePath;
     }
 
-    public SearchManager build(Environment environment) throws IOException {
+    public SearchManager build(Environment environment) {
         final SearchManager searchManager = new SearchManager(indexPath, databasePath);
         environment.lifecycle().manage(searchManager);
         return searchManager;

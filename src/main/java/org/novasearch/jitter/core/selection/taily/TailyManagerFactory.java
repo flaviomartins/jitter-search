@@ -5,7 +5,6 @@ import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.NotNull;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -88,7 +87,7 @@ public class TailyManagerFactory {
         this.topics = topics;
     }
 
-    public TailyManager build(Environment environment) throws IOException {
+    public TailyManager build(Environment environment) {
         final TailyManager tailyManager = new TailyManager(dbPath, index, mu, nc, users, topics);
         environment.lifecycle().manage(tailyManager);
         return tailyManager;

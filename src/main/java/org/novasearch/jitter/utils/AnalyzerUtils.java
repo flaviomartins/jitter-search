@@ -12,7 +12,7 @@ import java.util.List;
 public class AnalyzerUtils {
 
     public static List<String> analyze(Analyzer analyzer, String text) {
-        List<String> result = new LinkedList<String>();
+        List<String> result = new LinkedList<>();
         try {
             TokenStream stream;
             stream = analyzer.tokenStream("text", new StringReader(text));

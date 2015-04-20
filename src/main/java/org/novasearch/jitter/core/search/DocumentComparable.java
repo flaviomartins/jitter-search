@@ -2,7 +2,10 @@ package org.novasearch.jitter.core.search;
 
 import org.novasearch.jitter.api.search.Document;
 
+import javax.validation.constraints.NotNull;
+
 public class DocumentComparable implements Comparable<DocumentComparable> {
+    @NotNull
     private final Document document;
 
     public DocumentComparable(Document document) {

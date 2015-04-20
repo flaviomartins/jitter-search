@@ -171,6 +171,8 @@ public class SearchManager implements Managed {
                 dupliCount++;
                 rsvCurr = rsvCurr - 0.000001 / results.size() * dupliCount;
             }
+            // FIXME: what is this?
+            result.rsv = rsvCurr;
 
             docs.add(new Document(result));
             i++;
@@ -277,7 +279,7 @@ public class SearchManager implements Managed {
         textOptions.setStored(true);
         textOptions.setTokenized(true);
 
-        Connection connection = null;
+        Connection connection;
         int cnt = 0;
         try (IndexWriter writer = new IndexWriter(dir, config)) {
             // create a database connection
@@ -337,8 +339,7 @@ public class SearchManager implements Managed {
                 logger.error(e.getMessage());
             } finally {
                 try {
-                    if (connection != null)
-                        connection.close();
+                    connection.close();
                 } catch (SQLException e) {
                     // connection close failed.
                     logger.error(e);

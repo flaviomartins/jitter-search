@@ -11,7 +11,7 @@ import java.util.Map;
 public class TailyManager implements Managed {
     private static final Logger logger = Logger.getLogger(TailyManager.class);
 
-    private String dbPath;
+    private final String dbPath;
     private final String index;
     private final int mu;
     private final int nc;

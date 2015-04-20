@@ -21,8 +21,8 @@ public class FeatureStore {
     public static final int FREQUENT_TERMS = 1000; // tf required for a term to be considered "frequent"
 
     private Environment dbEnv;
-    private Database freqDb; // db storing frequent terms; see FREQUENT_TERMS
-    private Database infreqDb; // db storing frequent terms; see FREQUENT_TERMS
+    private final Database freqDb; // db storing frequent terms; see FREQUENT_TERMS
+    private final Database infreqDb; // db storing frequent terms; see FREQUENT_TERMS
 
     public FeatureStore(String dir, boolean readOnly) {
         String freqPath = dir + "/" + FREQ_DB_NAME;
@@ -79,9 +79,7 @@ public class FeatureStore {
             }
         }
 
-        double val = DoubleBinding.entryToDouble(data);
-
-        return val;
+        return DoubleBinding.entryToDouble(data);
     }
 
     public void putFeature(String keyStr, double val, int frequency) {

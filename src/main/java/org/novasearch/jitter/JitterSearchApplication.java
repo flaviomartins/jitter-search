@@ -102,11 +102,8 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final SelectSearchResource selectSearchResource = new SelectSearchResource(searchManager, selectionManager);
         environment.jersey().register(selectSearchResource);
 
-        final SseResource sseResource = new SseResource();
-        environment.jersey().register(sseResource);
 
-
-        OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build(environment);
+        OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build();
 
 
         final TimelineSseResource timelineSseResource = new TimelineSseResource();

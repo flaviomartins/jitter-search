@@ -38,7 +38,7 @@ public class SampleStream implements Managed {
     @Override
     public void start() throws Exception {
         // Create an appropriately sized blocking queue
-        final BlockingQueue<String> queue = new LinkedBlockingQueue<String>(10000);
+        final BlockingQueue<String> queue = new LinkedBlockingQueue<>(10000);
 
         // Define our endpoint: By default, delimited=length is set (we need this for our processor)
         // and stall warnings are on.

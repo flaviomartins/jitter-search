@@ -24,8 +24,7 @@ public abstract class SelectionMethod {
     }
 
     public Map<String, Double> getRanked(List<Document> results) {
-        Map<String, Double> map = rank(results);
-        return map;
+        return rank(results);
     }
 
 

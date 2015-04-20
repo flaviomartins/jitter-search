@@ -1,7 +1,6 @@
 package org.novasearch.jitter.core.twitter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
 public class OAuth1Factory {
@@ -58,9 +57,8 @@ public class OAuth1Factory {
         this.tokenSecret = tokenSecret;
     }
 
-    public OAuth1 build(Environment environment) {
-        final OAuth1 oAuth1 = new OAuth1(consumerKey, consumerSecret, token, tokenSecret);
-        return oAuth1;
+    public OAuth1 build() {
+        return new OAuth1(consumerKey, consumerSecret, token, tokenSecret);
     }
 
 }

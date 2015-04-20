@@ -18,7 +18,7 @@ public class ShardRanker {
     // a single index built the same way; just for stemming term
     private final String indexPath;
 
-    private String[] _shardIds;
+    private final String[] _shardIds;
 
     // number of shards
     private final int _numShards;
@@ -79,9 +79,9 @@ public class ShardRanker {
 
     class QueryFeats {
 
-        double[] queryMean;
-        double[] queryVar;
-        boolean[] hasATerm;
+        final double[] queryMean;
+        final double[] queryVar;
+        final boolean[] hasATerm;
 
         public QueryFeats(int numShards) {
             queryMean = new double[numShards];

@@ -6,7 +6,6 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -77,7 +76,7 @@ public class SelectionManagerFactory {
         this.topics = topics;
     }
 
-    public SelectionManager build(Environment environment) throws IOException {
+    public SelectionManager build(Environment environment) {
         final SelectionManager selectionManager = new SelectionManager(index, method, removeDuplicates, topics);
         environment.lifecycle().manage(selectionManager);
         return selectionManager;

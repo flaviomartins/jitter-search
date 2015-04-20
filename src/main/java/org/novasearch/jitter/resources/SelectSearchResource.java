@@ -33,7 +33,7 @@ public class SelectSearchResource {
 
     private final AtomicLong counter;
     private final SearchManager searchManager;
-    private SelectionManager selectionManager;
+    private final SelectionManager selectionManager;
 
     public SelectSearchResource(SearchManager searchManager, SelectionManager selectionManager) throws IOException {
         Preconditions.checkNotNull(searchManager);
