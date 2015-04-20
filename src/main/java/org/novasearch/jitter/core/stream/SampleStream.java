@@ -14,7 +14,10 @@ import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
 
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class SampleStream implements Managed {
     final static Logger logger = LoggerFactory.getLogger(SampleStream.class);
@@ -38,7 +41,7 @@ public class SampleStream implements Managed {
     @Override
     public void start() throws Exception {
         // Create an appropriately sized blocking queue
-        final BlockingQueue<String> queue = new LinkedBlockingQueue<>(10000);
+        final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>(10000);
 
         // Define our endpoint: By default, delimited=length is set (we need this for our processor)
         // and stall warnings are on.
@@ -51,33 +54,48 @@ public class SampleStream implements Managed {
                 .hosts(Constants.STREAM_HOST)
                 .endpoint(endpoint)
                 .authentication(auth)
-                .processor(new StringDelimitedProcessor(queue))
+                .processor(new StringDelimitedProcessor(messageQueue))
                 .build();
+
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
 
         // Establish a connection
         client.connect();
 
-        new Thread(new Runnable() {
+        if (client.isDone() || executorService.isTerminated()) {
+            throw new IllegalStateException("Client is already stopped");
+        }
+        Runnable runner = new Runnable() {
             @Override
             public void run() {
-                // Do whatever needs to be done with messages
-                while (!client.isDone()) {
-                    try {
-                        String msg = queue.poll(5, TimeUnit.SECONDS);
-                        if (msg != null) {
-                            notifyOnMessage(msg);
+                try {
+                    while (!client.isDone()) {
+                        String msg = messageQueue.take();
+                        try {
+                            onMessage(msg);
+                        } catch (Exception e) {
+                            logger.warn("Exception thrown during parsing msg " + msg, e);
+                            onException(e);
                         }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
+                } catch (Exception e) {
+                    onException(e);
                 }
             }
-        }).start();
+        };
+
+        executorService.execute(runner);
     }
 
-    private void notifyOnMessage(String msg) {
+    private void onMessage(String rawString) {
         for (RawStreamListener eventListener : rawStreamListeners) {
-            eventListener.onMessage(msg);
+            eventListener.onMessage(rawString);
+        }
+    }
+
+    private void onException(Exception e) {
+        for (RawStreamListener eventListener : rawStreamListeners) {
+            eventListener.onException(e);
         }
     }
 
