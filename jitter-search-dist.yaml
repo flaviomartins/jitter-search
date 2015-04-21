@@ -62,13 +62,14 @@ server:
 logging:
 
   # Permit DEBUG, INFO, WARN and ERROR messages to be logged by appenders.
-  level: DEBUG
+  level: INFO
 
   appenders:
     # Log warnings and errors to stderr
     - type: console
-      threshold: WARN
+      threshold: INFO
       target: stderr
+      timeZone: UTC
 
     # Log info, warnings and errors to our apps' main log.
     # Rolled over daily and retained for 5 days.
@@ -77,6 +78,7 @@ logging:
       currentLogFilename: ./logs/jitter-search.log
       archivedLogFilenamePattern: ./logs/jitter-search-%d.log.gz
       archivedFileCount: 5
+      timeZone: UTC
 
     # Log debug messages, info, warnings and errors to our apps' debug log.
     # Rolled over hourly and retained for 6 hours
@@ -85,3 +87,4 @@ logging:
       currentLogFilename: ./logs/debug.log
       archivedLogFilenamePattern: ./logs/debug-%d{yyyy-MM-dd-hh}.log.gz
       archivedFileCount: 6
+      timeZone: UTC
