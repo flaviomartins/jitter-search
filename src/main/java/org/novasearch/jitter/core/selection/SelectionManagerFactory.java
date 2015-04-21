@@ -17,9 +17,6 @@ public class SelectionManagerFactory {
     @NotEmpty
     private String method;
 
-    @NotEmpty
-    private String twitterMode;
-
     @Valid
     @NotNull
     private boolean removeDuplicates;
@@ -44,16 +41,6 @@ public class SelectionManagerFactory {
     @JsonProperty
     public void setMethod(String method) {
         this.method = method;
-    }
-
-    @JsonProperty("twitter")
-    public String getTwitterMode() {
-        return twitterMode;
-    }
-
-    @JsonProperty("twitter")
-    public void setTwitterMode(String twitterMode) {
-        this.twitterMode = twitterMode;
     }
 
     @JsonProperty

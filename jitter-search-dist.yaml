@@ -6,7 +6,6 @@ search:
 selection:
   index: index1/
   method: crcslin
-  twitter: archiver
   removeDuplicates: true
 
 
@@ -26,6 +25,11 @@ taily:
 
 
 twitter:
+  oauth:
+    consumerKey:
+    consumerSecret:
+    token:
+    tokenSecret:
   database: twitter.db
   collection: collection/
   users:
