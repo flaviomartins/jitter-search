@@ -3,12 +3,13 @@ package org.novasearch.jitter.core.selection.taily;
 import com.sleepycat.bind.tuple.DoubleBinding;
 import com.sleepycat.bind.tuple.StringBinding;
 import com.sleepycat.je.*;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
 public class FeatureStore {
-    private static final Logger logger = Logger.getLogger(FeatureStore.class);
+    private static final Logger logger = LoggerFactory.getLogger(FeatureStore.class);
 
     public static final String FEAT_SUFFIX = "#f";
     public static final String SQUARED_FEAT_SUFFIX = "#f2";
@@ -100,7 +101,7 @@ public class FeatureStore {
 
         OperationStatus status = db.put(null, key, data);
         if (status == OperationStatus.KEYEXIST) {
-            logger.error(String.format("Put failed because key %s already exists", keyStr));
+            logger.error("Put failed because key {} already exists", keyStr);
         }
     }
 

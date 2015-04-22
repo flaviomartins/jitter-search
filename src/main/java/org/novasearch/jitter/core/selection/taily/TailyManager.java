@@ -1,15 +1,16 @@
 package org.novasearch.jitter.core.selection.taily;
 
 import io.dropwizard.lifecycle.Managed;
-import org.apache.log4j.Logger;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class TailyManager implements Managed {
-    private static final Logger logger = Logger.getLogger(TailyManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(TailyManager.class);
 
     private final String dbPath;
     private final String index;

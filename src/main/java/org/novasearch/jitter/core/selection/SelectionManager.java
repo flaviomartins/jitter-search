@@ -3,7 +3,6 @@ package org.novasearch.jitter.core.selection;
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.log4j.Logger;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -18,13 +17,15 @@ import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.core.selection.methods.SelectionMethod;
 import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
 import org.novasearch.jitter.core.twitter.manager.TwitterManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 public class SelectionManager implements Managed {
-    private static final Logger logger = Logger.getLogger(SelectionManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(SelectionManager.class);
 
     private static final QueryParser QUERY_PARSER =
             new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
@@ -51,7 +52,7 @@ public class SelectionManager implements Managed {
             reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
             searcher = new IndexSearcher(reader);
         } catch (Exception e) {
-            logger.error(e);
+            logger.error(e.getMessage());
         }
     }
 
@@ -196,7 +197,7 @@ public class SelectionManager implements Managed {
                 }
             }
         } catch (IndexNotFoundException e) {
-            logger.error(e);
+            logger.error(e.getMessage());
         }
         return searcher;
     }

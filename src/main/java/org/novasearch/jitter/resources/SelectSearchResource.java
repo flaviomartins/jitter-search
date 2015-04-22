@@ -3,7 +3,6 @@ package org.novasearch.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import org.apache.log4j.Logger;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.novasearch.jitter.api.ResponseHeader;
 import org.novasearch.jitter.api.search.*;
@@ -11,6 +10,8 @@ import org.novasearch.jitter.core.search.SearchManager;
 import org.novasearch.jitter.core.selection.SelectionManager;
 import org.novasearch.jitter.core.selection.methods.SelectionMethod;
 import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Path("/ss")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class SelectSearchResource {
-    private static final Logger logger = Logger.getLogger(SelectSearchResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(SelectSearchResource.class);
 
     private final AtomicLong counter;
     private final SearchManager searchManager;

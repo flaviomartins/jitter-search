@@ -2,14 +2,15 @@ package org.novasearch.jitter.core.selection.taily;
 
 import cc.twittertools.index.IndexStatuses;
 import org.apache.commons.math3.distribution.GammaDistribution;
-import org.apache.log4j.Logger;
 import org.novasearch.jitter.utils.AnalyzerUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
 
 public class ShardRanker {
-    private static final Logger logger = Logger.getLogger(ShardRanker.class);
+    private static final Logger logger = LoggerFactory.getLogger(ShardRanker.class);
 
     // array of FeatureStore pointers
     // stores[0] is the whole collection store; stores[1] onwards is each shard; length is numShards+1

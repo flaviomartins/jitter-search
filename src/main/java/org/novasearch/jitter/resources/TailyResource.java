@@ -3,12 +3,13 @@ package org.novasearch.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import org.apache.log4j.Logger;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.novasearch.jitter.api.ResponseHeader;
 import org.novasearch.jitter.api.selection.SelectionDocumentsResponse;
 import org.novasearch.jitter.api.selection.SelectionResponse;
 import org.novasearch.jitter.core.selection.taily.TailyManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Path("/taily")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class TailyResource {
-    private static final Logger logger = Logger.getLogger(TailyResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(TailyResource.class);
 
     private final AtomicLong counter;
     private final TailyManager tailyManager;

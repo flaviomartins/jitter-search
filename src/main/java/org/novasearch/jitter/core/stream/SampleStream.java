@@ -74,7 +74,7 @@ public class SampleStream implements Managed {
                         try {
                             onMessage(msg);
                         } catch (Exception e) {
-                            logger.warn("Exception thrown during parsing msg " + msg, e);
+                            logger.warn("Exception thrown during parsing msg {}", msg, e);
                             onException(e);
                         }
                     }
@@ -103,8 +103,8 @@ public class SampleStream implements Managed {
     public void stop() throws Exception {
         if (client != null) {
             client.stop();
-            logger.error("Client connection closed: " + client.getExitEvent().getMessage());
-            logger.info(String.format("The client read %d messages!", client.getStatsTracker().getNumMessages()));
+            logger.error("Client connection closed: {}", client.getExitEvent().getMessage());
+            logger.info("The client read {} messages!", client.getStatsTracker().getNumMessages());
         }
     }
 

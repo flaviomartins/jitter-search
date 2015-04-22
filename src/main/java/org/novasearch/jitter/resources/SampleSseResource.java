@@ -1,11 +1,11 @@
 package org.novasearch.jitter.resources;
 
-import org.apache.log4j.Logger;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 import org.glassfish.jersey.media.sse.SseBroadcaster;
 import org.glassfish.jersey.media.sse.SseFeature;
-import twitter4j.*;
+import org.slf4j.Logger;
+import twitter4j.RawStreamListener;
 
 import javax.inject.Singleton;
 import javax.ws.rs.GET;
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Path("/sample")
 //@Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class SampleSseResource implements RawStreamListener {
-    private static final Logger logger = Logger.getLogger(SampleSseResource.class);
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(SampleSseResource.class);
 
     private final AtomicLong counter;
     private final SseBroadcaster broadcaster;

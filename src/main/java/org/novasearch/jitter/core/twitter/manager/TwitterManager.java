@@ -75,7 +75,7 @@ public class TwitterManager implements Managed {
             String[] names = var.toArray(new String[var.size()]);
             ResponseList<User> userResponseList;
             try {
-                logger.info(reqSize + " users info requested");
+                logger.info("{} users info requested", reqSize);
                 userResponseList = twitter.lookupUsers(names);
                 for (User user : userResponseList) {
                     logger.info("Got info for " + user.getScreenName() + " : " + user.getName() + " : " + user.getStatusesCount());
@@ -127,7 +127,7 @@ public class TwitterManager implements Managed {
         for (String screenName : screenNames) {
             User user = usersMap.get(screenName);
             if (user == null)
-                logger.warn("Failed to lookup " + screenName);
+                logger.warn("Failed to lookup {}", screenName);
 
             fetchTimeline(screenName);
         }

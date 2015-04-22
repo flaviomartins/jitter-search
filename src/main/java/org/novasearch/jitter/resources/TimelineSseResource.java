@@ -4,11 +4,12 @@ import com.google.gson.Gson;
 import com.twitter.hbc.twitter4j.handler.UserstreamHandler;
 import com.twitter.hbc.twitter4j.message.DisconnectMessage;
 import com.twitter.hbc.twitter4j.message.StallWarningMessage;
-import org.apache.log4j.Logger;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 import org.glassfish.jersey.media.sse.SseBroadcaster;
 import org.glassfish.jersey.media.sse.SseFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import twitter4j.*;
 
 import javax.inject.Singleton;
@@ -22,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Path("/timeline")
 //@Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class TimelineSseResource implements UserstreamHandler {
-    private static final Logger logger = Logger.getLogger(TimelineSseResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(TimelineSseResource.class);
 
     private final AtomicLong counter;
     private final SseBroadcaster broadcaster;

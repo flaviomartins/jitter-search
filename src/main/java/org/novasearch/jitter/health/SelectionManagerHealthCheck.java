@@ -3,8 +3,9 @@ package org.novasearch.jitter.health;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
-import org.apache.log4j.Logger;
 import org.novasearch.jitter.core.selection.SelectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class SelectionManagerHealthCheck extends HealthCheck {
-    private static final Logger logger = Logger.getLogger(SelectionManagerHealthCheck.class);
+    private static final Logger logger = LoggerFactory.getLogger(SelectionManagerHealthCheck.class);
 
     private final SelectionManager selectionManager;
 
@@ -38,13 +39,14 @@ public class SelectionManagerHealthCheck extends HealthCheck {
 
         Sets.SetView<String> diff1 = Sets.difference(twitterAccounts, topicAccounts);
         if (diff1.size() > 0) {
-            logger.warn("missing from topics: " + Joiner.on(" ").join(diff1));
+            logger.warn("missing from topics: {}", Joiner.on(" ").join(diff1));
         }
 
         Sets.SetView<String> diff2 = Sets.difference(topicAccounts, twitterAccounts );
         if (diff2.size() > 0) {
-            logger.error("missing from twitter: " + Joiner.on(" ").join(diff2));
-            return Result.unhealthy("missing from twitter: " + Joiner.on(" ").join(diff2));
+            String missing = Joiner.on(" ").join(diff2);
+            logger.error("missing from twitter: {}", missing);
+            return Result.unhealthy("missing from twitter: " + missing);
         }
 
         return Result.healthy();

@@ -1,7 +1,6 @@
 package org.novasearch.jitter.core.selection.taily;
 
 import cc.twittertools.index.IndexStatuses;
-import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -11,6 +10,8 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Taily {
-    private static final Logger logger = Logger.getLogger(Taily.class);
+    private static final Logger logger = LoggerFactory.getLogger(Taily.class);
 
     public static final String CORPUS_DBENV = "corpus";
     public static final String SOURCES_DBENV = "sources";
@@ -110,8 +111,8 @@ public class Taily {
         store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, FeatureStore.FREQUENT_TERMS + 1);
         store.putFeature(FeatureStore.TERM_SIZE_FEAT_SUFFIX, totalTermCount, FeatureStore.FREQUENT_TERMS + 1);
 
-        logger.info(String.format("build corpus %s = %d", FeatureStore.TERM_SIZE_FEAT_SUFFIX, totalTermCount));
-        logger.info(String.format("build corpus %s = %d", FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount));
+        logger.info("build corpus {} = {}", FeatureStore.TERM_SIZE_FEAT_SUFFIX, totalTermCount);
+        logger.info("build corpus {} = {}", FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount);
 
         store.close();
         indexReader.close();
@@ -145,7 +146,7 @@ public class Taily {
             double totalDocCount = topDocs.totalHits;
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
 
-            logger.info(String.format("build sources %s: %s = %d", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, (int) totalDocCount));
+            logger.info("build sources {}: {} = {}", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, (int) totalDocCount);
         }
 
         // get the total term length of the collection (for Indri scoring)
@@ -171,7 +172,7 @@ public class Taily {
 
             termCnt++;
             if (termCnt % 1000 == 0) {
-                logger.info("  Finished " + termCnt + " terms");
+                logger.info("  Finished {} terms", termCnt);
             }
 
             // get term ctf
@@ -294,7 +295,7 @@ public class Taily {
             }
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
 
-            logger.info(String.format("build topics %s: %s = %d", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, (int) totalDocCount));
+            logger.info("build topics {}: {} = {}", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, (int) totalDocCount);
         }
 
         // get the total term length of the collection (for Indri scoring)

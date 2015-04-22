@@ -4,7 +4,6 @@ import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.thrift.gen.TResult;
 import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.log4j.Logger;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
@@ -17,6 +16,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +27,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class SearchManager implements Managed {
-    private static final Logger logger = Logger.getLogger(SearchManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(SearchManager.class);
 
     public static final int MAX_RESULTS = 10000;
     public static final int MAX_TERMS_RESULTS = 1000;
@@ -51,7 +52,7 @@ public class SearchManager implements Managed {
             reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
             searcher = new IndexSearcher(reader);
         } catch (Exception e) {
-            logger.error(e);
+            logger.error(e.getMessage());
         }
     }
 
@@ -154,7 +155,7 @@ public class SearchManager implements Managed {
             sortedResults.add(new DocumentComparable(p));
         }
         if (filterRT) {
-            logger.info("filter_rt count: " + retweetCount);
+            logger.info("filter_rt count: {}", retweetCount);
         }
 
         List<Document> docs = Lists.newArrayList();
@@ -214,7 +215,7 @@ public class SearchManager implements Managed {
                     connection.close();
             } catch (SQLException e) {
                 // connection close failed.
-                logger.error(e);
+                logger.error(e.getMessage());
             }
         }
     }
@@ -260,7 +261,7 @@ public class SearchManager implements Managed {
                     connection.close();
             } catch (SQLException e) {
                 // connection close failed.
-                logger.error(e);
+                logger.error(e.getMessage());
             }
         }
 
@@ -323,13 +324,13 @@ public class SearchManager implements Managed {
                         int retweetCount = rs.getInt(IndexStatuses.StatusField.RETWEET_COUNT.name);
                         doc.add(new IntField(IndexStatuses.StatusField.RETWEET_COUNT.name, retweetCount, Field.Store.YES));
                         if (retweetCount < 0 || retweetStatusId < 0) {
-                            logger.warn("Error parsing retweet fields of " + id);
+                            logger.warn("Error parsing retweet fields of {}", id);
                         }
                     }
 
                     writer.addDocument(doc);
                     if (cnt % 10000 == 0) {
-                        logger.info(cnt + " statuses indexed");
+                        logger.info("{} statuses indexed", cnt);
                     }
                 }
 
@@ -342,10 +343,10 @@ public class SearchManager implements Managed {
                     connection.close();
                 } catch (SQLException e) {
                     // connection close failed.
-                    logger.error(e);
+                    logger.error(e.getMessage());
                 }
             }
-            logger.info(String.format("Total of %s statuses added", cnt));
+            logger.info("Total of {} statuses added", cnt);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -382,7 +383,7 @@ public class SearchManager implements Managed {
                 }
             }
         } catch (IndexNotFoundException e) {
-            logger.error(e);
+            logger.error(e.getMessage());
         }
         return searcher;
     }

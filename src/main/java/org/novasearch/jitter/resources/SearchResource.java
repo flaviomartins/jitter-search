@@ -3,13 +3,14 @@ package org.novasearch.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import org.apache.log4j.Logger;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.novasearch.jitter.api.ResponseHeader;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.api.search.DocumentsResponse;
 import org.novasearch.jitter.api.search.SearchResponse;
 import org.novasearch.jitter.core.search.SearchManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Path("/search")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class SearchResource {
-    private static final Logger logger = Logger.getLogger(SearchResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(SearchResource.class);
 
     private final AtomicLong counter;
     private final SearchManager searchManager;
