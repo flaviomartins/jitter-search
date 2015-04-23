@@ -8,6 +8,7 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.novasearch.jitter.core.search.SearchManager;
 import org.novasearch.jitter.core.selection.taily.TailyManager;
 import org.novasearch.jitter.core.stream.SampleStream;
+import org.novasearch.jitter.core.stream.StreamLogger;
 import org.novasearch.jitter.core.stream.UserStream;
 import org.novasearch.jitter.core.twitter.OAuth1;
 import org.novasearch.jitter.health.*;
@@ -111,9 +112,9 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.lifecycle().manage(userStream);
         environment.jersey().register(timelineSseResource);
 
-
+        final StreamLogger statusStreamLogger = new StreamLogger("./archive/sample");
         final SampleSseResource sampleSseResource = new SampleSseResource();
-        final SampleStream statusStream = new SampleStream(oAuth1, Lists.<RawStreamListener>newArrayList(sampleSseResource));
+        final SampleStream statusStream = new SampleStream(oAuth1, Lists.<RawStreamListener>newArrayList(statusStreamLogger, sampleSseResource));
         environment.lifecycle().manage(statusStream);
         environment.jersey().register(sampleSseResource);
     }
