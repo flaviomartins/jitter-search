@@ -18,13 +18,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class StreamLogger implements RawStreamListener, Managed {
 
-    private static final Logger logger = (Logger) LoggerFactory.getLogger(StreamLogger.class);
     private static final String HOUR_ROLL = ".%d{yyyy-MM-dd-HH, UTC}.gz";
 
     private AtomicLong counter;
+    private final Logger logger;
 
     public StreamLogger(String directory) {
         counter = new AtomicLong();
+        logger = (Logger) LoggerFactory.getLogger(StreamLogger.class + directory);
         LoggerContext logCtx = (LoggerContext) LoggerFactory.getILoggerFactory();
 
         PatternLayoutEncoder standardEncoder = new PatternLayoutEncoder();
