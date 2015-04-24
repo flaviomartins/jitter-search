@@ -113,7 +113,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build();
 
         final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(selectionManager.getIndexPath(), 1);
-        final StreamLogger userStreamLogger = new StreamLogger("./archive/user");
+        final StreamLogger userStreamLogger = new StreamLogger("./data/archive/user");
         final TimelineSseResource timelineSseResource = new TimelineSseResource();
         final UserStream userStream = new UserStream(oAuth1,
                 Lists.<UserStreamListener>newArrayList(timelineSseResource, userStreamIndexer),
@@ -123,7 +123,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.jersey().register(timelineSseResource);
 
         final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 1000);
-        final StreamLogger statusStreamLogger = new StreamLogger("./archive/sample");
+        final StreamLogger statusStreamLogger = new StreamLogger("./data/archive/sample");
         final SampleSseResource sampleSseResource = new SampleSseResource();
         final SampleStream statusStream = new SampleStream(oAuth1,
                 Lists.<StatusListener>newArrayList(sampleSseResource, statusStreamIndexer),
