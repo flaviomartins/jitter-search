@@ -58,7 +58,9 @@ public class SelectionManager implements Managed {
 
     @Override
     public void stop() throws Exception {
-        reader.close();
+        if (reader != null) {
+            reader.close();
+        }
     }
 
     public String getMethod() {

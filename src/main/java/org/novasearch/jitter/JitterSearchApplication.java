@@ -8,6 +8,7 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.novasearch.jitter.core.search.SearchManager;
 import org.novasearch.jitter.core.selection.SelectionManager;
 import org.novasearch.jitter.core.selection.taily.TailyManager;
+import org.novasearch.jitter.core.stream.LiveStreamIndexer;
 import org.novasearch.jitter.core.stream.SampleStream;
 import org.novasearch.jitter.core.stream.StreamLogger;
 import org.novasearch.jitter.core.stream.UserStream;
@@ -111,21 +112,24 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build();
 
-
+        final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(selectionManager.getIndexPath(), 1);
         final StreamLogger userStreamLogger = new StreamLogger("./archive/user");
         final TimelineSseResource timelineSseResource = new TimelineSseResource();
         final UserStream userStream = new UserStream(oAuth1,
-                Lists.<UserStreamListener>newArrayList(timelineSseResource),
+                Lists.<UserStreamListener>newArrayList(timelineSseResource, userStreamIndexer),
                 Lists.<RawStreamListener>newArrayList(userStreamLogger));
         environment.lifecycle().manage(userStream);
+        environment.lifecycle().manage(userStreamIndexer);
         environment.jersey().register(timelineSseResource);
 
+        final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 1000);
         final StreamLogger statusStreamLogger = new StreamLogger("./archive/sample");
         final SampleSseResource sampleSseResource = new SampleSseResource();
         final SampleStream statusStream = new SampleStream(oAuth1,
-                Lists.<StatusListener>newArrayList(sampleSseResource),
+                Lists.<StatusListener>newArrayList(sampleSseResource, statusStreamIndexer),
                 Lists.<RawStreamListener>newArrayList(statusStreamLogger));
         environment.lifecycle().manage(statusStream);
+        environment.lifecycle().manage(statusStreamIndexer);
         environment.jersey().register(sampleSseResource);
     }
 }
