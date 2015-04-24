@@ -6,22 +6,26 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.novasearch.jitter.core.search.SearchManager;
+import org.novasearch.jitter.core.selection.SelectionManager;
 import org.novasearch.jitter.core.selection.taily.TailyManager;
 import org.novasearch.jitter.core.stream.SampleStream;
 import org.novasearch.jitter.core.stream.StreamLogger;
 import org.novasearch.jitter.core.stream.UserStream;
 import org.novasearch.jitter.core.twitter.OAuth1;
-import org.novasearch.jitter.health.*;
+import org.novasearch.jitter.core.twitter.manager.TwitterManager;
+import org.novasearch.jitter.health.SearchManagerHealthCheck;
+import org.novasearch.jitter.health.SelectionManagerHealthCheck;
+import org.novasearch.jitter.health.TailyManagerHealthCheck;
+import org.novasearch.jitter.health.TwitterManagerHealthCheck;
 import org.novasearch.jitter.resources.*;
-import org.novasearch.jitter.core.selection.SelectionManager;
-import org.novasearch.jitter.tasks.SelectionManagerIndexTask;
 import org.novasearch.jitter.tasks.SearchManagerIndexTask;
+import org.novasearch.jitter.tasks.SelectionManagerIndexTask;
 import org.novasearch.jitter.tasks.TailyManagerIndexTask;
 import org.novasearch.jitter.tasks.TwitterManagerArchiveTask;
-import org.novasearch.jitter.core.twitter.manager.TwitterManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
+import twitter4j.StatusListener;
 import twitter4j.UserStreamListener;
 
 import javax.servlet.DispatcherType;
@@ -30,6 +34,7 @@ import java.io.IOException;
 import java.util.EnumSet;
 
 public class JitterSearchApplication extends Application<JitterSearchConfiguration> {
+
     final static Logger logger = LoggerFactory.getLogger(JitterSearchApplication.class);
 
     public static void main(String[] args) throws Exception {
@@ -107,14 +112,19 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build();
 
 
+        final StreamLogger userStreamLogger = new StreamLogger("./archive/user");
         final TimelineSseResource timelineSseResource = new TimelineSseResource();
-        final UserStream userStream = new UserStream(oAuth1, Lists.<UserStreamListener>newArrayList(timelineSseResource));
+        final UserStream userStream = new UserStream(oAuth1,
+                Lists.<UserStreamListener>newArrayList(timelineSseResource),
+                Lists.<RawStreamListener>newArrayList(userStreamLogger));
         environment.lifecycle().manage(userStream);
         environment.jersey().register(timelineSseResource);
 
         final StreamLogger statusStreamLogger = new StreamLogger("./archive/sample");
         final SampleSseResource sampleSseResource = new SampleSseResource();
-        final SampleStream statusStream = new SampleStream(oAuth1, Lists.<RawStreamListener>newArrayList(statusStreamLogger, sampleSseResource));
+        final SampleStream statusStream = new SampleStream(oAuth1,
+                Lists.<StatusListener>newArrayList(sampleSseResource),
+                Lists.<RawStreamListener>newArrayList(statusStreamLogger));
         environment.lifecycle().manage(statusStream);
         environment.jersey().register(sampleSseResource);
     }

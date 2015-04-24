@@ -1,4 +1,4 @@
-package org.novasearch.jitter.core.utils;
+package org.novasearch.jitter.utils;
 
 import com.twitter.Extractor;
 import org.apache.commons.lang.StringEscapeUtils;

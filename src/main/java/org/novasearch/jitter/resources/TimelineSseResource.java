@@ -1,6 +1,8 @@
 package org.novasearch.jitter.resources;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.twitter.hbc.twitter4j.handler.UserstreamHandler;
 import com.twitter.hbc.twitter4j.message.DisconnectMessage;
 import com.twitter.hbc.twitter4j.message.StallWarningMessage;
@@ -22,15 +24,18 @@ import java.util.concurrent.atomic.AtomicLong;
 @Singleton
 @Path("/timeline")
 //@Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
-public class TimelineSseResource implements UserstreamHandler {
+public class TimelineSseResource implements UserstreamHandler, RawStreamListener {
+
     private static final Logger logger = LoggerFactory.getLogger(TimelineSseResource.class);
 
     private final AtomicLong counter;
     private final SseBroadcaster broadcaster;
+    private final ObjectWriter objectWriter;
 
     public TimelineSseResource() {
         counter = new AtomicLong();
         broadcaster = new SseBroadcaster();
+        objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
     }
 
 //    @Produces(MediaType.TEXT_PLAIN)
@@ -50,6 +55,16 @@ public class TimelineSseResource implements UserstreamHandler {
         final EventOutput eventOutput = new EventOutput();
         broadcaster.add(eventOutput);
         return eventOutput;
+    }
+
+    @Override
+    public void onMessage(String rawString) {
+
+    }
+
+    @Override
+    public void onException(Exception ex) {
+
     }
 
     @Override
@@ -169,8 +184,13 @@ public class TimelineSseResource implements UserstreamHandler {
 
     @Override
     public void onStatus(Status status) {
-        String json = new Gson().toJsonTree(status).toString();
-        broadcastMessage("message", json);
+        String json;
+        try {
+            json = objectWriter.writeValueAsString(status);
+            broadcastMessage("status", json);
+        } catch (JsonProcessingException e) {
+            logger.error(e.getMessage());
+        }
     }
 
     @Override
@@ -190,11 +210,6 @@ public class TimelineSseResource implements UserstreamHandler {
 
     @Override
     public void onStallWarning(StallWarning warning) {
-
-    }
-
-    @Override
-    public void onException(Exception ex) {
 
     }
 }

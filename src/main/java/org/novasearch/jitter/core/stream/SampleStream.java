@@ -9,9 +9,11 @@ import com.twitter.hbc.httpclient.BasicClient;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
 import io.dropwizard.lifecycle.Managed;
+import org.novasearch.jitter.twitter4j.CustomTwitter4jStatusClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
+import twitter4j.StatusListener;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -20,28 +22,29 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class SampleStream implements Managed {
+
     final static Logger logger = LoggerFactory.getLogger(SampleStream.class);
 
-
     private final Authentication auth;
+    private final List<? extends StatusListener> statusListeners;
     private final List<RawStreamListener> rawStreamListeners;
 
     private BasicClient client;
 
-    public SampleStream(OAuth1 oAuth1, List<RawStreamListener> listeners) {
+    public SampleStream(OAuth1 oAuth1, List<StatusListener> statusListeners, List<RawStreamListener> rawStreamListeners) {
         this.auth = oAuth1;
-        this.rawStreamListeners = ImmutableList.copyOf(listeners);
+        this.statusListeners = ImmutableList.copyOf(statusListeners);
+        this.rawStreamListeners = ImmutableList.copyOf(rawStreamListeners);
     }
 
-    public SampleStream(org.novasearch.jitter.core.twitter.OAuth1 oAuth1, List<RawStreamListener> listeners) {
-        this(new OAuth1(oAuth1.getConsumerKey(), oAuth1.getConsumerSecret(), oAuth1.getToken(), oAuth1.getTokenSecret()), listeners);
+    public SampleStream(org.novasearch.jitter.core.twitter.OAuth1 oAuth1, List<StatusListener> statusListeners, List<RawStreamListener> rawStreamListeners) {
+        this(new OAuth1(oAuth1.getConsumerKey(), oAuth1.getConsumerSecret(), oAuth1.getToken(), oAuth1.getTokenSecret()), statusListeners, rawStreamListeners);
     }
-
 
     @Override
     public void start() throws Exception {
         // Create an appropriately sized blocking queue
-        final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>(10000);
+        final BlockingQueue<String> queue = new LinkedBlockingQueue<>(10000);
 
         // Define our endpoint: By default, delimited=length is set (we need this for our processor)
         // and stall warnings are on.
@@ -54,48 +57,23 @@ public class SampleStream implements Managed {
                 .hosts(Constants.STREAM_HOST)
                 .endpoint(endpoint)
                 .authentication(auth)
-                .processor(new StringDelimitedProcessor(messageQueue))
+                .processor(new StringDelimitedProcessor(queue))
                 .build();
 
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        // Create an executor service which will spawn threads to do the actual work of parsing the incoming messages and
+        // calling the listeners on each message
+        int numProcessingThreads = 4;
+        ExecutorService service = Executors.newFixedThreadPool(numProcessingThreads);
+
+        // Wrap our BasicClient with the twitter4j client
+        CustomTwitter4jStatusClient t4jClient = new CustomTwitter4jStatusClient(
+                client, queue, statusListeners, service, rawStreamListeners);
 
         // Establish a connection
-        client.connect();
-
-        if (client.isDone() || executorService.isTerminated()) {
-            throw new IllegalStateException("Client is already stopped");
-        }
-        Runnable runner = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    while (!client.isDone()) {
-                        String msg = messageQueue.take();
-                        try {
-                            onMessage(msg);
-                        } catch (Exception e) {
-                            logger.warn("Exception thrown during parsing msg {}", msg, e);
-                            onException(e);
-                        }
-                    }
-                } catch (Exception e) {
-                    onException(e);
-                }
-            }
-        };
-
-        executorService.execute(runner);
-    }
-
-    private void onMessage(String rawString) {
-        for (RawStreamListener eventListener : rawStreamListeners) {
-            eventListener.onMessage(rawString);
-        }
-    }
-
-    private void onException(Exception e) {
-        for (RawStreamListener eventListener : rawStreamListeners) {
-            eventListener.onException(e);
+        t4jClient.connect();
+        for (int threads = 0; threads < numProcessingThreads; threads++) {
+            // This must be called once per processing thread
+            t4jClient.process();
         }
     }
 

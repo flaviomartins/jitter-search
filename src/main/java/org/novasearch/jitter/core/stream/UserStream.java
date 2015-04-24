@@ -8,8 +8,8 @@ import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.BasicClient;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
-import com.twitter.hbc.twitter4j.Twitter4jUserstreamClient;
 import io.dropwizard.lifecycle.Managed;
+import org.novasearch.jitter.twitter4j.CustomTwitter4jUserstreamClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.*;
@@ -18,23 +18,23 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class UserStream implements Managed {
-    final static Logger logger = LoggerFactory.getLogger(UserStream.class);
 
+    final static Logger logger = LoggerFactory.getLogger(UserStream.class);
 
     private final Authentication auth;
     private final List<UserStreamListener> userStreamListeners;
-
+    private final List<RawStreamListener> rawStreamListeners;
     private BasicClient client;
 
-    public UserStream(OAuth1 oAuth1, List<UserStreamListener> listeners) {
+    public UserStream(OAuth1 oAuth1, List<UserStreamListener> userStreamListeners, List<RawStreamListener> rawStreamListeners) {
         this.auth = oAuth1;
-        this.userStreamListeners = ImmutableList.copyOf(listeners);
+        this.userStreamListeners = ImmutableList.copyOf(userStreamListeners);
+        this.rawStreamListeners = ImmutableList.copyOf(rawStreamListeners);
     }
 
-    public UserStream(org.novasearch.jitter.core.twitter.OAuth1 oAuth1, List<UserStreamListener> listeners) {
-        this(new OAuth1(oAuth1.getConsumerKey(), oAuth1.getConsumerSecret(), oAuth1.getToken(), oAuth1.getTokenSecret()), listeners);
+    public UserStream(org.novasearch.jitter.core.twitter.OAuth1 oAuth1, List<UserStreamListener> userStreamListeners, List<RawStreamListener> rawStreamListeners) {
+        this(new OAuth1(oAuth1.getConsumerKey(), oAuth1.getConsumerSecret(), oAuth1.getToken(), oAuth1.getTokenSecret()), userStreamListeners, rawStreamListeners);
     }
-
 
     @Override
     public void start() throws Exception {
@@ -61,8 +61,8 @@ public class UserStream implements Managed {
         ExecutorService service = Executors.newFixedThreadPool(numProcessingThreads);
 
         // Wrap our BasicClient with the twitter4j client
-        Twitter4jUserstreamClient t4jClient = new Twitter4jUserstreamClient(
-                client, queue, userStreamListeners, service);
+        CustomTwitter4jUserstreamClient t4jClient = new CustomTwitter4jUserstreamClient(
+                client, queue, userStreamListeners, service, rawStreamListeners);
 
         // Establish a connection
         t4jClient.connect();

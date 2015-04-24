@@ -15,17 +15,14 @@ import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
 
 public class StreamLogger implements RawStreamListener, Managed {
+
     private static final Logger logger = (Logger) LoggerFactory.getLogger(StreamLogger.class);
 
     private static int cnt = 0;
-
-    @SuppressWarnings("unused")
-    private static final String MINUTE_ROLL = ".%d{yyyy-MM-dd-HH-mm, UTC}.gz";
     private static final String HOUR_ROLL = ".%d{yyyy-MM-dd-HH, UTC}.gz";
 
     public StreamLogger(String directory) {
         LoggerContext logCtx = (LoggerContext) LoggerFactory.getILoggerFactory();
-
 
         PatternLayoutEncoder standardEncoder = new PatternLayoutEncoder();
         standardEncoder.setContext(logCtx);
@@ -92,6 +89,7 @@ public class StreamLogger implements RawStreamListener, Managed {
 
     @Override
     public void start() throws Exception {
+
     }
 
     @Override
