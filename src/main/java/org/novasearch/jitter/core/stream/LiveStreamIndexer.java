@@ -6,6 +6,7 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
@@ -58,6 +59,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
     }
 
     private void index(Status status) {
+        if (writer == null) return;
         try {
             counter.incrementAndGet();
             Document doc = new Document();
@@ -99,6 +101,8 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
                 logger.info("{} {} statuses indexed", indexPath, counter.get());
                 writer.commit();
             }
+        } catch (AlreadyClosedException e) {
+            // do nothing
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
