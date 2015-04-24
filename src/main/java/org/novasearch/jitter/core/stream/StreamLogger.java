@@ -14,14 +14,17 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class StreamLogger implements RawStreamListener, Managed {
 
     private static final Logger logger = (Logger) LoggerFactory.getLogger(StreamLogger.class);
-
-    private static int cnt = 0;
     private static final String HOUR_ROLL = ".%d{yyyy-MM-dd-HH, UTC}.gz";
 
+    private AtomicLong counter;
+
     public StreamLogger(String directory) {
+        counter = new AtomicLong();
         LoggerContext logCtx = (LoggerContext) LoggerFactory.getILoggerFactory();
 
         PatternLayoutEncoder standardEncoder = new PatternLayoutEncoder();
@@ -99,7 +102,7 @@ public class StreamLogger implements RawStreamListener, Managed {
 
     @Override
     public void onMessage(String rawString) {
-        cnt++;
+        long cnt = counter.incrementAndGet();
         logger.info(StringUtils.chomp(rawString));
         if (cnt % 1000 == 0) {
             logger.warn(cnt + " messages received.");
