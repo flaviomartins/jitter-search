@@ -58,7 +58,9 @@ public class SearchManager implements Managed {
 
     @Override
     public void stop() throws Exception {
-        reader.close();
+        if (reader != null) {
+            reader.close();
+        }
     }
 
     public List<Document> search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
