@@ -14,6 +14,14 @@ public class JitterSearchConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private boolean live;
+
+    @Valid
+    @NotNull
+    private boolean cors;
+
+    @Valid
+    @NotNull
     private SearchManagerFactory searchManagerFactory = new SearchManagerFactory();
 
     @Valid
@@ -66,5 +74,25 @@ public class JitterSearchConfiguration extends Configuration {
     @JsonProperty("taily")
     public void setTailyManagerFactory(TailyManagerFactory tailyManagerFactory) {
         this.tailyManagerFactory = tailyManagerFactory;
+    }
+
+    @JsonProperty
+    public boolean isCors() {
+        return cors;
+    }
+
+    @JsonProperty
+    public void setCors(boolean cors) {
+        this.cors = cors;
+    }
+
+    @JsonProperty
+    public boolean isLive() {
+        return live;
+    }
+
+    @JsonProperty
+    public void setLive(boolean live) {
+        this.live = live;
     }
 }

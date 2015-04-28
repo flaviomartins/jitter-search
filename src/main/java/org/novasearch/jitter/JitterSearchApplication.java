@@ -55,18 +55,20 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
     @Override
     public void run(JitterSearchConfiguration configuration,
                     Environment environment) throws IOException, InterruptedException {
-        // Enable CORS headers
-        final FilterRegistration.Dynamic cors =
-                environment.servlets().addFilter("CORS", CrossOriginFilter.class);
 
-        // Configure CORS parameters
-        cors.setInitParameter("allowedOrigins", "*");
-        cors.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin");
-        cors.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+        if (configuration.isCors()) {
+            // Enable CORS headers
+            final FilterRegistration.Dynamic cors =
+                    environment.servlets().addFilter("CORS", CrossOriginFilter.class);
 
-        // Add URL mapping
-        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+            // Configure CORS parameters
+            cors.setInitParameter("allowedOrigins", "*");
+            cors.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin");
+            cors.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD");
 
+            // Add URL mapping
+            cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+        }
 
         final SearchManager searchManager = configuration.getSearchManagerFactory().build(environment);
         final SearchManagerHealthCheck searchManagerHealthCheck =
@@ -109,27 +111,28 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final SelectSearchResource selectSearchResource = new SelectSearchResource(searchManager, selectionManager);
         environment.jersey().register(selectSearchResource);
 
+        if (configuration.isLive()) {
+            OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build();
 
-        OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build();
+            final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(selectionManager.getIndexPath(), 1);
+            final StreamLogger userStreamLogger = new StreamLogger("./data/archive/user");
+            final TimelineSseResource timelineSseResource = new TimelineSseResource();
+            final UserStream userStream = new UserStream(oAuth1,
+                    Lists.<UserStreamListener>newArrayList(timelineSseResource, userStreamIndexer),
+                    Lists.<RawStreamListener>newArrayList(userStreamLogger));
+            environment.lifecycle().manage(userStream);
+            environment.lifecycle().manage(userStreamIndexer);
+            environment.jersey().register(timelineSseResource);
 
-        final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(selectionManager.getIndexPath(), 1);
-        final StreamLogger userStreamLogger = new StreamLogger("./data/archive/user");
-        final TimelineSseResource timelineSseResource = new TimelineSseResource();
-        final UserStream userStream = new UserStream(oAuth1,
-                Lists.<UserStreamListener>newArrayList(timelineSseResource, userStreamIndexer),
-                Lists.<RawStreamListener>newArrayList(userStreamLogger));
-        environment.lifecycle().manage(userStream);
-        environment.lifecycle().manage(userStreamIndexer);
-        environment.jersey().register(timelineSseResource);
-
-        final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 1000);
-        final StreamLogger statusStreamLogger = new StreamLogger("./data/archive/sample");
-        final SampleSseResource sampleSseResource = new SampleSseResource();
-        final SampleStream statusStream = new SampleStream(oAuth1,
-                Lists.<StatusListener>newArrayList(sampleSseResource, statusStreamIndexer),
-                Lists.<RawStreamListener>newArrayList(statusStreamLogger));
-        environment.lifecycle().manage(statusStream);
-        environment.lifecycle().manage(statusStreamIndexer);
-        environment.jersey().register(sampleSseResource);
+            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 1000);
+            final StreamLogger statusStreamLogger = new StreamLogger("./data/archive/sample");
+            final SampleSseResource sampleSseResource = new SampleSseResource();
+            final SampleStream statusStream = new SampleStream(oAuth1,
+                    Lists.<StatusListener>newArrayList(sampleSseResource, statusStreamIndexer),
+                    Lists.<RawStreamListener>newArrayList(statusStreamLogger));
+            environment.lifecycle().manage(statusStream);
+            environment.lifecycle().manage(statusStreamIndexer);
+            environment.jersey().register(sampleSseResource);
+        }
     }
 }
