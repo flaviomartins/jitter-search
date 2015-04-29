@@ -125,6 +125,29 @@ public class SelectionManager implements Managed {
         return sortedMap;
     }
 
+    public List<Document> filterTopic(String topicName, List<Document> selectResults) {
+        String topic = topicName.toLowerCase();
+        List<Document> results = new ArrayList<>();
+        for (Document doc : selectResults) {
+            if (topics.get(topic) != null && topics.get(topic).contains(doc.getScreen_name().toLowerCase())) {
+                results.add(doc);
+            }
+        }
+        return results;
+    }
+
+    public List<Document> searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
+        String topic = topicName.toLowerCase();
+        int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
+        Query q = QUERY_PARSER.parse(query);
+
+        TopDocs rs = getSearcher().search(q, numResults);
+
+        List<Document> sorted = getSorted(rs, filterRT);
+
+        return filterTopic(topic, sorted);
+    }
+
     public List<Document> search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
         int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
         Query q = QUERY_PARSER.parse(query);

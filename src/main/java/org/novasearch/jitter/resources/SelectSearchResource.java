@@ -59,6 +59,7 @@ public class SelectSearchResource {
                                  @QueryParam("slimit") Optional<Integer> slimit,
                                  @QueryParam("max_col") Optional<Integer> max_col,
                                  @QueryParam("min_ranks") Optional<Double> min_ranks,
+                                 @QueryParam("topic") Optional<String> topic,
                                  @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -71,6 +72,7 @@ public class SelectSearchResource {
         int s = slimit.or(50);
         int col_max = max_col.or(3);
         double ranks_min = min_ranks.or(1e-5);
+        String topicName = topic.or("");
 
         long startTime = System.currentTimeMillis();
 
@@ -138,6 +140,10 @@ public class SelectSearchResource {
                     break;
                 topics.put(entry.getKey(), entry.getValue());
             }
+        }
+
+        if (topic.isPresent()) {
+            selectResults = selectionManager.filterTopic(topicName, selectResults);
         }
 
         List<Document> searchResults;
