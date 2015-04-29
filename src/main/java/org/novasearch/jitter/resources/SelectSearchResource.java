@@ -149,7 +149,7 @@ public class SelectSearchResource {
         logger.info(String.format("%4dms %s", (endTime - startTime), query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(ranking, methodName, totalHits, 0, searchResults);
+        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(map, methodName, totalHits, 0, searchResults);
         return new SelectSearchResponse(responseHeader, documentsResponse);
     }
 }
