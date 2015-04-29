@@ -56,6 +56,7 @@ public class SelectSearchResource {
                                  @QueryParam("epoch") Optional<String> epoch_range,
                                  @QueryParam("filter_rt") Optional<Boolean> filter_rt,
                                  @QueryParam("method") Optional<String> method,
+                                 @QueryParam("topics") Optional<Boolean> topics,
                                  @QueryParam("slimit") Optional<Integer> slimit,
                                  @QueryParam("max_col") Optional<Integer> max_col,
                                  @QueryParam("min_ranks") Optional<Double> min_ranks,
@@ -68,6 +69,7 @@ public class SelectSearchResource {
         boolean filterRT = filter_rt.or(false);
 
         String methodText = method.or(selectionManager.getMethod());
+        boolean isTopics = topics.or(false);
         int s = slimit.or(50);
         int col_max = max_col.or(3);
         double ranks_min = min_ranks.or(1e-5);
@@ -100,7 +102,12 @@ public class SelectSearchResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(methodText);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> ranking = selectionManager.getRanked(selectionMethod, selectResults);
+        Map<String, Double> ranking;
+        if (isTopics) {
+            ranking = selectionManager.getRankedTopics(selectionMethod, selectResults);
+        } else {
+            ranking = selectionManager.getRanked(selectionMethod, selectResults);
+        }
 
         Map<String, Double> map = new LinkedHashMap<>();
         // rankS has its own limit mechanism

@@ -54,6 +54,7 @@ public class SelectionResource {
                                     @QueryParam("epoch") Optional<String> epoch_range,
                                     @QueryParam("filter_rt") Optional<Boolean> filter_rt,
                                     @QueryParam("method") Optional<String> method,
+                                    @QueryParam("topics") Optional<Boolean> topics,
                                     @QueryParam("max_col") Optional<Integer> max_col,
                                     @QueryParam("min_ranks") Optional<Double> min_ranks,
                                     @Context UriInfo uriInfo)
@@ -65,15 +66,16 @@ public class SelectionResource {
         boolean filterRT = filter_rt.or(false);
 
         String methodText = method.or(selectionManager.getMethod());
+        boolean isTopics = topics.or(false);
         int col_max = max_col.or(3);
         double ranks_min = min_ranks.or(1e-5);
 
         long startTime = System.currentTimeMillis();
 
-        List<Document> results;
+        List<Document> selectResults;
 
         if (max_id.isPresent()) {
-            results = selectionManager.search(query, n, filterRT, maxId);
+            selectResults = selectionManager.search(query, n, filterRT, maxId);
         } else if (epoch_range.isPresent()) {
             long firstEpoch = 0L;
             long lastEpoch = Long.MAX_VALUE;
@@ -88,18 +90,23 @@ public class SelectionResource {
             } catch (Exception e) {
                 // pass
             }
-            results = selectionManager.search(query, n, filterRT, firstEpoch, lastEpoch);
+            selectResults = selectionManager.search(query, n, filterRT, firstEpoch, lastEpoch);
         } else {
-            results = selectionManager.search(query, n, filterRT);
+            selectResults = selectionManager.search(query, n, filterRT);
         }
 
 
-        int totalHits = results != null ? results.size() : 0;
+        int totalHits = selectResults != null ? selectResults.size() : 0;
 
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(methodText);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> ranking = selectionManager.getRanked(selectionMethod, results);
+        Map<String, Double> ranking;
+        if (isTopics) {
+            ranking = selectionManager.getRankedTopics(selectionMethod, selectResults);
+        } else {
+            ranking = selectionManager.getRanked(selectionMethod, selectResults);
+        }
 
         Map<String, Double> map = new LinkedHashMap<>();
         // rankS has its own limit mechanism
@@ -123,7 +130,7 @@ public class SelectionResource {
         logger.info(String.format("%4dms %s", (endTime - startTime), query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(map, methodName, totalHits, 0, results);
+        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(map, methodName, totalHits, 0, selectResults);
         return new SelectionResponse(responseHeader, documentsResponse);
     }
 }
