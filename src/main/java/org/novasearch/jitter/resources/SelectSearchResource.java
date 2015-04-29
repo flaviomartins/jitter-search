@@ -56,7 +56,6 @@ public class SelectSearchResource {
                                  @QueryParam("epoch") Optional<String> epoch_range,
                                  @QueryParam("filter_rt") Optional<Boolean> filter_rt,
                                  @QueryParam("method") Optional<String> method,
-                                 @QueryParam("topics") Optional<Boolean> topics,
                                  @QueryParam("slimit") Optional<Integer> slimit,
                                  @QueryParam("max_col") Optional<Integer> max_col,
                                  @QueryParam("min_ranks") Optional<Double> min_ranks,
@@ -69,7 +68,6 @@ public class SelectSearchResource {
         boolean filterRT = filter_rt.or(false);
 
         String methodText = method.or(selectionManager.getMethod());
-        boolean isTopics = topics.or(false);
         int s = slimit.or(50);
         int col_max = max_col.or(3);
         double ranks_min = min_ranks.or(1e-5);
@@ -102,28 +100,43 @@ public class SelectSearchResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(methodText);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> ranking;
-        if (isTopics) {
-            ranking = selectionManager.getRankedTopics(selectionMethod, selectResults);
-        } else {
-            ranking = selectionManager.getRanked(selectionMethod, selectResults);
-        }
+        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults);
 
-        Map<String, Double> map = new LinkedHashMap<>();
+        Map<String, Double> sources = new LinkedHashMap<>();
         // rankS has its own limit mechanism
         if (RankS.class.getSimpleName().equals(methodName)) {
-            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
+            for (Map.Entry<String, Double> entry : rankedSources.entrySet()) {
                 if (entry.getValue() < ranks_min)
                     break;
-                map.put(entry.getKey(), entry.getValue());
+                sources.put(entry.getKey(), entry.getValue());
             }
         } else { // hard limit
             int i = 0;
-            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
+            for (Map.Entry<String, Double> entry : rankedSources.entrySet()) {
                 i++;
                 if (i > col_max)
                     break;
-                map.put(entry.getKey(), entry.getValue());
+                sources.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults);
+
+        Map<String, Double> topics = new LinkedHashMap<>();
+        // rankS has its own limit mechanism
+        if (RankS.class.getSimpleName().equals(methodName)) {
+            for (Map.Entry<String, Double> entry : rankedTopics.entrySet()) {
+                if (entry.getValue() < ranks_min)
+                    break;
+                topics.put(entry.getKey(), entry.getValue());
+            }
+        } else { // hard limit
+            int i = 0;
+            for (Map.Entry<String, Double> entry : rankedTopics.entrySet()) {
+                i++;
+                if (i > col_max)
+                    break;
+                topics.put(entry.getKey(), entry.getValue());
             }
         }
 
@@ -156,7 +169,7 @@ public class SelectSearchResource {
         logger.info(String.format("%4dms %s", (endTime - startTime), query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(map, methodName, totalHits, 0, searchResults);
+        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(sources, topics, methodName, totalHits, 0, selectResults, searchResults);
         return new SelectSearchResponse(responseHeader, documentsResponse);
     }
 }

@@ -7,21 +7,25 @@ import java.util.Map;
 
 public class SelectDocumentsResponse {
 
-    private Map<String, Double> collections;
+    private Map<String, Double> sources;
+    private Map<String, Double> topics;
     private String method;
     private int numFound;
     private int start;
+    private List<Document> selectDocs;
     private List<Document> docs;
 
     public SelectDocumentsResponse() {
         // Jackson deserialization
     }
 
-    public SelectDocumentsResponse(Map<String, Double> collections, String method, int numFound, int start, List<Document> docs) {
-        this.collections = collections;
+    public SelectDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, List<Document> selectDocs, List<Document> docs) {
+        this.sources = sources;
+        this.topics = topics;
         this.method = method;
         this.numFound = numFound;
         this.start = start;
+        this.selectDocs = selectDocs;
         this.docs = docs;
     }
 
@@ -36,8 +40,8 @@ public class SelectDocumentsResponse {
     }
 
     @JsonProperty
-    public Map<String, Double> getCollections() {
-        return collections;
+    public Map<String, Double> getSources() {
+        return sources;
     }
 
     @JsonProperty
@@ -48,5 +52,15 @@ public class SelectDocumentsResponse {
     @JsonProperty
     public String getMethod() {
         return method;
+    }
+
+    @JsonProperty
+    public Map<String, Double> getTopics() {
+        return topics;
+    }
+
+    @JsonProperty
+    public List<Document> getSelectDocs() {
+        return selectDocs;
     }
 }
