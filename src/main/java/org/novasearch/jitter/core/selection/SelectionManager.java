@@ -1,6 +1,7 @@
 package org.novasearch.jitter.core.selection;
 
 import cc.twittertools.index.IndexStatuses;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.lucene.index.*;
@@ -37,14 +38,18 @@ public class SelectionManager implements Managed {
     private final String indexPath;
     private final String method;
     private final boolean removeDuplicates;
-    private Map<String, List<String>> topics;
+    private Map<String, ImmutableSortedSet<String>> topics;
     private TwitterManager twitterManager;
 
-    public SelectionManager(String indexPath, String method, boolean removeDuplicates, Map<String, List<String>> topics) {
+    public SelectionManager(String indexPath, String method, boolean removeDuplicates, Map<String, Set<String>> topics) {
         this.indexPath = indexPath;
         this.method = method;
         this.removeDuplicates = removeDuplicates;
-        this.topics = topics;
+        TreeMap<String, ImmutableSortedSet<String>> treeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        for (Map.Entry<String, Set<String>> entry : topics.entrySet()) {
+            treeMap.put(entry.getKey(), new ImmutableSortedSet.Builder<>(String.CASE_INSENSITIVE_ORDER).addAll(entry.getValue()).build());
+        }
+        this.topics = treeMap;
     }
 
     @Override
@@ -76,11 +81,11 @@ public class SelectionManager implements Managed {
         return twitterManager;
     }
 
-    public Map<String, List<String>> getTopics() {
+    public Map<String, ImmutableSortedSet<String>> getTopics() {
         return topics;
     }
 
-    public void setTopics(Map<String, List<String>> topics) {
+    public void setTopics(Map<String, ImmutableSortedSet<String>> topics) {
         this.topics = topics;
     }
 
@@ -126,10 +131,9 @@ public class SelectionManager implements Managed {
     }
 
     public List<Document> filterTopic(String topicName, List<Document> selectResults) {
-        String topic = topicName.toLowerCase();
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults) {
-            if (topics.get(topic) != null && topics.get(topic).contains(doc.getScreen_name().toLowerCase())) {
+            if (topics.get(topicName) != null && topics.get(topicName).contains(doc.getScreen_name())) {
                 results.add(doc);
             }
         }
@@ -137,7 +141,6 @@ public class SelectionManager implements Managed {
     }
 
     public List<Document> searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
-        String topic = topicName.toLowerCase();
         int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
         Query q = QUERY_PARSER.parse(query);
 
@@ -145,7 +148,7 @@ public class SelectionManager implements Managed {
 
         List<Document> sorted = getSorted(rs, filterRT);
 
-        return filterTopic(topic, sorted);
+        return filterTopic(topicName, sorted);
     }
 
     public List<Document> search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {

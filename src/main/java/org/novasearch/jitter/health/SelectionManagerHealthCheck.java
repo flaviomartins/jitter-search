@@ -2,17 +2,18 @@ package org.novasearch.jitter.health;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
 import org.novasearch.jitter.core.selection.SelectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class SelectionManagerHealthCheck extends HealthCheck {
+
     private static final Logger logger = LoggerFactory.getLogger(SelectionManagerHealthCheck.class);
 
     private final SelectionManager selectionManager;
@@ -28,14 +29,15 @@ public class SelectionManagerHealthCheck extends HealthCheck {
             return Result.unhealthy("SelectionManager doesn't have any index");
         }
 
-        Map<String, List<String>> topics = selectionManager.getTopics();
-        Set<String> topicAccounts = new TreeSet<>();
-        for (String topic : topics.keySet()) {
-            topicAccounts.addAll(topics.get(topic));
+        Map<String, ImmutableSortedSet<String>> topics = selectionManager.getTopics();
+        Set<String> topicAccounts = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (Map.Entry<String, ImmutableSortedSet<String>> entry : topics.entrySet()) {
+            topicAccounts.addAll(entry.getValue());
         }
 
-        Set<String> twitterAccounts = new TreeSet<>();
-        twitterAccounts.addAll(selectionManager.getTwitterManager().getUsers());
+        ImmutableSortedSet<String> users = selectionManager.getTwitterManager().getUsers();
+        Set<String> twitterAccounts = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        twitterAccounts.addAll(users);
 
         Sets.SetView<String> diff1 = Sets.difference(twitterAccounts, topicAccounts);
         if (diff1.size() > 0) {

@@ -2,6 +2,8 @@ package org.novasearch.jitter.core.twitter.manager;
 
 import cc.twittertools.corpus.data.*;
 import cc.twittertools.index.IndexStatuses;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.FieldInfo;
@@ -16,11 +18,10 @@ import twitter4j.Status;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TwitterManager implements Managed {
+
     final static Logger logger = LoggerFactory.getLogger(TwitterManager.class);
 
     private static final int MAX_USERS_LOOKUP = 100;
@@ -29,7 +30,7 @@ public class TwitterManager implements Managed {
     @SuppressWarnings("FieldCanBeLocal")
     private final String databasePath;
     private final String collectionPath;
-    private final List<String> screenNames;
+    private final ImmutableSortedSet<String> screenNames;
 
     private final Map<String, User> usersMap;
     private final Map<String, UserTimeline> userTimelines;
@@ -37,12 +38,12 @@ public class TwitterManager implements Managed {
     // The factory instance is re-useable and thread safe.
     private final Twitter twitter = TwitterFactory.getSingleton();
 
-    public TwitterManager(String databasePath, String collectionPath, List<String> screenNames) {
+    public TwitterManager(String databasePath, String collectionPath, Set<String> screenNames) {
         this.databasePath = databasePath;
         this.collectionPath = collectionPath;
-        this.screenNames = screenNames;
-        this.usersMap = new LinkedHashMap<>();
-        this.userTimelines = new LinkedHashMap<>();
+        this.screenNames = new ImmutableSortedSet.Builder<>(String.CASE_INSENSITIVE_ORDER).addAll(screenNames).build();
+        this.usersMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        this.userTimelines = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     }
 
     @Override
@@ -55,7 +56,7 @@ public class TwitterManager implements Managed {
 
     }
 
-    public List<String> getUsers() {
+    public ImmutableSortedSet<String> getUsers() {
         return screenNames;
     }
 
@@ -67,11 +68,12 @@ public class TwitterManager implements Managed {
         int remaining = screenNames.size();
         logger.info(remaining + " total users");
 
+        ImmutableList<String> users = ImmutableList.copyOf(screenNames);
         int i = 0;
         do {
             int reqSize = Math.min(remaining, MAX_USERS_LOOKUP);
 
-            List<String> var = screenNames.subList(i, i + reqSize);
+            List<String> var = users.subList(i, i + reqSize);
             String[] names = var.toArray(new String[var.size()]);
             ResponseList<User> userResponseList;
             try {
@@ -79,7 +81,7 @@ public class TwitterManager implements Managed {
                 userResponseList = twitter.lookupUsers(names);
                 for (User user : userResponseList) {
                     logger.info("Got info for " + user.getScreenName() + " : " + user.getName() + " : " + user.getStatusesCount());
-                    usersMap.put(user.getScreenName().toLowerCase(), user);
+                    usersMap.put(user.getScreenName(), user);
                 }
             } catch (TwitterException e) {
                 e.printStackTrace();

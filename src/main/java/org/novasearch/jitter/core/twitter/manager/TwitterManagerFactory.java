@@ -7,7 +7,7 @@ import org.novasearch.jitter.core.twitter.OAuth1Factory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.List;
+import java.util.Set;
 
 public class TwitterManagerFactory {
 
@@ -22,7 +22,7 @@ public class TwitterManagerFactory {
     private String collectionPath;
 
     @NotEmpty
-    private List<String> users;
+    private Set<String> users;
 
     @JsonProperty("oauth")
     public OAuth1Factory getoAuth1Factory() {
@@ -55,12 +55,12 @@ public class TwitterManagerFactory {
     }
 
     @JsonProperty
-    public List<String> getUsers() {
+    public Set<String> getUsers() {
         return users;
     }
 
     @JsonProperty
-    public void setUsers(List<String> users) {
+    public void setUsers(Set<String> users) {
         this.users = users;
     }
 

@@ -6,8 +6,8 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SelectionManagerFactory {
 
@@ -21,7 +21,7 @@ public class SelectionManagerFactory {
     @NotNull
     private boolean removeDuplicates;
 
-    private Map<String, List<String>> topics;
+    private Map<String, Set<String>> topics;
 
     @JsonProperty("index")
     public String getIndex() {
@@ -54,12 +54,12 @@ public class SelectionManagerFactory {
     }
 
     @JsonProperty
-    public Map<String, List<String>> getTopics() {
+    public Map<String, Set<String>> getTopics() {
         return topics;
     }
 
     @JsonProperty
-    public void setTopics(Map<String, List<String>> topics) {
+    public void setTopics(Map<String, Set<String>> topics) {
         this.topics = topics;
     }
 
