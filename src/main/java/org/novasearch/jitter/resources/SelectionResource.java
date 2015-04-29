@@ -48,22 +48,52 @@ public class SelectionResource {
     @GET
     @Timed
     public SelectionResponse search(@QueryParam("q") Optional<String> q,
-                                    @QueryParam("method") Optional<String> method,
+                                    @QueryParam("fq") Optional<String> filterQuery,
                                     @QueryParam("limit") Optional<Integer> limit,
+                                    @QueryParam("max_id") Optional<Long> max_id,
+                                    @QueryParam("epoch") Optional<String> epoch_range,
+                                    @QueryParam("filter_rt") Optional<Boolean> filter_rt,
+                                    @QueryParam("method") Optional<String> method,
                                     @QueryParam("max_col") Optional<Integer> max_col,
                                     @QueryParam("min_ranks") Optional<Double> min_ranks,
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        String methodText = method.or(selectionManager.getMethod());
         int n = limit.or(50);
+        long maxId = max_id.or(-1L);
+        boolean filterRT = filter_rt.or(false);
+
+        String methodText = method.or(selectionManager.getMethod());
         int col_max = max_col.or(3);
         double ranks_min = min_ranks.or(1e-5);
 
         long startTime = System.currentTimeMillis();
 
-        List<Document> results = selectionManager.search(query, n);
+        List<Document> results;
+
+        if (max_id.isPresent()) {
+            results = selectionManager.search(query, n, filterRT, maxId);
+        } else if (epoch_range.isPresent()) {
+            long firstEpoch = 0L;
+            long lastEpoch = Long.MAX_VALUE;
+            String[] epochs = epoch_range.get().split("[: ]");
+            try {
+                if (epochs.length == 1) {
+                    lastEpoch = Long.parseLong(epochs[0]);
+                } else {
+                    firstEpoch = Long.parseLong(epochs[0]);
+                    lastEpoch = Long.parseLong(epochs[1]);
+                }
+            } catch (Exception e) {
+                // pass
+            }
+            results = selectionManager.search(query, n, filterRT, firstEpoch, lastEpoch);
+        } else {
+            results = selectionManager.search(query, n, filterRT);
+        }
+
+
         int totalHits = results != null ? results.size() : 0;
 
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(methodText);

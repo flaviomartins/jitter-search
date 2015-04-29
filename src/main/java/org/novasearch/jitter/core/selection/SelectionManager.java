@@ -6,14 +6,12 @@ import io.dropwizard.lifecycle.Managed;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
+import org.novasearch.jitter.core.search.DocumentComparable;
 import org.novasearch.jitter.core.selection.methods.SelectionMethod;
 import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
 import org.novasearch.jitter.core.twitter.manager.TwitterManager;
@@ -25,7 +23,10 @@ import java.io.IOException;
 import java.util.*;
 
 public class SelectionManager implements Managed {
+
     private static final Logger logger = LoggerFactory.getLogger(SelectionManager.class);
+
+    public static final int MAX_RESULTS = 10000;
 
     private static final QueryParser QUERY_PARSER =
             new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
@@ -124,13 +125,48 @@ public class SelectionManager implements Managed {
         return sortedMap;
     }
 
+    public List<Document> search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
+        int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
+        Query q = QUERY_PARSER.parse(query);
+
+        Filter filter =
+                NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
+        TopDocs rs = getSearcher().search(q, filter, numResults);
+
+        return getSorted(rs, filterRT);
+    }
+
+    public List<Document> search(String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
+        int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
+        Query q = QUERY_PARSER.parse(query);
+
+        Filter filter =
+                NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
+        TopDocs rs = getSearcher().search(q, filter, numResults);
+
+        return getSorted(rs, filterRT);
+    }
+
+    public List<Document> search(String query, int n, boolean filterRT) throws IOException, ParseException {
+        int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
+        Query q = QUERY_PARSER.parse(query);
+
+        TopDocs rs = getSearcher().search(q, numResults);
+
+        return getSorted(rs, filterRT);
+    }
+
     public List<Document> search(String query, int n) throws IOException, ParseException {
         int numResults = n > 10000 ? 10000 : n;
         Query q = QUERY_PARSER.parse(query);
 
-        List<Document> results = Lists.newArrayList();
-
         TopDocs rs = getSearcher().search(q, numResults);
+
+        return getSorted(rs, false);
+    }
+
+    private List<Document> getResults(TopDocs rs) throws IOException {
+        List<Document> results = Lists.newArrayList();
         for (ScoreDoc scoreDoc : rs.scoreDocs) {
             org.apache.lucene.document.Document hit = getSearcher().doc(scoreDoc.doc);
 
@@ -176,6 +212,52 @@ public class SelectionManager implements Managed {
             results.add(p);
         }
         return results;
+    }
+
+    public List<Document> getSorted(TopDocs rs, boolean filterRT) throws IOException {
+        List<Document> results = getResults(rs);
+        return sortResults(results, filterRT);
+    }
+
+    private List<Document> sortResults(List<Document> results, boolean filterRT) {
+        int retweetCount = 0;
+        SortedSet<DocumentComparable> sortedResults = new TreeSet<>();
+        for (Document p : results) {
+            // Throw away retweets.
+            if (filterRT && p.getRetweeted_status_id() != 0) {
+                retweetCount++;
+                continue;
+            }
+
+            sortedResults.add(new DocumentComparable(p));
+        }
+        if (filterRT) {
+            logger.info("filter_rt count: {}", retweetCount);
+        }
+
+        List<Document> docs = Lists.newArrayList();
+
+        int i = 1;
+        int dupliCount = 0;
+        double rsvPrev = 0;
+        for (DocumentComparable sortedResult : sortedResults) {
+            Document result = sortedResult.getDocument();
+            double rsvCurr = result.rsv;
+            if (Math.abs(rsvCurr - rsvPrev) > 0.0000001) {
+                dupliCount = 0;
+            } else {
+                dupliCount++;
+                rsvCurr = rsvCurr - 0.000001 / results.size() * dupliCount;
+            }
+            // FIXME: what is this?
+            result.rsv = rsvCurr;
+
+            docs.add(new Document(result));
+            i++;
+            rsvPrev = result.rsv;
+        }
+
+        return docs;
     }
 
     public void index() throws IOException {

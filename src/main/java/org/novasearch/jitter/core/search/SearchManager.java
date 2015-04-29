@@ -27,6 +27,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class SearchManager implements Managed {
+
     private static final Logger logger = LoggerFactory.getLogger(SearchManager.class);
 
     public static final int MAX_RESULTS = 10000;
@@ -92,6 +93,15 @@ public class SearchManager implements Managed {
         TopDocs rs = getSearcher().search(q, numResults);
 
         return getSorted(rs, filterRT);
+    }
+
+    public List<Document> search(String query, int n) throws IOException, ParseException {
+        int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
+        Query q = QUERY_PARSER.parse(query);
+
+        TopDocs rs = getSearcher().search(q, numResults);
+
+        return getSorted(rs, false);
     }
 
     private List<Document> getResults(TopDocs rs) throws IOException {

@@ -67,8 +67,12 @@ public class SearchResource {
             long lastEpoch = Long.MAX_VALUE;
             String[] epochs = epoch_range.get().split("[: ]");
             try {
-                firstEpoch = Long.parseLong(epochs[0]);
-                lastEpoch = Long.parseLong(epochs[1]);
+                if (epochs.length == 1) {
+                    lastEpoch = Long.parseLong(epochs[0]);
+                } else {
+                    firstEpoch = Long.parseLong(epochs[0]);
+                    lastEpoch = Long.parseLong(epochs[1]);
+                }
             } catch (Exception e) {
                 // pass
             }

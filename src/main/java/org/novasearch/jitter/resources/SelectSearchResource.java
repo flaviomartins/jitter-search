@@ -8,6 +8,7 @@ import org.novasearch.jitter.api.ResponseHeader;
 import org.novasearch.jitter.api.search.*;
 import org.novasearch.jitter.core.search.SearchManager;
 import org.novasearch.jitter.core.selection.SelectionManager;
+import org.novasearch.jitter.core.selection.methods.RankS;
 import org.novasearch.jitter.core.selection.methods.SelectionMethod;
 import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -55,6 +57,8 @@ public class SelectSearchResource {
                                  @QueryParam("filter_rt") Optional<Boolean> filter_rt,
                                  @QueryParam("method") Optional<String> method,
                                  @QueryParam("slimit") Optional<Integer> slimit,
+                                 @QueryParam("max_col") Optional<Integer> max_col,
+                                 @QueryParam("min_ranks") Optional<Double> min_ranks,
                                  @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -62,17 +66,59 @@ public class SelectSearchResource {
         int n = limit.or(30);
         long maxId = max_id.or(-1L);
         boolean filterRT = filter_rt.or(false);
+
         String methodText = method.or(selectionManager.getMethod());
         int s = slimit.or(50);
+        int col_max = max_col.or(3);
+        double ranks_min = min_ranks.or(1e-5);
 
         long startTime = System.currentTimeMillis();
 
-        List<Document> selectResults = selectionManager.search(query, s);
+        List<Document> selectResults;
+
+        if (max_id.isPresent()) {
+            selectResults = selectionManager.search(query, s, filterRT, maxId);
+        } else if (epoch_range.isPresent()) {
+            long firstEpoch = 0L;
+            long lastEpoch = Long.MAX_VALUE;
+            String[] epochs = epoch_range.get().split("[: ]");
+            try {
+                if (epochs.length == 1) {
+                    lastEpoch = Long.parseLong(epochs[0]);
+                } else {
+                    firstEpoch = Long.parseLong(epochs[0]);
+                    lastEpoch = Long.parseLong(epochs[1]);
+                }
+            } catch (Exception e) {
+                // pass
+            }
+            selectResults = selectionManager.search(query, s, filterRT, firstEpoch, lastEpoch);
+        } else {
+            selectResults = selectionManager.search(query, s, filterRT);
+        }
 
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(methodText);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> ranked = selectionManager.getRankedTopics(selectionMethod, selectResults);
+        Map<String, Double> ranking = selectionManager.getRanked(selectionMethod, selectResults);
+
+        Map<String, Double> map = new LinkedHashMap<>();
+        // rankS has its own limit mechanism
+        if (RankS.class.getSimpleName().equals(methodName)) {
+            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
+                if (entry.getValue() < ranks_min)
+                    break;
+                map.put(entry.getKey(), entry.getValue());
+            }
+        } else { // hard limit
+            int i = 0;
+            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
+                i++;
+                if (i > col_max)
+                    break;
+                map.put(entry.getKey(), entry.getValue());
+            }
+        }
 
         List<Document> searchResults;
 
@@ -83,8 +129,12 @@ public class SelectSearchResource {
             long lastEpoch = Long.MAX_VALUE;
             String[] epochs = epoch_range.get().split("[: ]");
             try {
-                firstEpoch = Long.parseLong(epochs[0]);
-                lastEpoch = Long.parseLong(epochs[1]);
+                if (epochs.length == 1) {
+                    lastEpoch = Long.parseLong(epochs[0]);
+                } else {
+                    firstEpoch = Long.parseLong(epochs[0]);
+                    lastEpoch = Long.parseLong(epochs[1]);
+                }
             } catch (Exception e) {
                 // pass
             }
@@ -99,7 +149,7 @@ public class SelectSearchResource {
         logger.info(String.format("%4dms %s", (endTime - startTime), query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(ranked, methodName, totalHits, 0, searchResults);
+        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(ranking, methodName, totalHits, 0, searchResults);
         return new SelectSearchResponse(responseHeader, documentsResponse);
     }
 }
