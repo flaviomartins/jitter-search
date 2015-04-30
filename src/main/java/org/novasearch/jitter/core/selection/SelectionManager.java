@@ -157,7 +157,7 @@ public class SelectionManager implements Managed {
 
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
-        TopDocs rs = getSearcher().search(q, filter, numResults, new Sort(new SortField(IndexStatuses.StatusField.EPOCH.name, SortField.Type.LONG)));
+        TopDocs rs = getSearcher().search(q, filter, numResults, new Sort(new SortField(IndexStatuses.StatusField.EPOCH.name, SortField.Type.LONG)), true, true);
 
         return getSorted(rs, filterRT);
     }
@@ -168,7 +168,7 @@ public class SelectionManager implements Managed {
 
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
-        TopDocs rs = getSearcher().search(q, filter, numResults, new Sort(new SortField(IndexStatuses.StatusField.EPOCH.name, SortField.Type.LONG)));
+        TopDocs rs = getSearcher().search(q, filter, numResults, new Sort(new SortField(IndexStatuses.StatusField.EPOCH.name, SortField.Type.LONG)), true, true);
 
         return getSorted(rs, filterRT);
     }
@@ -177,7 +177,7 @@ public class SelectionManager implements Managed {
         int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
         Query q = QUERY_PARSER.parse(query);
 
-        TopDocs rs = getSearcher().search(q, numResults, new Sort(new SortField(IndexStatuses.StatusField.EPOCH.name, SortField.Type.LONG)));
+        TopDocs rs = getSearcher().search(q, null, numResults, new Sort(new SortField(IndexStatuses.StatusField.EPOCH.name, SortField.Type.LONG)), true, true);
 
         return getSorted(rs, filterRT);
     }
@@ -186,7 +186,7 @@ public class SelectionManager implements Managed {
         int numResults = n > 10000 ? 10000 : n;
         Query q = QUERY_PARSER.parse(query);
 
-        TopDocs rs = getSearcher().search(q, numResults, new Sort(new SortField(IndexStatuses.StatusField.EPOCH.name, SortField.Type.LONG)));
+        TopDocs rs = getSearcher().search(q, null, numResults, new Sort(new SortField(IndexStatuses.StatusField.EPOCH.name, SortField.Type.LONG)), true, true);
 
         return getSorted(rs, false);
     }
