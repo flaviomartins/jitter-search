@@ -8,13 +8,13 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.core.search.DocumentComparable;
 import org.novasearch.jitter.core.selection.methods.SelectionMethod;
 import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
+import org.novasearch.jitter.core.similarities.IDFSimilarity;
 import org.novasearch.jitter.core.twitter.manager.TwitterManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -296,14 +296,14 @@ public class SelectionManager implements Managed {
             if (reader == null) {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
                 searcher = new IndexSearcher(reader);
-                searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
+                searcher.setSimilarity(new IDFSimilarity());
             } else {
                 DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
                 if (newReader != null) {
                     reader.close();
                     reader = newReader;
                     searcher = new IndexSearcher(reader);
-                    searcher.setSimilarity(new LMDirichletSimilarity(2500.0f));
+                    searcher.setSimilarity(new IDFSimilarity());
                 }
             }
         } catch (IndexNotFoundException e) {
