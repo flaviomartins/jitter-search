@@ -4,13 +4,18 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.ResponseHeader;
 import org.novasearch.jitter.api.search.*;
+import org.novasearch.jitter.core.analysis.StopperTweetAnalyzer;
+import org.novasearch.jitter.core.document.FeatureVector;
+import org.novasearch.jitter.core.feedback.FeedbackRelevanceModel;
 import org.novasearch.jitter.core.search.SearchManager;
 import org.novasearch.jitter.core.selection.SelectionManager;
 import org.novasearch.jitter.core.selection.methods.RankS;
 import org.novasearch.jitter.core.selection.methods.SelectionMethod;
 import org.novasearch.jitter.core.selection.methods.SelectionMethodFactory;
+import org.novasearch.jitter.core.utils.AnalyzerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +29,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/ss")
@@ -144,6 +147,41 @@ public class SelectSearchResource {
 
         if (topic.isPresent()) {
             selectResults = selectionManager.filterTopic(topicName, selectResults);
+
+
+            FeatureVector queryFV = new FeatureVector(null);
+            Iterator<String> qTerms = AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query).iterator();
+            while (qTerms.hasNext()) {
+                String term = qTerms.next();
+                queryFV.addTerm(term.toLowerCase(), 1.0);
+            }
+            queryFV.normalizeToOne();
+
+            // cap results
+            List<Document> results = selectResults.subList(0, Math.min(50, selectResults.size()));
+
+            FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
+            fb.setOriginalQueryFV(queryFV);
+            fb.setRes(results);
+            fb.build(null);
+
+            FeatureVector fbVector = fb.asFeatureVector();
+            fbVector.pruneToSize(20);
+            fbVector.normalizeToOne();
+            fbVector = FeatureVector.interpolate(queryFV, fbVector, 0.5); // ORIG_QUERY_WEIGHT
+
+            logger.info("Feature Vector for topic {}:\n{}", topicName, fbVector.toString());
+
+            StringBuilder builder = new StringBuilder();
+            Iterator<String> terms = fbVector.iterator();
+            while (terms.hasNext()) {
+                String term = terms.next();
+                double prob = fbVector.getFeaturetWeight(term);
+                if (prob < 0)
+                    continue;
+                builder.append('"').append(term).append('"').append("^").append(prob).append(" ");
+            }
+            query = builder.toString().trim();
         }
 
         List<Document> searchResults;
