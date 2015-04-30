@@ -9,7 +9,7 @@ import com.twitter.hbc.httpclient.BasicClient;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
 import io.dropwizard.lifecycle.Managed;
-import org.novasearch.jitter.twitter4j.CustomTwitter4jUserstreamClient;
+import org.novasearch.jitter.core.twitter4j.CustomTwitter4jUserstreamClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.*;

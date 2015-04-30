@@ -1,4 +1,4 @@
-package org.novasearch.jitter.utils;
+package org.novasearch.jitter.core.utils;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;

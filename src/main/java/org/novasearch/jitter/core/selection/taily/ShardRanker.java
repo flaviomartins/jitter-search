@@ -2,7 +2,7 @@ package org.novasearch.jitter.core.selection.taily;
 
 import cc.twittertools.index.IndexStatuses;
 import org.apache.commons.math3.distribution.GammaDistribution;
-import org.novasearch.jitter.utils.AnalyzerUtils;
+import org.novasearch.jitter.core.utils.AnalyzerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

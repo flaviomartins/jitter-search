@@ -1,4 +1,4 @@
-package org.novasearch.jitter.twitter4j;
+package org.novasearch.jitter.core.twitter4j;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
