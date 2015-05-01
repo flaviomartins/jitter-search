@@ -7,7 +7,12 @@ public class IDFSimilarity extends DefaultSimilarity {
 
     @Override
     public float lengthNorm(FieldInvertState state) {
-        return 1;
+        final int numTerms;
+        if (discountOverlaps)
+            numTerms = state.getLength() - state.getNumOverlap();
+        else
+            numTerms = state.getLength();
+        return state.getBoost() * (numTerms > 0 ? 1.0f : 0.0f);
     }
 
     @Override
