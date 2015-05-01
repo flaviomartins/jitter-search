@@ -17,7 +17,7 @@ public class IDFSimilarity extends DefaultSimilarity {
 
     @Override
     public float tf(float freq) {
-        return freq > 1 ? 1 : 0;
+        return freq > 0 ? 1.0f : 0.0f;
     }
 
     @Override
