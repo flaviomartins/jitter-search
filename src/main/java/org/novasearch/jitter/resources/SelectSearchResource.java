@@ -153,6 +153,8 @@ public class SelectSearchResource {
             Iterator<String> qTerms = AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query).iterator();
             while (qTerms.hasNext()) {
                 String term = qTerms.next();
+                if ("AND".equals(term) || "OR".equals(term))
+                    continue;
                 queryFV.addTerm(term.toLowerCase(), 1.0);
             }
             queryFV.normalizeToOne();
