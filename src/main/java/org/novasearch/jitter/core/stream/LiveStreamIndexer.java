@@ -98,7 +98,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
 
             writer.addDocument(doc);
             if (counter.get() % commitEvery == 0) {
-                logger.info("{} {} statuses indexed", indexPath, counter.get());
+                logger.debug("{} {} statuses indexed", indexPath, counter.get());
                 writer.commit();
             }
         } catch (AlreadyClosedException e) {
