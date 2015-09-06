@@ -16,6 +16,10 @@ public class JitterSearchConfiguration extends Configuration {
     @NotNull
     private boolean live;
 
+    private String statusStreamLogPath;
+
+    private String userStreamLogPath;
+
     @Valid
     @NotNull
     private boolean cors;
@@ -94,5 +98,25 @@ public class JitterSearchConfiguration extends Configuration {
     @JsonProperty
     public void setLive(boolean live) {
         this.live = live;
+    }
+
+    @JsonProperty("status_log_path")
+    public String getStatusStreamLogPath() {
+        return statusStreamLogPath;
+    }
+
+    @JsonProperty("status_log_path")
+    public void setStatusStreamLogPath(String statusStreamLogPath) {
+        this.statusStreamLogPath = statusStreamLogPath;
+    }
+
+    @JsonProperty("user_log_path")
+    public String getUserStreamLogPath() {
+        return userStreamLogPath;
+    }
+
+    @JsonProperty("user_log_path")
+    public void setUserStreamLogPath(String userStreamLogPath) {
+        this.userStreamLogPath = userStreamLogPath;
     }
 }
