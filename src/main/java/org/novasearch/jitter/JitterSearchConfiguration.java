@@ -6,6 +6,7 @@ import org.novasearch.jitter.core.search.SearchManagerFactory;
 import org.novasearch.jitter.core.selection.SelectionManagerFactory;
 import org.novasearch.jitter.core.selection.taily.TailyManagerFactory;
 import org.novasearch.jitter.core.twitter.manager.TwitterManagerFactory;
+import org.novasearch.jitter.core.twittertools.api.TrecMicroblogAPIWrapperFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -39,6 +40,10 @@ public class JitterSearchConfiguration extends Configuration {
     @Valid
     @NotNull
     private TailyManagerFactory tailyManagerFactory = new TailyManagerFactory();
+
+    @Valid
+    @NotNull
+    private TrecMicroblogAPIWrapperFactory trecMicroblogAPIWrapperFactory = new TrecMicroblogAPIWrapperFactory();
 
     @JsonProperty("search")
     public SearchManagerFactory getSearchManagerFactory() {
@@ -78,6 +83,16 @@ public class JitterSearchConfiguration extends Configuration {
     @JsonProperty("taily")
     public void setTailyManagerFactory(TailyManagerFactory tailyManagerFactory) {
         this.tailyManagerFactory = tailyManagerFactory;
+    }
+
+    @JsonProperty("twittertools")
+    public TrecMicroblogAPIWrapperFactory getTrecMicroblogAPIWrapperFactory() {
+        return trecMicroblogAPIWrapperFactory;
+    }
+
+    @JsonProperty("twittertools")
+    public void setTrecMicroblogAPIWrapperFactory(TrecMicroblogAPIWrapperFactory trecMicroblogAPIWrapperFactory) {
+        this.trecMicroblogAPIWrapperFactory = trecMicroblogAPIWrapperFactory;
     }
 
     @JsonProperty
