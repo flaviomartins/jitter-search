@@ -112,6 +112,9 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final SelectSearchResource selectSearchResource = new SelectSearchResource(searchManager, selectionManager);
         environment.jersey().register(selectSearchResource);
 
+        final MultiFeedbackResource multiFeedbackResource = new MultiFeedbackResource(searchManager, selectionManager);
+        environment.jersey().register(multiFeedbackResource);
+
         if (configuration.isLive()) {
             OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build();
 
