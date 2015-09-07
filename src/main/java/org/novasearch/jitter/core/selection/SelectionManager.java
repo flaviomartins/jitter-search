@@ -140,6 +140,18 @@ public class SelectionManager implements Managed {
         return results;
     }
 
+    public List<Document> filterTopics(Set<String> topicNames, List<Document> selectResults) {
+        List<Document> results = new ArrayList<>();
+        for (Document doc : selectResults) {
+            for (String topicName: topicNames) {
+                if (topics.get(topicName) != null && topics.get(topicName).contains(doc.getScreen_name())) {
+                    results.add(doc);
+                }
+            }
+        }
+        return results;
+    }
+
     public List<Document> searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
         int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
         Query q = QUERY_PARSER.parse(query);

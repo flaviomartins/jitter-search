@@ -1,6 +1,7 @@
 package org.novasearch.jitter.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -150,8 +151,8 @@ public class MultiFeedbackResource {
             }
         }
 
-        if (topic.isPresent()) {
-            selectResults = selectionManager.filterTopic(topicName, selectResults);
+        if (topics.size() > 0) {
+            selectResults = selectionManager.filterTopics(topics.keySet(), selectResults);
 
 
             FeatureVector queryFV = new FeatureVector(null);
@@ -177,7 +178,7 @@ public class MultiFeedbackResource {
             fbVector.normalizeToOne();
             fbVector = FeatureVector.interpolate(queryFV, fbVector, 0.5); // ORIG_QUERY_WEIGHT
 
-            logger.info("Feature Vector for topic {}:\n{}", topicName, fbVector.toString());
+            logger.info("Feature Vector for topics {}:\n{}", Joiner.on(", ").join(topics.keySet()), fbVector.toString());
 
             StringBuilder builder = new StringBuilder();
             Iterator<String> terms = fbVector.iterator();
