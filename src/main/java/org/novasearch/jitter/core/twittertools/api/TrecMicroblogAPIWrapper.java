@@ -3,7 +3,9 @@ package org.novasearch.jitter.core.twittertools.api;
 import cc.twittertools.search.api.TrecSearchThriftClient;
 import cc.twittertools.thrift.gen.TResult;
 import com.google.common.base.Preconditions;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
@@ -36,8 +38,13 @@ public class TrecMicroblogAPIWrapper {
             createDatabase();
     }
 
+    public List<TResultWrapper> search(String query, long maxId, int numResults)  throws TException,
+            IOException, ClassNotFoundException {
+        return search(query, maxId, numResults, false);
+    }
+
     @SuppressWarnings("unchecked")
-    public List<TResultWrapper> search(String query, long maxId, int numResults) throws TException,
+    public List<TResultWrapper> search(String query, long maxId, int numResults, boolean filterRT) throws TException,
             IOException, ClassNotFoundException {
         String cacheFileName = DigestUtils.shaHex(query + maxId + DEFAULT_MAX_NUM_RESULTS);
         File f = new File(cacheDir + cacheFileName);
@@ -71,9 +78,23 @@ public class TrecMicroblogAPIWrapper {
 
         // Convert to custom class
         Iterator<TResult> resultIt = results.iterator();
+
+        LongOpenHashSet seenSet = new LongOpenHashSet();
         List<TResultWrapper> updatedResults = new ArrayList<TResultWrapper>(results.size());
         while (resultIt.hasNext()) {
             TResult origResult = resultIt.next();
+
+            if (origResult.getRetweeted_status_id() != 0)
+                continue;
+
+            if (StringUtils.startsWithIgnoreCase(origResult.getText(), "RT "))
+                continue;
+
+            if (seenSet.contains(origResult.getId()))
+                continue;
+
+            seenSet.add(origResult.getId());
+
             TResultWrapper updatedResult = new TResultWrapper(origResult);
             updatedResults.add(updatedResult);
         }

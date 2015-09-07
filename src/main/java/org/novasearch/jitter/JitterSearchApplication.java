@@ -15,6 +15,7 @@ import org.novasearch.jitter.core.stream.StreamLogger;
 import org.novasearch.jitter.core.stream.UserStream;
 import org.novasearch.jitter.core.twitter.OAuth1;
 import org.novasearch.jitter.core.twitter.manager.TwitterManager;
+import org.novasearch.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import org.novasearch.jitter.health.SearchManagerHealthCheck;
 import org.novasearch.jitter.health.SelectionManagerHealthCheck;
 import org.novasearch.jitter.health.TailyManagerHealthCheck;
@@ -114,6 +115,10 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         final MultiFeedbackResource multiFeedbackResource = new MultiFeedbackResource(searchManager, selectionManager);
         environment.jersey().register(multiFeedbackResource);
+
+        final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper = configuration.getTrecMicroblogAPIWrapperFactory().build(environment);
+        final TrecMultiFeedbackResource trecMultiFeedbackResource = new TrecMultiFeedbackResource(trecMicroblogAPIWrapper, selectionManager);
+        environment.jersey().register(trecMultiFeedbackResource);
 
         if (configuration.isLive()) {
             OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getoAuth1Factory().build();

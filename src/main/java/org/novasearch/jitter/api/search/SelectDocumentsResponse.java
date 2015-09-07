@@ -13,13 +13,13 @@ public class SelectDocumentsResponse {
     private int numFound;
     private int start;
     private List<Document> selectDocs;
-    private List<Document> docs;
+    private List<?> docs;
 
     public SelectDocumentsResponse() {
         // Jackson deserialization
     }
 
-    public SelectDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, List<Document> selectDocs, List<Document> docs) {
+    public SelectDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, List<Document> selectDocs, List<?> docs) {
         this.sources = sources;
         this.topics = topics;
         this.method = method;
@@ -45,7 +45,7 @@ public class SelectDocumentsResponse {
     }
 
     @JsonProperty
-    public List<Document> getDocs() {
+    public List<?> getDocs() {
         return docs;
     }
 
