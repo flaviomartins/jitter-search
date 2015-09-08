@@ -8,6 +8,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
+import org.novasearch.jitter.core.utils.Stopper;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -25,6 +26,7 @@ public class TrecMicroblogAPIWrapper {
     private final String cacheDir;
     private final boolean useCache;
     private final String collectDb;
+    private Stopper stopper;
 
     public TrecMicroblogAPIWrapper(String host, int port, @Nullable String group,
                                    @Nullable String token, @Nullable String cacheDir, boolean useCache, @Nullable String collectDb) {
@@ -36,6 +38,19 @@ public class TrecMicroblogAPIWrapper {
         this.collectDb = collectDb;
         if (collectDb != null)
             createDatabase();
+    }
+
+    public TrecMicroblogAPIWrapper(String host, int port, String group, String token, String cacheDir, boolean useCache, String collectDb, String stopwords) {
+        this(host, port, group, token, cacheDir, useCache, collectDb);
+        stopper = new Stopper(stopwords);
+    }
+
+    public Stopper getStopper() {
+        return stopper;
+    }
+
+    public void setStopper(Stopper stopper) {
+        this.stopper = stopper;
     }
 
     public List<TResultWrapper> search(String query, long maxId, int numResults)  throws TException,

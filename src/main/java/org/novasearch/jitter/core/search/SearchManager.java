@@ -16,6 +16,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.novasearch.jitter.api.search.Document;
 import org.novasearch.jitter.core.similarities.IDFSimilarity;
+import org.novasearch.jitter.core.utils.Stopper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,7 @@ public class SearchManager implements Managed {
 
     private final String indexPath;
     private final String databasePath;
+    private Stopper stopper;
 
     private DirectoryReader reader;
     private IndexSearcher searcher;
@@ -45,6 +47,11 @@ public class SearchManager implements Managed {
     public SearchManager(String indexPath, String databasePath) {
         this.indexPath = indexPath;
         this.databasePath = databasePath;
+    }
+
+    public SearchManager(String indexPath, String databasePath, String stopwords) {
+        this(indexPath, databasePath);
+        stopper = new Stopper(stopwords);
     }
 
     @Override
@@ -62,6 +69,14 @@ public class SearchManager implements Managed {
         if (reader != null) {
             reader.close();
         }
+    }
+
+    public Stopper getStopper() {
+        return stopper;
+    }
+
+    public void setStopper(Stopper stopper) {
+        this.stopper = stopper;
     }
 
     public List<Document> search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {

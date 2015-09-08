@@ -171,7 +171,7 @@ public class MultiFeedbackResource {
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
             fb.setRes(results);
-            fb.build(null);
+            fb.build(searchManager.getStopper());
 
             FeatureVector fbVector = fb.asFeatureVector();
             fbVector.pruneToSize(20);

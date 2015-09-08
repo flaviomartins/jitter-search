@@ -173,7 +173,7 @@ public class TrecMultiFeedbackResource {
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
             fb.setRes(results);
-            fb.build(null);
+            fb.build(trecMicroblogAPIWrapper.getStopper());
 
             FeatureVector fbVector = fb.asFeatureVector();
             fbVector.pruneToSize(20);

@@ -12,6 +12,9 @@ public class SearchManagerFactory {
     @NotEmpty
     private String databasePath;
 
+    @NotEmpty
+    private String stopwords;
+
     @JsonProperty("index")
     public String getIndexPath() {
         return indexPath;
@@ -32,8 +35,18 @@ public class SearchManagerFactory {
         this.databasePath = databasePath;
     }
 
+    @JsonProperty("stopwords")
+    public String getStopwords() {
+        return stopwords;
+    }
+
+    @JsonProperty("stopwords")
+    public void setStopwords(String stopwords) {
+        this.stopwords = stopwords;
+    }
+
     public SearchManager build(Environment environment) {
-        final SearchManager searchManager = new SearchManager(indexPath, databasePath);
+        final SearchManager searchManager = new SearchManager(indexPath, databasePath, stopwords);
         environment.lifecycle().manage(searchManager);
         return searchManager;
     }
