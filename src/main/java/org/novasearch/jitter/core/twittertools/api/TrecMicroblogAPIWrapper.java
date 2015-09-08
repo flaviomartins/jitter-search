@@ -116,7 +116,7 @@ public class TrecMicroblogAPIWrapper {
             updatedResults.add(updatedResult);
         }
 
-        return updatedResults.subList(0, Math.min(results.size(), numResults));
+        return updatedResults.subList(0, Math.min(updatedResults.size(), numResults));
     }
 
     private void createDatabase() {
