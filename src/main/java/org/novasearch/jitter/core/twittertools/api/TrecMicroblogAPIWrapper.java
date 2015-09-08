@@ -99,11 +99,13 @@ public class TrecMicroblogAPIWrapper {
         while (resultIt.hasNext()) {
             TResult origResult = resultIt.next();
 
-            if (origResult.getRetweeted_status_id() != 0)
-                continue;
+            if (filterRT) {
+                if (origResult.getRetweeted_status_id() != 0)
+                    continue;
 
-            if (StringUtils.startsWithIgnoreCase(origResult.getText(), "RT "))
-                continue;
+                if (StringUtils.startsWithIgnoreCase(origResult.getText(), "RT "))
+                    continue;
+            }
 
             if (seenSet.contains(origResult.getId()))
                 continue;
