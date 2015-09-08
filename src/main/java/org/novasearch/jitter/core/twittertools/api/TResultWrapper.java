@@ -3,11 +3,15 @@ package org.novasearch.jitter.core.twittertools.api;
 import cc.twittertools.thrift.gen.TResult;
 import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.learning.DenseDataPoint;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"setId", "setRsv", "setScreen_name", "setEpoch", "setText",
+        "setFollowers_count", "setStatuses_count", "setLang", "setIn_reply_to_status_id", "setIn_reply_to_user_id",
+        "setRetweeted_status_id", "setRetweeted_user_id", "setRetweeted_count", "features", "properties", "dataPoint"})
 public class TResultWrapper extends TResult {
     public ArrayList<Float> features;
     public Map<String, Float> properties;
