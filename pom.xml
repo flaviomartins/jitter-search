@@ -29,7 +29,7 @@
         <!-- Guava 18.0 is required in Dropwizard 0.8.4 -->
         <guava.version>18.0</guava.version>
         <lucene.version>4.3.1</lucene.version>
-        <twitter4j.version>4.0.3</twitter4j.version>
+        <twitter4j.version>4.0.4</twitter4j.version>
         <hbc.version>2.2.0</hbc.version>
         <twitter-text.version>1.13.0</twitter-text.version>
         <twittertools.version>1.4.3</twittertools.version>
