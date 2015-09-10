@@ -1,6 +1,5 @@
 logs/
 target/
-.idea/
 *.iml
 jitter-search.yaml
 twitter4j.properties
