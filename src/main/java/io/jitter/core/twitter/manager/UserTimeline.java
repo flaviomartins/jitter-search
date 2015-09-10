@@ -34,7 +34,7 @@ public class UserTimeline {
         this.statuses = statuses;
     }
 
-    public void add(Status status) {
+    private void add(Status status) {
         statuses.put(status.getId(), status);
         if (latestId < status.getId()) {
             latestId = status.getId();

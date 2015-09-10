@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class CRCSISR extends SelectionMethod {
 
-    protected CRCSISR() {
+    CRCSISR() {
     }
 
     @Override

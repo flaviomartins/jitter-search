@@ -62,6 +62,10 @@ public class ShardRanker {
         }
     }
 
+    public String getIndexPath() {
+        return indexPath;
+    }
+
     public void close() {
         for (FeatureStore store : _stores) {
             if (store != null) {

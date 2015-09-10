@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class CRCSLIN extends SelectionMethod {
 
-    protected CRCSLIN() {
+    CRCSLIN() {
     }
 
     @Override

@@ -17,8 +17,8 @@ public class FeatureStore {
     public static final String SIZE_FEAT_SUFFIX = "#d";
     public static final String TERM_SIZE_FEAT_SUFFIX = "#t";
 
-    public static final String FREQ_DB_NAME = "freq.db";
-    public static final String INFREQ_DB_NAME = "infreq.db";
+    private static final String FREQ_DB_NAME = "freq.db";
+    private static final String INFREQ_DB_NAME = "infreq.db";
     public static final int FREQUENT_TERMS = 1000; // tf required for a term to be considered "frequent"
 
     private Environment dbEnv;

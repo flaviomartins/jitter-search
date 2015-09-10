@@ -23,7 +23,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class SampleStream implements Managed {
 
-    final static Logger logger = LoggerFactory.getLogger(SampleStream.class);
+    private final static Logger logger = LoggerFactory.getLogger(SampleStream.class);
 
     private final Authentication auth;
     private final List<? extends StatusListener> statusListeners;

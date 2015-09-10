@@ -16,6 +16,8 @@ public class TailyManagerHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() throws Exception {
+        if (tailyManager == null)
+            return Result.unhealthy("TailyManager is null.");
         return Result.healthy();
     }
 }

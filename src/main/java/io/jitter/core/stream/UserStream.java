@@ -19,7 +19,7 @@ import java.util.concurrent.*;
 
 public class UserStream implements Managed {
 
-    final static Logger logger = LoggerFactory.getLogger(UserStream.class);
+    private final static Logger logger = LoggerFactory.getLogger(UserStream.class);
 
     private final Authentication auth;
     private final List<UserStreamListener> userStreamListeners;

@@ -46,7 +46,7 @@ public abstract class FeedbackModel {
         return toString(features.size());
     }
 
-    public String toString(int k) {
+    private String toString(int k) {
         DecimalFormat format = new DecimalFormat("#.#####################");
 
 

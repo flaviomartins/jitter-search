@@ -6,10 +6,10 @@ import java.util.*;
 
 public abstract class SelectionMethod {
 
-    protected SelectionMethod() {
+    SelectionMethod() {
     }
 
-    public Map<String, Double> getCounts(List<Document> results) {
+    Map<String, Double> getCounts(List<Document> results) {
         Map<String, Double> counts = new HashMap<>();
         for (Document result : results) {
             String screenName = result.getScreen_name();
@@ -28,6 +28,6 @@ public abstract class SelectionMethod {
     }
 
 
-    public abstract Map<String, Double> rank(List<Document> results);
+    protected abstract Map<String, Double> rank(List<Document> results);
 
 }

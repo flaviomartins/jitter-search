@@ -252,7 +252,7 @@ public class SelectionManager implements Managed {
         return results;
     }
 
-    public List<Document> getSorted(TopDocs rs, boolean filterRT) throws IOException {
+    private List<Document> getSorted(TopDocs rs, boolean filterRT) throws IOException {
         List<Document> results = getResults(rs);
         return sortResults(results, filterRT);
     }
@@ -303,7 +303,7 @@ public class SelectionManager implements Managed {
         twitterManager.index(indexPath, removeDuplicates);
     }
 
-    public IndexSearcher getSearcher() throws IOException {
+    private IndexSearcher getSearcher() throws IOException {
         try {
             if (reader == null) {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));

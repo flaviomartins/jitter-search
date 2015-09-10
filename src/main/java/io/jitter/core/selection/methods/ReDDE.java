@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class ReDDE extends SelectionMethod {
 
-    protected ReDDE() {
+    ReDDE() {
     }
 
     // TODO: implement ReDDE

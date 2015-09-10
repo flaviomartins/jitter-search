@@ -13,8 +13,8 @@ import java.util.Map;
         "setFollowers_count", "setStatuses_count", "setLang", "setIn_reply_to_status_id", "setIn_reply_to_user_id",
         "setRetweeted_status_id", "setRetweeted_user_id", "setRetweeted_count", "features", "properties", "dataPoint"})
 public class TResultWrapper extends TResult {
-    public ArrayList<Float> features;
-    public Map<String, Float> properties;
+    private ArrayList<Float> features;
+    private Map<String, Float> properties;
 
     public TResultWrapper(TResult other) {
         super(other);

@@ -16,7 +16,7 @@ public class DocumentComparable implements Comparable<DocumentComparable> {
         return document;
     }
 
-    public int compareTo(DocumentComparable other) {
+    public int compareTo(@SuppressWarnings("NullableProblems") DocumentComparable other) {
         if (document.rsv > other.document.rsv) {
             return -1;
         } else if (document.rsv < other.document.rsv) {

@@ -17,7 +17,7 @@ public class CustomTwitter4jStatusClient extends Twitter4jStatusClient {
 
     private final static Logger logger = LoggerFactory.getLogger(CustomTwitter4jStatusClient.class);
 
-    protected final Client client;
+    private final Client client;
     private final BlockingQueue<String> messageQueue;
     private final ExecutorService executorService;
     private final List<RawStreamListener> rawStreamListeners;
@@ -63,7 +63,7 @@ public class CustomTwitter4jStatusClient extends Twitter4jStatusClient {
         executorService.execute(runner);
     }
 
-    public void onMessage(String rawString) {
+    private void onMessage(String rawString) {
         for (RawStreamListener listener : rawStreamListeners) {
             listener.onMessage(rawString);
         }

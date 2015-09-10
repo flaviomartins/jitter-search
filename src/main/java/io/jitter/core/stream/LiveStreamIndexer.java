@@ -25,7 +25,6 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
     private final AtomicLong counter;
     private final String indexPath;
     private final int commitEvery;
-    private final Directory dir;
     private final FieldType textOptions;
     private final IndexWriter writer;
 
@@ -33,7 +32,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         counter = new AtomicLong();
         this.indexPath = indexPath;
         this.commitEvery = commitEvery;
-        dir = FSDirectory.open(new File(indexPath));
+        Directory dir = FSDirectory.open(new File(indexPath));
         IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 

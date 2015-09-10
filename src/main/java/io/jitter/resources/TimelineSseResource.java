@@ -39,7 +39,7 @@ public class TimelineSseResource implements UserstreamHandler, RawStreamListener
     }
 
 //    @Produces(MediaType.TEXT_PLAIN)
-    public void broadcastMessage(String name, String msg) {
+    private void broadcastMessage(String name, String msg) {
         final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
         final OutboundEvent event = eventBuilder.name(name)
                 .mediaType(MediaType.TEXT_PLAIN_TYPE)

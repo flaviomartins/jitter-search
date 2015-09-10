@@ -40,8 +40,8 @@ public class Taily {
         this(dbPath, indexPath, IndriFeature.DEFAULT_MU);
     }
 
-    public void storeTermStats(FeatureStore store, String term, int ctf, double min,
-                               double df, double f, double f2) {
+    private void storeTermStats(FeatureStore store, String term, int ctf, double min,
+                                double df, double f, double f2) {
         // store min feature for term (for this shard; will later be merged into corpus-wide Db)
         String minFeatKey = term + FeatureStore.MIN_FEAT_SUFFIX;
         store.putFeature(minFeatKey, min, ctf);

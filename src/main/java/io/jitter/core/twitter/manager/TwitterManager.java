@@ -22,7 +22,7 @@ import java.util.*;
 
 public class TwitterManager implements Managed {
 
-    final static Logger logger = LoggerFactory.getLogger(TwitterManager.class);
+    private final static Logger logger = LoggerFactory.getLogger(TwitterManager.class);
 
     private static final int MAX_USERS_LOOKUP = 100;
     private static final int MAX_STATUSES_REQUEST = 200;
@@ -60,11 +60,11 @@ public class TwitterManager implements Managed {
         return screenNames;
     }
 
-    public UserTimeline getUserTimeline(String screenName) {
+    private UserTimeline getUserTimeline(String screenName) {
         return userTimelines.get(screenName);
     }
 
-    public void lookupUsers() {
+    private void lookupUsers() {
         int remaining = screenNames.size();
         logger.info(remaining + " total users");
 

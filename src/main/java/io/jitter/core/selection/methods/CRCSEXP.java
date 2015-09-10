@@ -8,10 +8,10 @@ import java.util.Map;
 
 public class CRCSEXP extends SelectionMethod {
 
-    public float alpha = 1.2f;
-    public float beta = 0.28f;
+    private float alpha = 1.2f;
+    private float beta = 0.28f;
 
-    protected CRCSEXP() {
+    CRCSEXP() {
     }
 
     @Override

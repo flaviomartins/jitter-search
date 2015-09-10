@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class Votes extends SelectionMethod {
 
-    protected Votes() {
+    Votes() {
     }
 
     @Override

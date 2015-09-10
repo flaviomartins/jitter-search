@@ -5,7 +5,7 @@ import io.jitter.api.ResponseHeader;
 
 public class TopTermsResponse {
 
-    ResponseHeader responseHeader;
+    private ResponseHeader responseHeader;
     private TermsResponse response;
 
     public TopTermsResponse() {

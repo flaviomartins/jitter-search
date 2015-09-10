@@ -83,7 +83,7 @@ public class FeatureVector {
     /**
      * Add a term to this vector.  if it's already here, increment its count.
      */
-    public void addTerm(String term) {
+    private void addTerm(String term) {
         if (stopper != null && stopper.isStopWord(term))
             return;
 
@@ -205,7 +205,7 @@ public class FeatureVector {
         return kvpList;
     }
 
-    public String toString(int k) {
+    private String toString(int k) {
         DecimalFormat format = new DecimalFormat("#.#########");
         StringBuilder b = new StringBuilder();
         List<KeyValuePair> kvpList = getOrderedFeatures();
