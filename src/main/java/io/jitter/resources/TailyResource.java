@@ -3,6 +3,8 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import io.dropwizard.jersey.params.BooleanParam;
+import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.selection.SelectionDocumentsResponse;
 import io.jitter.api.selection.SelectionResponse;
@@ -11,10 +13,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -42,29 +41,29 @@ public class TailyResource {
     @GET
     @Timed
     public SelectionResponse search(@QueryParam("q") Optional<String> q,
-                                    @QueryParam("v") Optional<Integer> v,
-                                    @QueryParam("topics") Optional<Boolean> topics,
+                                    @QueryParam("v") @DefaultValue("50") IntParam v,
+                                    @QueryParam("topics") @DefaultValue("false") BooleanParam topics,
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
+
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        int taily_v = v.or(50);
-        boolean retTopics = topics.or(false);
+        Map<String, Double> map = new LinkedHashMap<>();
 
         long startTime = System.currentTimeMillis();
 
-        Map<String, Double> ranking;
-        if (retTopics) {
-            ranking = tailyManager.getRankedTopics(query);
-        } else {
-            ranking = tailyManager.getRanked(query);
-        }
+        if (q.isPresent()) {
+            Map<String, Double> ranking;
+            if (topics.get()) {
+                ranking = tailyManager.getRankedTopics(query);
+            } else {
+                ranking = tailyManager.getRanked(query);
+            }
 
-
-        Map<String, Double> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Double> entry : ranking.entrySet()) {
-            if (entry.getValue() >= taily_v) {
-                map.put(entry.getKey(), entry.getValue());
+            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
+                if (entry.getValue() >= v.get()) {
+                    map.put(entry.getKey(), entry.getValue());
+                }
             }
         }
 

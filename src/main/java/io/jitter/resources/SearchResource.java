@@ -3,19 +3,19 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import io.dropwizard.jersey.params.BooleanParam;
+import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.Document;
 import io.jitter.api.search.DocumentsResponse;
-import io.jitter.core.search.SearchManager;
-import org.apache.lucene.queryparser.classic.ParseException;
 import io.jitter.api.search.SearchResponse;
+import io.jitter.core.search.SearchManager;
+import io.jitter.core.utils.Epochs;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -43,48 +43,36 @@ public class SearchResource {
     @GET
     @Timed
     public SearchResponse search(@QueryParam("q") Optional<String> q,
-                                 @QueryParam("fq") Optional<String> filterQuery,
-                                 @QueryParam("limit") Optional<Integer> limit,
-                                 @QueryParam("max_id") Optional<Long> max_id,
-                                 @QueryParam("epoch") Optional<String> epoch_range,
-                                 @QueryParam("filter_rt") Optional<Boolean> filter_rt,
+                                 @QueryParam("fq") Optional<String> fq,
+                                 @QueryParam("limit") @DefaultValue("1000") IntParam limit,
+                                 @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
+                                 @QueryParam("maxId") Optional<Long> maxId,
+                                 @QueryParam("epoch") Optional<String> epoch,
                                  @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        String query = URLDecoder.decode(q.or(""), "UTF-8");
-        int n = limit.or(1000);
-        long maxId = max_id.or(-1L);
-        boolean filterRT = filter_rt.or(false);
+
+        String query = URLDecoder.decode(q.or("empty"), "UTF-8");
+        List<Document> results = null;
 
         long startTime = System.currentTimeMillis();
 
-        List<Document> results;
-
-        if (max_id.isPresent()) {
-            results = searchManager.search(query, n, filterRT, maxId);
-        } else if (epoch_range.isPresent()) {
-            long firstEpoch = 0L;
-            long lastEpoch = Long.MAX_VALUE;
-            String[] epochs = epoch_range.get().split("[: ]");
-            try {
-                if (epochs.length == 1) {
-                    lastEpoch = Long.parseLong(epochs[0]);
-                } else {
-                    firstEpoch = Long.parseLong(epochs[0]);
-                    lastEpoch = Long.parseLong(epochs[1]);
-                }
-            } catch (Exception e) {
-                // pass
+        if (q.isPresent()) {
+            if (maxId.isPresent()) {
+                results = searchManager.search(query, limit.get(), retweets.get(), maxId.get());
+            } else if (epoch.isPresent()) {
+                long[] epochs = Epochs.parseEpochRange(epoch.get());
+                results = searchManager.search(query, limit.get(), retweets.get(), epochs[0], epochs[1]);
+            } else {
+                results = searchManager.search(query, limit.get(), retweets.get());
             }
-            results = searchManager.search(query, n, filterRT, firstEpoch, lastEpoch);
-        } else {
-            results = searchManager.search(query, n, filterRT);
         }
+
+        long endTime = System.currentTimeMillis();
 
         int totalHits = results != null ? results.size() : 0;
 
-        long endTime = System.currentTimeMillis();
-        logger.info(String.format("%4dms %s", (endTime - startTime), query));
+        logger.info(String.format("%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
         DocumentsResponse documentsResponse = new DocumentsResponse(totalHits, 0, results);

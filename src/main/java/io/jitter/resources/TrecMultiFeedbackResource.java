@@ -4,7 +4,10 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import io.dropwizard.jersey.params.BooleanParam;
+import io.dropwizard.jersey.params.IntParam;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
 import org.apache.thrift.TException;
@@ -24,10 +27,7 @@ import io.jitter.core.utils.AnalyzerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -61,56 +61,38 @@ public class TrecMultiFeedbackResource {
     @GET
     @Timed
     public SelectSearchResponse search(@QueryParam("q") Optional<String> q,
-                                 @QueryParam("fq") Optional<String> filterQuery,
-                                 @QueryParam("limit") Optional<Integer> limit,
-                                 @QueryParam("max_id") Optional<Long> max_id,
-                                 @QueryParam("epoch") Optional<String> epoch_range,
-                                 @QueryParam("filter_rt") Optional<Boolean> filter_rt,
-                                 @QueryParam("method") Optional<String> method,
-                                 @QueryParam("slimit") Optional<Integer> slimit,
-                                 @QueryParam("max_col") Optional<Integer> max_col,
-                                 @QueryParam("min_ranks") Optional<Double> min_ranks,
-                                 @QueryParam("topic") Optional<String> topic,
-                                 @Context UriInfo uriInfo)
+                                       @QueryParam("fq") Optional<String> fq,
+                                       @QueryParam("limit") @DefaultValue("1000") IntParam limit,
+                                       @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
+                                       @QueryParam("maxId") Optional<Long> maxId,
+                                       @QueryParam("epoch") Optional<String> epoch,
+                                       @QueryParam("slimit") @DefaultValue("50") IntParam slimit,
+                                       @QueryParam("method") @DefaultValue("crcsexp") String method,
+                                       @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
+                                       @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
+                                       @QueryParam("topic") Optional<String> topic,
+                                       @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        String query = URLDecoder.decode(q.or(""), "UTF-8");
-        int n = limit.or(30);
-        long maxId = max_id.or(-1L);
-        boolean filterRT = filter_rt.or(false);
 
-        String methodText = method.or(selectionManager.getMethod());
-        int s = slimit.or(50);
-        int col_max = max_col.or(3);
-        double ranks_min = min_ranks.or(1e-5);
-        String topicName = topic.or("");
+        String query = URLDecoder.decode(q.or(""), "UTF-8");
+        List<Document> selectResults = null;
+        List<TResultWrapper> results = null;
 
         long startTime = System.currentTimeMillis();
 
-        List<Document> selectResults;
-
-        if (max_id.isPresent()) {
-            selectResults = selectionManager.search(query, s, filterRT, maxId);
-        } else if (epoch_range.isPresent()) {
-            long firstEpoch = 0L;
-            long lastEpoch = Long.MAX_VALUE;
-            String[] epochs = epoch_range.get().split("[: ]");
-            try {
-                if (epochs.length == 1) {
-                    lastEpoch = Long.parseLong(epochs[0]);
-                } else {
-                    firstEpoch = Long.parseLong(epochs[0]);
-                    lastEpoch = Long.parseLong(epochs[1]);
-                }
-            } catch (Exception e) {
-                // pass
+        if (q.isPresent()) {
+            if (maxId.isPresent()) {
+                selectResults = selectionManager.search(query, slimit.get(), retweets.get(), maxId.get());
+            } else if (epoch.isPresent()) {
+                long[] epochs = Epochs.parseEpochRange(epoch.get());
+                selectResults = selectionManager.search(query, slimit.get(), retweets.get(), epochs[0], epochs[1]);
+            } else {
+                selectResults = selectionManager.search(query, slimit.get(), retweets.get());
             }
-            selectResults = selectionManager.search(query, s, filterRT, firstEpoch, lastEpoch);
-        } else {
-            selectResults = selectionManager.search(query, s, filterRT);
         }
 
-        SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(methodText);
+        SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
         Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults);
@@ -119,7 +101,7 @@ public class TrecMultiFeedbackResource {
         // rankS has its own limit mechanism
         if (RankS.class.getSimpleName().equals(methodName)) {
             for (Map.Entry<String, Double> entry : rankedSources.entrySet()) {
-                if (entry.getValue() < ranks_min)
+                if (entry.getValue() < minRanks)
                     break;
                 sources.put(entry.getKey(), entry.getValue());
             }
@@ -127,7 +109,7 @@ public class TrecMultiFeedbackResource {
             int i = 0;
             for (Map.Entry<String, Double> entry : rankedSources.entrySet()) {
                 i++;
-                if (i > col_max)
+                if (i > maxCol.get())
                     break;
                 sources.put(entry.getKey(), entry.getValue());
             }
@@ -139,7 +121,7 @@ public class TrecMultiFeedbackResource {
         // rankS has its own limit mechanism
         if (RankS.class.getSimpleName().equals(methodName)) {
             for (Map.Entry<String, Double> entry : rankedTopics.entrySet()) {
-                if (entry.getValue() < ranks_min)
+                if (entry.getValue() < minRanks)
                     break;
                 topics.put(entry.getKey(), entry.getValue());
             }
@@ -147,7 +129,7 @@ public class TrecMultiFeedbackResource {
             int i = 0;
             for (Map.Entry<String, Double> entry : rankedTopics.entrySet()) {
                 i++;
-                if (i > col_max)
+                if (i > maxCol.get())
                     break;
                 topics.put(entry.getKey(), entry.getValue());
             }
@@ -166,11 +148,11 @@ public class TrecMultiFeedbackResource {
             queryFV.normalizeToOne();
 
             // cap results
-            List<Document> results = selectResults.subList(0, Math.min(50, selectResults.size()));
+            selectResults = selectResults.subList(0, Math.min(50, selectResults.size()));
 
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
-            fb.setRes(results);
+            fb.setRes(selectResults);
             fb.build(trecMicroblogAPIWrapper.getStopper());
 
             FeatureVector fbVector = fb.asFeatureVector();
@@ -192,37 +174,26 @@ public class TrecMultiFeedbackResource {
             query = builder.toString().trim();
         }
 
-        List<TResultWrapper> searchResults;
-
-        if (max_id.isPresent()) {
-            searchResults = trecMicroblogAPIWrapper.search(query, maxId, n, filterRT);
-        } else if (epoch_range.isPresent()) {
-            long firstEpoch = 0L;
-            long lastEpoch = Long.MAX_VALUE;
-            String[] epochs = epoch_range.get().split("[: ]");
-            try {
-                if (epochs.length == 1) {
-                    lastEpoch = Long.parseLong(epochs[0]);
-                } else {
-                    firstEpoch = Long.parseLong(epochs[0]);
-                    lastEpoch = Long.parseLong(epochs[1]);
-                }
-            } catch (Exception e) {
-                // pass
+        if (q.isPresent()) {
+            if (maxId.isPresent()) {
+                results = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), retweets.get());
+            } else if (epoch.isPresent()) {
+                long[] epochs = Epochs.parseEpochRange(epoch.get());
+                //TODO: filter by epoch
+                results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), retweets.get());
+            } else {
+                results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), retweets.get());
             }
-            //TODO: filter by epoch
-            searchResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, n, filterRT);
-        } else {
-            searchResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, n, filterRT);
         }
 
-        int totalHits = searchResults != null ? searchResults.size() : 0;
-
         long endTime = System.currentTimeMillis();
-        logger.info(String.format("%4dms %s", (endTime - startTime), query));
+
+        int totalHits = results != null ? results.size() : 0;
+
+        logger.info(String.format("%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(sources, topics, methodName, totalHits, 0, selectResults, searchResults);
+        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(sources, topics, methodName, totalHits, 0, selectResults, results);
         return new SelectSearchResponse(responseHeader, documentsResponse);
     }
 }

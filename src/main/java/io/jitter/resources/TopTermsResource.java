@@ -3,6 +3,7 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import io.dropwizard.jersey.params.IntParam;
 import io.jitter.core.search.SearchManager;
 import org.apache.lucene.misc.TermStats;
 import io.jitter.api.ResponseHeader;
@@ -11,10 +12,7 @@ import io.jitter.api.collectionstatistics.TopTermsResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -39,18 +37,19 @@ public class TopTermsResource {
 
     @GET
     @Timed
-    public TopTermsResponse top(@QueryParam("limit") Optional<Integer> limit, @Context UriInfo uriInfo) throws Exception {
+    public TopTermsResponse top(@QueryParam("limit") @DefaultValue("1000") IntParam limit,
+                                @Context UriInfo uriInfo) throws Exception {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        int n = limit.or(1000);
 
         long startTime = System.currentTimeMillis();
 
-        TermStats[] terms = searchManager.getHighFreqTerms(n);
+        TermStats[] terms = searchManager.getHighFreqTerms(limit.get());
+
+        long endTime = System.currentTimeMillis();
 
         int totalHits = terms != null ? terms.length : 0;
 
-        long endTime = System.currentTimeMillis();
-        logger.info(String.format("%4dms %d high freq terms", (endTime - startTime), n));
+        logger.info(String.format("%4dms %d high freq terms", (endTime - startTime), limit.get()));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
         TermsResponse termsResponse = new TermsResponse(totalHits, 0, terms);
