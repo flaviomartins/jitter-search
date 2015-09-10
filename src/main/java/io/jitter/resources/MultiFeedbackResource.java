@@ -69,6 +69,9 @@ public class MultiFeedbackResource {
                                        @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                        @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
                                        @QueryParam("topic") Optional<String> topic,
+                                       @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
+                                       @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
+                                       @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                        @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -146,7 +149,7 @@ public class MultiFeedbackResource {
             queryFV.normalizeToOne();
 
             // cap results
-            selectResults = selectResults.subList(0, Math.min(50, selectResults.size()));
+            selectResults = selectResults.subList(0, Math.min(fbDocs.get(), selectResults.size()));
 
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
@@ -154,9 +157,9 @@ public class MultiFeedbackResource {
             fb.build(searchManager.getStopper());
 
             FeatureVector fbVector = fb.asFeatureVector();
-            fbVector.pruneToSize(20);
+            fbVector.pruneToSize(fbTerms.get());
             fbVector.normalizeToOne();
-            fbVector = FeatureVector.interpolate(queryFV, fbVector, 0.5); // ORIG_QUERY_WEIGHT
+            fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
             logger.info("Feature Vector for topics {}:\n{}", Joiner.on(", ").join(topics.keySet()), fbVector.toString());
 
