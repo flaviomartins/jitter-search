@@ -11,7 +11,7 @@
     <artifactId>jitter-search</artifactId>
     <version>0.0.5-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Jitter Search Server</name>
+    <name>Jitter Search</name>
     <url>${jitter.url}</url>
     <description>
         Jitter is a RESTful web application that does search on Twitter.
