@@ -68,12 +68,12 @@ public class SelectionResource {
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                selectResults = selectionManager.search(query, limit.get(), retweets.get(), maxId.get());
+                selectResults = selectionManager.search(query, limit.get(), !retweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
                 long[] epochs = Epochs.parseEpochRange(epoch.get());
-                selectResults = selectionManager.search(query, limit.get(), retweets.get(), epochs[0], epochs[1]);
+                selectResults = selectionManager.search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
             } else {
-                selectResults = selectionManager.search(query, limit.get(), retweets.get());
+                selectResults = selectionManager.search(query, limit.get(), !retweets.get());
             }
         }
 

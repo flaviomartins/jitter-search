@@ -140,7 +140,7 @@ public class SelectionManager implements Managed {
         return results;
     }
 
-    public List<Document> filterTopics(Set<String> topicNames, List<Document> selectResults) {
+    public List<Document> filterTopics(Iterable<String> topicNames, List<Document> selectResults) {
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults) {
             for (String topicName: topicNames) {

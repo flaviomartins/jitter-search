@@ -59,12 +59,12 @@ public class SearchResource {
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                results = searchManager.search(query, limit.get(), retweets.get(), maxId.get());
+                results = searchManager.search(query, limit.get(), !retweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
                 long[] epochs = Epochs.parseEpochRange(epoch.get());
-                results = searchManager.search(query, limit.get(), retweets.get(), epochs[0], epochs[1]);
+                results = searchManager.search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
             } else {
-                results = searchManager.search(query, limit.get(), retweets.get());
+                results = searchManager.search(query, limit.get(), !retweets.get());
             }
         }
 

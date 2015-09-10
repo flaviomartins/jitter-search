@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
@@ -74,6 +75,7 @@ public class TrecMultiFeedbackResource {
                                        @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
                                        @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                        @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
+                                       @QueryParam("fbTopics") @DefaultValue("3") IntParam fbTopics,
                                        @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -86,12 +88,12 @@ public class TrecMultiFeedbackResource {
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                selectResults = selectionManager.search(query, slimit.get(), retweets.get(), maxId.get());
+                selectResults = selectionManager.search(query, slimit.get(), !retweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
                 long[] epochs = Epochs.parseEpochRange(epoch.get());
-                selectResults = selectionManager.search(query, slimit.get(), retweets.get(), epochs[0], epochs[1]);
+                selectResults = selectionManager.search(query, slimit.get(), !retweets.get(), epochs[0], epochs[1]);
             } else {
-                selectResults = selectionManager.search(query, slimit.get(), retweets.get());
+                selectResults = selectionManager.search(query, slimit.get(), !retweets.get());
             }
         }
 
@@ -139,8 +141,8 @@ public class TrecMultiFeedbackResource {
         }
 
         if (topics.size() > 0) {
-            selectResults = selectionManager.filterTopics(topics.keySet(), selectResults);
-
+            Iterable<String> fbTopicsEnabled = Iterables.limit(topics.keySet(), fbTopics.get());
+            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults);
 
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query)) {
@@ -163,7 +165,7 @@ public class TrecMultiFeedbackResource {
             fbVector.normalizeToOne();
             fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
-            logger.info("Feature Vector for topics {}:\n{}", Joiner.on(", ").join(topics.keySet()), fbVector.toString());
+            logger.info("Feature Vector for topics {}:\n{}", Joiner.on(", ").join(fbTopicsEnabled), fbVector.toString());
 
             StringBuilder builder = new StringBuilder();
             Iterator<String> terms = fbVector.iterator();
@@ -179,13 +181,13 @@ public class TrecMultiFeedbackResource {
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                results = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), retweets.get());
+                results = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !retweets.get());
             } else if (epoch.isPresent()) {
                 long[] epochs = Epochs.parseEpochRange(epoch.get());
                 //TODO: filter by epoch
-                results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), retweets.get());
+                results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !retweets.get());
             } else {
-                results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), retweets.get());
+                results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !retweets.get());
             }
         }
 
