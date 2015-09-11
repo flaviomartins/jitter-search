@@ -21,7 +21,7 @@ import java.util.List;
 public class TrecMicroblogAPIWrapper implements Managed {
     private static final Logger LOG = Logger.getLogger(TrecMicroblogAPIWrapper.class);
 
-    public static final int DEFAULT_MAX_NUM_RESULTS = 10000;
+    public static final int MAX_NUM_RESULTS = 10000;
 
     private final TrecSearchThriftClient client;
     private final String cacheDir;
@@ -72,7 +72,10 @@ public class TrecMicroblogAPIWrapper implements Managed {
     @SuppressWarnings("unchecked")
     public List<TResultWrapper> search(String query, long maxId, int numResults, boolean filterRT) throws TException,
             IOException, ClassNotFoundException {
-        String cacheFileName = DigestUtils.shaHex(query + maxId + DEFAULT_MAX_NUM_RESULTS);
+
+        int numResultsToFetch = (int) Math.min(MAX_NUM_RESULTS, 3 * numResults);
+
+        String cacheFileName = DigestUtils.shaHex(query + maxId + numResultsToFetch);
         File f = new File(cacheDir + cacheFileName);
         List<TResult> results;
         boolean fromCache = false;
@@ -88,7 +91,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
             } else {
                 LOG.warn("Cache file not found: " + f.getPath()
                         + ". Connecting to the server...");
-                results = client.search(query, maxId, DEFAULT_MAX_NUM_RESULTS);
+                results = client.search(query, maxId, numResultsToFetch);
                 ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f));
                 oos.writeObject(results);
                 oos.close();

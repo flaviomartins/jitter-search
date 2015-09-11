@@ -143,6 +143,7 @@ public class TrecMultiFeedbackResource {
         if (topics.size() > 0) {
             Iterable<String> fbTopicsEnabled = Iterables.limit(topics.keySet(), fbTopics.get());
             selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults);
+//            selectResults = selectionManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbTopics.get()), selectResults);
 
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query)) {

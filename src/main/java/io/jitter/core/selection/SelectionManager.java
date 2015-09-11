@@ -130,26 +130,41 @@ public class SelectionManager implements Managed {
         return sortedMap;
     }
 
-    public List<Document> filterTopic(String topicName, List<Document> selectResults) {
+    public List<Document> filterTopic(String selectedTopic, List<Document> selectResults) {
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults) {
-            if (topics.get(topicName) != null && topics.get(topicName).contains(doc.getScreen_name())) {
+            if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
                 results.add(doc);
             }
         }
         return results;
     }
 
-    public List<Document> filterTopics(Iterable<String> topicNames, List<Document> selectResults) {
+    public List<Document> filterTopics(Iterable<String> selectedTopics, List<Document> selectResults) {
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults) {
-            for (String topicName: topicNames) {
-                if (topics.get(topicName) != null && topics.get(topicName).contains(doc.getScreen_name())) {
+            for (String selectedTopic: selectedTopics) {
+                if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
                     results.add(doc);
                 }
             }
         }
         return results;
+    }
+
+    public List<Document> reScoreSelected(Iterable<Map.Entry<String, Double>> selectedTopics, List<Document> selectResults) {
+        List<Document> results = new ArrayList<>();
+        for (Document doc : selectResults) {
+            Document updatedDocument = new Document(doc);
+            for (Map.Entry<String, Double> selectedTopic : selectedTopics) {
+                if (topics.get(selectedTopic.getKey()) != null && topics.get(selectedTopic.getKey()).contains(doc.getScreen_name())) {
+                    double newRsv = selectedTopic.getValue() * doc.getRsv();
+                    updatedDocument.setRsv(newRsv);
+                    results.add(updatedDocument);
+                }
+            }
+        }
+        return sortResults(results, false);
     }
 
     public List<Document> searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
