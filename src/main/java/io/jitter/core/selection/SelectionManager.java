@@ -40,11 +40,9 @@ public class SelectionManager implements Managed {
     private final boolean removeDuplicates;
     private Map<String, ImmutableSortedSet<String>> topics;
     private Set<String> enabledTopics;
-    private Map<String, Integer> sourcesSizes = new HashMap<>();
-    private Map<String, Integer> topicsSizes = new HashMap<>();
-    private int sourcesTotalDocs;
-    private int topicsTotalDocs;
-    private int maxTopicSize;
+
+    private ShardStats sourcesShardStats;
+    private ShardStats topicsShardStats;
     private TwitterManager twitterManager;
 
     public SelectionManager(String indexPath, String method, boolean removeDuplicates, Map<String, Set<String>> topics) {
@@ -73,10 +71,12 @@ public class SelectionManager implements Managed {
     }
 
     public void collectStats() throws IOException {
+        Map<String, Integer> sourcesSizes = new HashMap<>();
+        Map<String, Integer> topicsSizes = new HashMap<>();
+
         Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.SCREEN_NAME.name);
         TermsEnum termEnum = terms.iterator(null);
 
-        int sourcesTotalDocs = 0;
         int termCnt = 0;
         BytesRef bytesRef;
         while ((bytesRef = termEnum.next()) != null) {
@@ -95,36 +95,25 @@ public class SelectionManager implements Managed {
                 logger.warn("SCAN source: " + source + " " + docFreq);
             }
 
-            sourcesTotalDocs += docFreq;
             termCnt++;
         }
 
         logger.info("SCAN total sources: " + termCnt);
 
-        int maxTopicSize = 0;
-        int topicsTotalDocs = 0;
         for (String topic : topics.keySet()) {
             int docFreq = 0;
             for (String source : topics.get(topic)) {
                 docFreq += sourcesSizes.get(source);
             }
 
-            if (maxTopicSize < docFreq)
-                maxTopicSize = docFreq;
-
             topicsSizes.put(topic, docFreq);
             logger.info("SCAN topics: " + topic + " " + docFreq);
-
-            topicsTotalDocs += docFreq;
         }
 
-        logger.info("SCAN total docs: " + sourcesTotalDocs + " - " + topicsTotalDocs);
+        sourcesShardStats = new ShardStats(sourcesSizes);
+        topicsShardStats = new ShardStats(topicsSizes);
 
-        logger.info("SCAN max topic size: " + maxTopicSize);
-
-        this.sourcesTotalDocs = sourcesTotalDocs;
-        this.topicsTotalDocs = topicsTotalDocs;
-        this.maxTopicSize = maxTopicSize;
+        logger.info("SCAN total docs: " + sourcesShardStats.getTotalDocs() + " - " + topicsShardStats.getTotalDocs());
     }
 
     @Override
