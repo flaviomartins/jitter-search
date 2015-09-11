@@ -14,9 +14,7 @@ import io.jitter.health.SearchManagerHealthCheck;
 import io.jitter.health.TailyManagerHealthCheck;
 import io.jitter.health.TwitterManagerHealthCheck;
 import io.jitter.resources.*;
-import io.jitter.tasks.SearchManagerIndexTask;
-import io.jitter.tasks.SelectionManagerIndexTask;
-import io.jitter.tasks.TailyManagerIndexTask;
+import io.jitter.tasks.*;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import io.jitter.core.selection.SelectionManager;
@@ -24,7 +22,6 @@ import io.jitter.core.stream.LiveStreamIndexer;
 import io.jitter.core.stream.StreamLogger;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.jitter.health.SelectionManagerHealthCheck;
-import io.jitter.tasks.TwitterManagerArchiveTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
@@ -87,6 +84,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
                 new SelectionManagerHealthCheck(selectionManager);
         environment.healthChecks().register("selection", selectionManagerHealthCheck);
         environment.admin().addTask(new SelectionManagerIndexTask(selectionManager));
+        environment.admin().addTask(new SelectionManagerStatsTask(selectionManager));
 
         final TailyManager tailyManager = configuration.getTailyManagerFactory().build(environment);
         final TailyManagerHealthCheck tailyManagerHealthCheck =

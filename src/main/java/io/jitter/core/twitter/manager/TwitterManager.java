@@ -167,7 +167,7 @@ public class TwitterManager implements Managed {
                 Document doc = new Document();
                 doc.add(new LongField(IndexStatuses.StatusField.ID.name, status.getId(), Field.Store.YES));
                 doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getEpoch(), Field.Store.YES));
-                doc.add(new TextField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getScreenname(), Field.Store.YES));
+                doc.add(new StringField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getScreenname(), Field.Store.YES));
 
                 doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
 

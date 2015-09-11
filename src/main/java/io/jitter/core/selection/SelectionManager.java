@@ -13,7 +13,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.util.*;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.similarities.IDFSimilarity;
 import org.slf4j.Logger;
@@ -39,6 +39,12 @@ public class SelectionManager implements Managed {
     private final String method;
     private final boolean removeDuplicates;
     private Map<String, ImmutableSortedSet<String>> topics;
+    private Set<String> enabledTopics;
+    private Map<String, Integer> sourcesSizes = new HashMap<>();
+    private Map<String, Integer> topicsSizes = new HashMap<>();
+    private int sourcesTotalDocs;
+    private int topicsTotalDocs;
+    private int maxTopicSize;
     private TwitterManager twitterManager;
 
     public SelectionManager(String indexPath, String method, boolean removeDuplicates, Map<String, Set<String>> topics) {
@@ -46,10 +52,13 @@ public class SelectionManager implements Managed {
         this.method = method;
         this.removeDuplicates = removeDuplicates;
         TreeMap<String, ImmutableSortedSet<String>> treeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        TreeSet<String> treeSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (Map.Entry<String, Set<String>> entry : topics.entrySet()) {
             treeMap.put(entry.getKey(), new ImmutableSortedSet.Builder<>(String.CASE_INSENSITIVE_ORDER).addAll(entry.getValue()).build());
+            treeSet.addAll(entry.getValue());
         }
         this.topics = treeMap;
+        this.enabledTopics = treeSet;
     }
 
     @Override
@@ -57,9 +66,65 @@ public class SelectionManager implements Managed {
         try {
             reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
             searcher = new IndexSearcher(reader);
+            collectStats();
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
+    }
+
+    public void collectStats() throws IOException {
+        Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.SCREEN_NAME.name);
+        TermsEnum termEnum = terms.iterator(null);
+
+        int sourcesTotalDocs = 0;
+        int termCnt = 0;
+        BytesRef bytesRef;
+        while ((bytesRef = termEnum.next()) != null) {
+            String term = bytesRef.utf8ToString();
+            int docFreq = termEnum.docFreq();
+            if (term.isEmpty()) {
+                continue;
+            }
+
+            String source = term.toLowerCase();
+
+            if (enabledTopics.contains(source)) {
+                sourcesSizes.put(source, docFreq);
+                logger.info("SCAN source: " + source + " " + docFreq);
+            } else {
+                logger.warn("SCAN source: " + source + " " + docFreq);
+            }
+
+            sourcesTotalDocs += docFreq;
+            termCnt++;
+        }
+
+        logger.info("SCAN total sources: " + termCnt);
+
+        int maxTopicSize = 0;
+        int topicsTotalDocs = 0;
+        for (String topic : topics.keySet()) {
+            int docFreq = 0;
+            for (String source : topics.get(topic)) {
+                docFreq += sourcesSizes.get(source);
+            }
+
+            if (maxTopicSize < docFreq)
+                maxTopicSize = docFreq;
+
+            topicsSizes.put(topic, docFreq);
+            logger.info("SCAN topics: " + topic + " " + docFreq);
+
+            topicsTotalDocs += docFreq;
+        }
+
+        logger.info("SCAN total docs: " + sourcesTotalDocs + " - " + topicsTotalDocs);
+
+        logger.info("SCAN max topic size: " + maxTopicSize);
+
+        this.sourcesTotalDocs = sourcesTotalDocs;
+        this.topicsTotalDocs = topicsTotalDocs;
+        this.maxTopicSize = maxTopicSize;
     }
 
     @Override
@@ -117,8 +182,11 @@ public class SelectionManager implements Managed {
                         sum += ranked.get(col);
                 }
             }
-            if (sum != 0)
+            if (sum != 0) {
                 map.put(topic, sum);
+//                double norm = (double) maxTopicSize / topicsSizes.get(topic.toLowerCase());
+//                map.put(topic, sum * norm);
+            }
         }
         return getSortedMap(map);
     }
