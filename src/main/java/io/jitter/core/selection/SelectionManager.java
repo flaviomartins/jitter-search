@@ -152,12 +152,13 @@ public class SelectionManager implements Managed {
     }
 
     public SortedMap<String, Double> getRanked(List<Document> results) {
-        SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-        return getSortedMap(selectionMethod.getRanked(results));
+        return getRanked(SelectionMethodFactory.getMethod(method), results);
     }
 
     public SortedMap<String, Double> getRanked(SelectionMethod selectionMethod, List<Document> results) {
-        return getSortedMap(selectionMethod.getRanked(results));
+        Map<String, Double> ranked = selectionMethod.getRanked(results);
+        Map<String, Double> map = selectionMethod.normalize(ranked, sourcesShardStats);
+        return getSortedMap(map);
     }
 
     public SortedMap<String, Double> getRankedTopics(SelectionMethod selectionMethod, List<Document> results) {
@@ -171,12 +172,10 @@ public class SelectionManager implements Managed {
                         sum += ranked.get(col);
                 }
             }
-            if (sum != 0) {
+            if (sum != 0)
                 map.put(topic, sum);
-//                double norm = (double) maxTopicSize / topicsSizes.get(topic.toLowerCase());
-//                map.put(topic, sum * norm);
-            }
         }
+        map = selectionMethod.normalize(map, topicsShardStats);
         return getSortedMap(map);
     }
 

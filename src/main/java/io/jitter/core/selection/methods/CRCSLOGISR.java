@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CRCSLOGISR extends SelectionMethod {
+public class CRCSLOGISR extends CRCS {
 
     CRCSLOGISR() {
     }

@@ -1,6 +1,7 @@
 package io.jitter.core.selection.methods;
 
 import io.jitter.api.search.Document;
+import io.jitter.core.selection.ShardStats;
 
 import java.util.*;
 
@@ -29,5 +30,9 @@ public abstract class SelectionMethod {
 
 
     protected abstract Map<String, Double> rank(List<Document> results);
+
+    public Map<String, Double> normalize(Map<String, Double> rank, ShardStats shardStats) {
+        return rank;
+    }
 
 }
