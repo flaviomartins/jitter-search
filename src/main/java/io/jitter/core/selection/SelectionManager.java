@@ -103,7 +103,9 @@ public class SelectionManager implements Managed {
         for (String topic : topics.keySet()) {
             int docFreq = 0;
             for (String source : topics.get(topic)) {
-                docFreq += sourcesSizes.get(source);
+                Integer sz = sourcesSizes.get(source);
+                if (sz != null)
+                    docFreq += sz.intValue();
             }
 
             topicsSizes.put(topic, docFreq);

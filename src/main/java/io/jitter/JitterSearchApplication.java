@@ -119,7 +119,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         if (configuration.isLive()) {
             OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getOAuth1Factory().build();
 
-            final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(selectionManager.getIndexPath(), 1);
+            final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(selectionManager.getIndexPath(), 1, true);
 
             String userLogPath = "./data/archive/user";
             if (StringUtils.isNotBlank(configuration.getStatusStreamLogPath()))
@@ -135,7 +135,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             environment.lifecycle().manage(userStreamIndexer);
             environment.jersey().register(timelineSseResource);
 
-            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 1000);
+            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 1000, false);
 
             String statusLogPath = "./data/archive/sample";
             if (StringUtils.isNotBlank(configuration.getStatusStreamLogPath()))

@@ -25,13 +25,17 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
     private final AtomicLong counter;
     private final String indexPath;
     private final int commitEvery;
+    private final boolean stringField;
+
     private final FieldType textOptions;
     private final IndexWriter writer;
 
-    public LiveStreamIndexer(String indexPath, int commitEvery) throws IOException {
+    public LiveStreamIndexer(String indexPath, int commitEvery, boolean stringField) throws IOException {
         counter = new AtomicLong();
         this.indexPath = indexPath;
         this.commitEvery = commitEvery;
+        this.stringField = stringField;
+
         Directory dir = FSDirectory.open(new File(indexPath));
         IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
@@ -65,8 +69,12 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
             long id = status.getId();
             doc.add(new LongField(IndexStatuses.StatusField.ID.name, id, Field.Store.YES));
             doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getCreatedAt().getTime() / 1000L, Field.Store.YES));
-            doc.add(new TextField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), Field.Store.YES));
+            if (stringField) {
+                doc.add(new StringField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), Field.Store.YES));
+            } else {
+                doc.add(new TextField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), Field.Store.YES));
 
+            }
             doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
 
 //            doc.add(new IntField(IndexStatuses.StatusField.FRIENDS_COUNT.name, status.getUser().getFriendsCount(), Field.Store.YES));
