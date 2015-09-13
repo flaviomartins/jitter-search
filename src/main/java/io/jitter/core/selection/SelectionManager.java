@@ -30,7 +30,7 @@ public class SelectionManager implements Managed {
     public static final int MAX_RESULTS = 10000;
 
     private static final QueryParser QUERY_PARSER =
-            new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
+            new QueryParser(IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
 
     private DirectoryReader reader;
     private IndexSearcher searcher;
@@ -39,7 +39,7 @@ public class SelectionManager implements Managed {
     private final String method;
     private final boolean removeDuplicates;
     private Map<String, ImmutableSortedSet<String>> topics;
-    private Set<String> enabledTopics;
+    private final Set<String> enabledTopics;
 
     private ShardStats sourcesShardStats;
     private ShardStats topicsShardStats;
@@ -105,7 +105,7 @@ public class SelectionManager implements Managed {
             for (String source : topics.get(topic)) {
                 Integer sz = sourcesSizes.get(source);
                 if (sz != null)
-                    docFreq += sz.intValue();
+                    docFreq += sz;
             }
 
             topicsSizes.put(topic, docFreq);

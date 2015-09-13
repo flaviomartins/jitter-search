@@ -73,7 +73,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
     public List<TResultWrapper> search(String query, long maxId, int numResults, boolean filterRT) throws TException,
             IOException, ClassNotFoundException {
 
-        int numResultsToFetch = (int) Math.min(MAX_NUM_RESULTS, 3 * numResults);
+        int numResultsToFetch = Math.min(MAX_NUM_RESULTS, 3 * numResults);
 
         String cacheFileName = DigestUtils.shaHex(query + maxId + numResultsToFetch);
         File f = new File(cacheDir + cacheFileName);

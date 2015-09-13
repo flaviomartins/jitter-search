@@ -9,7 +9,6 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,7 +140,7 @@ public class Taily {
             // store the shard size (# of docs) feature
 //            Term t = new Term(IndexStatuses.StatusField.SCREEN_NAME.name, shardIdStr);
 //            Query q = new TermQuery(t);
-            Query q = (new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER)).parse(IndexStatuses.StatusField.SCREEN_NAME.name + ":" + shardIdStr);
+            Query q = (new QueryParser(IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER)).parse(IndexStatuses.StatusField.SCREEN_NAME.name + ":" + shardIdStr);
             TopDocs topDocs = indexSearcher.search(q, 10);
             double totalDocCount = topDocs.totalHits;
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
@@ -181,7 +180,7 @@ public class Taily {
             // track df for this term for each shard; initialize
             Map<String, ShardData> shardDataMap = new HashMap<>();
 
-            if (termEnum.seekExact(bytesRef, true)) {
+            if (termEnum.seekExact(bytesRef)) {
 
                 DocsEnum docsEnum = termEnum.docs(liveDocs, null);
 
@@ -330,7 +329,7 @@ public class Taily {
             // track df for this term for each shard; initialize
             Map<String, ShardData> shardDataMap = new HashMap<>();
 
-            if (termEnum.seekExact(bytesRef, true)) {
+            if (termEnum.seekExact(bytesRef)) {
 
                 DocsEnum docsEnum = termEnum.docs(liveDocs, null);
 

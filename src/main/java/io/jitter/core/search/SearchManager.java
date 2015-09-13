@@ -35,7 +35,7 @@ public class SearchManager implements Managed {
     public static final int MAX_TERMS_RESULTS = 1000;
 
     private static final QueryParser QUERY_PARSER =
-            new QueryParser(Version.LUCENE_43, IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
+            new QueryParser(IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
 
     private final String indexPath;
     private final String databasePath;
@@ -391,7 +391,7 @@ public class SearchManager implements Managed {
 
     public TermStats[] getHighFreqTerms(int n) throws Exception {
         int numResults = n > MAX_TERMS_RESULTS ? MAX_TERMS_RESULTS : n;
-        return HighFreqTerms.getHighFreqTerms(reader, numResults, IndexStatuses.StatusField.TEXT.name);
+        return HighFreqTerms.getHighFreqTerms(reader, numResults, IndexStatuses.StatusField.TEXT.name, new HighFreqTerms.DocFreqComparator());
     }
 
     private IndexSearcher getSearcher() throws IOException {

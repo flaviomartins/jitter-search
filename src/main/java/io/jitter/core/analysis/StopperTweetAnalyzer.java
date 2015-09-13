@@ -27,7 +27,7 @@ public final class StopperTweetAnalyzer extends StopwordAnalyzerBase {
     private final boolean possessiveFiltering;
 
     public StopperTweetAnalyzer(Version matchVersion, CharArraySet stopWords, boolean stemming, boolean preserveCaps, boolean possessiveFiltering) {
-        super(matchVersion, stopWords);
+        super(stopWords);
         this.matchVersion = matchVersion;
         this.stemming = stemming;
         this.preserveCaps = preserveCaps;
@@ -35,7 +35,7 @@ public final class StopperTweetAnalyzer extends StopwordAnalyzerBase {
     }
 
     public StopperTweetAnalyzer(Version matchVersion, CharArraySet stopWords, boolean stemming, boolean preserveCaps) {
-        super(matchVersion, stopWords);
+        super(stopWords);
         this.matchVersion = matchVersion;
         this.stemming = stemming;
         this.preserveCaps = preserveCaps;
@@ -57,16 +57,16 @@ public final class StopperTweetAnalyzer extends StopwordAnalyzerBase {
 
     @Override
     protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
-        Tokenizer source = new WhitespaceTokenizer(matchVersion, reader);
+        Tokenizer source = new WhitespaceTokenizer(reader);
         TokenStream tok;
         if (possessiveFiltering) {
-            tok = new EnglishPossessiveFilter(Version.LUCENE_43, source);
+            tok = new EnglishPossessiveFilter(matchVersion, source);
             tok = new EntityPreservingFilter(tok, preserveCaps);
         } else {
             tok = new EntityPreservingFilter(source, preserveCaps);
         }
 
-        tok = new StopFilter(matchVersion, tok, stopwords);
+        tok = new StopFilter(tok, stopwords);
 
         if (stemming) {
             // Porter stemmer ignores words which are marked as keywords

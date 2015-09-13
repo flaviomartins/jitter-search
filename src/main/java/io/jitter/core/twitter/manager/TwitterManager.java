@@ -11,6 +11,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.*;
@@ -146,7 +147,7 @@ public class TwitterManager implements Managed {
         StatusStream stream = new JsonStatusCorpusReader(file);
 
         Directory dir = FSDirectory.open(new File(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, IndexStatuses.ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, IndexStatuses.ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();
@@ -214,7 +215,7 @@ public class TwitterManager implements Managed {
 
     public void indexLive(String indexPath, boolean removeDuplicates) throws IOException {
         Directory dir = FSDirectory.open(new File(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, IndexStatuses.ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, IndexStatuses.ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();

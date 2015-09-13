@@ -13,7 +13,7 @@ public class ShardStats {
         maxSize = Collections.max(sizes.values());
         totalDocs = 0;
         for (Integer sz : sizes.values()) {
-            totalDocs += sz.intValue();
+            totalDocs += sz;
         }
     }
 

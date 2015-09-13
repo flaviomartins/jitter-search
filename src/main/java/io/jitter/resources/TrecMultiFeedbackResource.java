@@ -183,10 +183,6 @@ public class TrecMultiFeedbackResource {
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 results = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !retweets.get());
-            } else if (epoch.isPresent()) {
-                long[] epochs = Epochs.parseEpochRange(epoch.get());
-                //TODO: filter by epoch
-                results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !retweets.get());
             } else {
                 results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !retweets.get());
             }
