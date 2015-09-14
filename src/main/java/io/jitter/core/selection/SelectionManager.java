@@ -7,12 +7,12 @@ import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.search.DocumentComparable;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
+import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.*;
 import io.jitter.core.selection.methods.SelectionMethod;
@@ -387,17 +387,15 @@ public class SelectionManager implements Managed {
         try {
             if (reader == null) {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
-                searcher = new IndexSearcher(reader);
-                searcher.setSimilarity(new LMDirichletSimilarity(2500));
             } else {
                 DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
                 if (newReader != null) {
                     reader.close();
                     reader = newReader;
-                    searcher = new IndexSearcher(reader);
-                    searcher.setSimilarity(new LMDirichletSimilarity(2500));
                 }
             }
+            searcher = new IndexSearcher(reader);
+            searcher.setSimilarity(new IDFSimilarity());
         } catch (IndexNotFoundException e) {
             logger.error(e.getMessage());
         }

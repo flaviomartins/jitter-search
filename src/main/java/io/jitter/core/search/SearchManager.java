@@ -4,6 +4,7 @@ import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.thrift.gen.TResult;
 import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
+import io.jitter.core.similarities.IDFSimilarity;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
@@ -397,17 +398,15 @@ public class SearchManager implements Managed {
         try {
             if (reader == null) {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
-                searcher = new IndexSearcher(reader);
-                searcher.setSimilarity(new LMDirichletSimilarity(2500));
             } else {
                 DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
                 if (newReader != null) {
                     reader.close();
                     reader = newReader;
-                    searcher = new IndexSearcher(reader);
-                    searcher.setSimilarity(new LMDirichletSimilarity(2500));
                 }
             }
+            searcher = new IndexSearcher(reader);
+            searcher.setSimilarity(new IDFSimilarity());
         } catch (IndexNotFoundException e) {
             logger.error(e.getMessage());
         }
