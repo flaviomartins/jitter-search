@@ -24,12 +24,7 @@ public abstract class SelectionMethod {
         return counts;
     }
 
-    public Map<String, Double> getRanked(List<Document> results) {
-        return rank(results);
-    }
-
-
-    protected abstract Map<String, Double> rank(List<Document> results);
+    public abstract Map<String, Double> rank(List<Document> results);
 
     public Map<String, Double> normalize(Map<String, Double> rank, ShardStats shardStats) {
         return rank;

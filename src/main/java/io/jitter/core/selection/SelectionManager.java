@@ -157,7 +157,7 @@ public class SelectionManager implements Managed {
     }
 
     public SortedMap<String, Double> getRanked(SelectionMethod selectionMethod, List<Document> results) {
-        Map<String, Double> ranked = selectionMethod.getRanked(results);
+        Map<String, Double> ranked = selectionMethod.rank(results);
         if (sourcesShardStats != null) {
             Map<String, Double> map = selectionMethod.normalize(ranked, sourcesShardStats);
             return getSortedMap(map);
@@ -167,7 +167,7 @@ public class SelectionManager implements Managed {
     }
 
     public SortedMap<String, Double> getRankedTopics(SelectionMethod selectionMethod, List<Document> results) {
-        Map<String, Double> ranked = selectionMethod.getRanked(results);
+        Map<String, Double> ranked = selectionMethod.rank(results);
         Map<String, Double> topicsRanked = new HashMap<>();
         for (String topic : topics.keySet()) {
             double sum = 0;
