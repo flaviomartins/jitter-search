@@ -11,11 +11,11 @@ import org.apache.lucene.misc.TermStats;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import io.jitter.api.search.Document;
-import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.utils.Stopper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +57,7 @@ public class SearchManager implements Managed {
     @Override
     public void start() throws Exception {
         try {
-            reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
-            searcher = new IndexSearcher(reader);
+            searcher = getSearcher();
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -399,14 +398,14 @@ public class SearchManager implements Managed {
             if (reader == null) {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
                 searcher = new IndexSearcher(reader);
-                searcher.setSimilarity(new IDFSimilarity());
+                searcher.setSimilarity(new LMDirichletSimilarity(2500));
             } else {
                 DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
                 if (newReader != null) {
                     reader.close();
                     reader = newReader;
                     searcher = new IndexSearcher(reader);
-                    searcher.setSimilarity(new IDFSimilarity());
+                    searcher.setSimilarity(new LMDirichletSimilarity(2500));
                 }
             }
         } catch (IndexNotFoundException e) {
