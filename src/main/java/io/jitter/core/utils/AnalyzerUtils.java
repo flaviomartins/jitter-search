@@ -23,6 +23,7 @@ public class AnalyzerUtils {
                 String term = charTermAttribute.toString();
                 result.add(term);
             }
+            stream.close();
         } catch (IOException e) {
             // do nothing
         }
