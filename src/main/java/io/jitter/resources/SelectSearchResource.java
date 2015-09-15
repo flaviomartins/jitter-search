@@ -60,7 +60,8 @@ public class SelectSearchResource {
                                        @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
                                        @QueryParam("maxId") Optional<Long> maxId,
                                        @QueryParam("epoch") Optional<String> epoch,
-                                       @QueryParam("slimit") @DefaultValue("50") IntParam slimit,
+                                       @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
+                                       @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
                                        @QueryParam("method") @DefaultValue("crcsexp") String method,
                                        @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                        @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
@@ -80,12 +81,12 @@ public class SelectSearchResource {
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                selectResults = selectionManager.search(query, slimit.get(), retweets.get(), maxId.get());
+                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
                 long[] epochs = Epochs.parseEpochRange(epoch.get());
-                selectResults = selectionManager.search(query, slimit.get(), retweets.get(), epochs[0], epochs[1]);
+                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
             } else {
-                selectResults = selectionManager.search(query, slimit.get(), retweets.get());
+                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
             }
         }
 
