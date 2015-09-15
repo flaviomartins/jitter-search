@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.search.DocumentComparable;
+import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
 import org.apache.lucene.index.*;
@@ -210,6 +211,28 @@ public class SelectionManager implements Managed {
             }
         }
         return results;
+    }
+
+    public Map<String,Double> limit(SelectionMethod selectionMethod, Map<String, Double> ranking, int maxCol, double minRanks) {
+        String methodName = selectionMethod.getClass().getSimpleName();
+        Map<String, Double> map = new LinkedHashMap<>();
+        // rankS has its own limit mechanism
+        if (RankS.class.getSimpleName().equals(methodName)) {
+            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
+                if (entry.getValue() < minRanks)
+                    break;
+                map.put(entry.getKey(), entry.getValue());
+            }
+        } else { // hard limit
+            int i = 0;
+            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
+                i++;
+                if (i > maxCol)
+                    break;
+                map.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return map;
     }
 
     public List<Document> reScoreSelected(Iterable<Map.Entry<String, Double>> selectedTopics, List<Document> selectResults) {

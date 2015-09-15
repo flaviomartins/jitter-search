@@ -88,23 +88,7 @@ public class SelectionResource {
             ranking = selectionManager.getRanked(selectionMethod, selectResults, normalize.get());
         }
 
-        Map<String, Double> map = new LinkedHashMap<>();
-        // rankS has its own limit mechanism
-        if (RankS.class.getSimpleName().equals(methodName)) {
-            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
-                if (entry.getValue() < minRanks)
-                    break;
-                map.put(entry.getKey(), entry.getValue());
-            }
-        } else { // hard limit
-            int i = 0;
-            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
-                i++;
-                if (i > maxCol.get())
-                    break;
-                map.put(entry.getKey(), entry.getValue());
-            }
-        }
+        Map<String, Double> map = selectionManager.limit(selectionMethod, ranking, maxCol.get(), minRanks);
 
         long endTime = System.currentTimeMillis();
 

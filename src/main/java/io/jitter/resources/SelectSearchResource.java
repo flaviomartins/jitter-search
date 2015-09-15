@@ -95,44 +95,10 @@ public class SelectSearchResource {
         String methodName = selectionMethod.getClass().getSimpleName();
 
         Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults, normalize.get());
-
-        Map<String, Double> sources = new LinkedHashMap<>();
-        // rankS has its own limit mechanism
-        if (RankS.class.getSimpleName().equals(methodName)) {
-            for (Map.Entry<String, Double> entry : rankedSources.entrySet()) {
-                if (entry.getValue() < minRanks)
-                    break;
-                sources.put(entry.getKey(), entry.getValue());
-            }
-        } else { // hard limit
-            int i = 0;
-            for (Map.Entry<String, Double> entry : rankedSources.entrySet()) {
-                i++;
-                if (i > maxCol.get())
-                    break;
-                sources.put(entry.getKey(), entry.getValue());
-            }
-        }
+        Map<String, Double> sources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
 
         Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
-
-        Map<String, Double> topics = new LinkedHashMap<>();
-        // rankS has its own limit mechanism
-        if (RankS.class.getSimpleName().equals(methodName)) {
-            for (Map.Entry<String, Double> entry : rankedTopics.entrySet()) {
-                if (entry.getValue() < minRanks)
-                    break;
-                topics.put(entry.getKey(), entry.getValue());
-            }
-        } else { // hard limit
-            int i = 0;
-            for (Map.Entry<String, Double> entry : rankedTopics.entrySet()) {
-                i++;
-                if (i > maxCol.get())
-                    break;
-                topics.put(entry.getKey(), entry.getValue());
-            }
-        }
+        Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
         if (topic.isPresent()) {
             selectResults = selectionManager.filterTopic(topic.get(), selectResults);
