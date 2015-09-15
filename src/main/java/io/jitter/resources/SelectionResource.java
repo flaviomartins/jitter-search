@@ -57,6 +57,7 @@ public class SelectionResource {
                                     @QueryParam("topics") @DefaultValue("false") BooleanParam topics,
                                     @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                     @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
+                                    @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -82,9 +83,9 @@ public class SelectionResource {
 
         Map<String, Double> ranking;
         if (topics.get()) {
-            ranking = selectionManager.getRankedTopics(selectionMethod, selectResults);
+            ranking = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
         } else {
-            ranking = selectionManager.getRanked(selectionMethod, selectResults);
+            ranking = selectionManager.getRanked(selectionMethod, selectResults, normalize.get());
         }
 
         Map<String, Double> map = new LinkedHashMap<>();

@@ -72,6 +72,7 @@ public class TrecMultiFeedbackResource {
                                        @QueryParam("method") @DefaultValue("crcsexp") String method,
                                        @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                        @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
+                                       @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
                                        @QueryParam("topic") Optional<String> topic,
                                        @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
                                        @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
@@ -101,7 +102,7 @@ public class TrecMultiFeedbackResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults);
+        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults, normalize.get());
 
         Map<String, Double> sources = new LinkedHashMap<>();
         // rankS has its own limit mechanism
@@ -121,7 +122,7 @@ public class TrecMultiFeedbackResource {
             }
         }
 
-        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults);
+        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
 
         Map<String, Double> topics = new LinkedHashMap<>();
         // rankS has its own limit mechanism

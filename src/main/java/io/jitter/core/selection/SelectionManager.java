@@ -6,7 +6,6 @@ import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.search.DocumentComparable;
-import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
 import org.apache.lucene.index.*;
@@ -152,13 +151,9 @@ public class SelectionManager implements Managed {
         this.twitterManager = twitterManager;
     }
 
-    public SortedMap<String, Double> getRanked(List<Document> results) {
-        return getRanked(SelectionMethodFactory.getMethod(method), results);
-    }
-
-    public SortedMap<String, Double> getRanked(SelectionMethod selectionMethod, List<Document> results) {
+    public SortedMap<String, Double> getRanked(SelectionMethod selectionMethod, List<Document> results, boolean normalize) {
         Map<String, Double> ranked = selectionMethod.rank(results);
-        if (sourcesShardStats != null) {
+        if (normalize && sourcesShardStats != null) {
             Map<String, Double> map = selectionMethod.normalize(ranked, sourcesShardStats);
             return getSortedMap(map);
         } else {
@@ -166,7 +161,7 @@ public class SelectionManager implements Managed {
         }
     }
 
-    public SortedMap<String, Double> getRankedTopics(SelectionMethod selectionMethod, List<Document> results) {
+    public SortedMap<String, Double> getRankedTopics(SelectionMethod selectionMethod, List<Document> results, boolean normalize) {
         Map<String, Double> ranked = selectionMethod.rank(results);
         Map<String, Double> topicsRanked = new HashMap<>();
         for (String topic : topics.keySet()) {
@@ -180,7 +175,7 @@ public class SelectionManager implements Managed {
             if (sum != 0)
                 topicsRanked.put(topic, sum);
         }
-        if (topicsShardStats != null) {
+        if (normalize && topicsShardStats != null) {
             Map<String, Double> map = selectionMethod.normalize(topicsRanked, topicsShardStats);
             return getSortedMap(map);
         } else {
