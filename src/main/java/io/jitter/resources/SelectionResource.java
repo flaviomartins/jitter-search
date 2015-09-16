@@ -81,14 +81,14 @@ public class SelectionResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> ranking;
+        Map<String, Double> ranked;
         if (topics.get()) {
-            ranking = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
+            ranked = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
         } else {
-            ranking = selectionManager.getRanked(selectionMethod, selectResults, normalize.get());
+            ranked = selectionManager.getRanked(selectionMethod, selectResults, normalize.get());
         }
 
-        Map<String, Double> map = selectionManager.limit(selectionMethod, ranking, maxCol.get(), minRanks);
+        Map<String, Double> map = selectionManager.limit(selectionMethod, ranked, maxCol.get(), minRanks);
 
         long endTime = System.currentTimeMillis();
 
