@@ -73,11 +73,13 @@ public class TrecMultiFeedbackResource {
                                        @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                        @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
                                        @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
+                                       @QueryParam("reScore") @DefaultValue("false") BooleanParam reScore,
                                        @QueryParam("topic") Optional<String> topic,
                                        @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
                                        @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                        @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
-                                       @QueryParam("fbTopics") @DefaultValue("3") IntParam fbTopics,
+                                       @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
+                                       @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
                                        @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -108,13 +110,25 @@ public class TrecMultiFeedbackResource {
         Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
         Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
-        if (topics.size() > 0) {
-            Iterable<String> fbTopicsEnabled = Iterables.limit(topics.keySet(), fbTopics.get());
-            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults);
-//            selectResults = selectionManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbTopics.get()), selectResults);
+        Iterable<String> fbSourcesEnabled = null;
+        Iterable<String> fbTopicsEnabled = null;
 
+        if (fbUseSources.get()) {
+            fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
+            selectResults = selectionManager.filterSources(fbSourcesEnabled, selectResults);
+        } else {
+            fbTopicsEnabled = Iterables.limit(topics.keySet(), fbCols.get());
+            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults);
+            if (reScore.get()) {
+                selectResults = selectionManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), selectResults);
+            }
+        }
+
+        if (sources.size() > 0 && topics.size() > 0) {
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query)) {
+                if (term.isEmpty())
+                    continue;
                 if ("AND".equals(term) || "OR".equals(term))
                     continue;
                 queryFV.addTerm(term.toLowerCase(), 1.0);
@@ -134,7 +148,11 @@ public class TrecMultiFeedbackResource {
             fbVector.normalizeToOne();
             fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
-            logger.info("Feature Vector for topics {}:\n{}", Joiner.on(", ").join(fbTopicsEnabled), fbVector.toString());
+            if (fbUseSources.get()) {
+                logger.info("Feature Vector for sources {}:\n{}", Joiner.on(", ").join(fbSourcesEnabled), fbVector.toString());
+            } else {
+                logger.info("Feature Vector for topics {}:\n{}", Joiner.on(", ").join(fbTopicsEnabled), fbVector.toString());
+            }
 
             StringBuilder builder = new StringBuilder();
             Iterator<String> terms = fbVector.iterator();

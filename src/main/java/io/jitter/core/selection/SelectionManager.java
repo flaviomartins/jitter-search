@@ -3,6 +3,7 @@ package io.jitter.core.selection;
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.search.DocumentComparable;
@@ -195,6 +196,17 @@ public class SelectionManager implements Managed {
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults) {
             if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
+                results.add(doc);
+            }
+        }
+        return results;
+    }
+
+    public List<Document> filterSources(Iterable<String> selectedSources, List<Document> selectResults) {
+        HashSet<String> sources = Sets.newHashSet(selectedSources);
+        List<Document> results = new ArrayList<>();
+        for (Document doc : selectResults) {
+            if (sources.contains(doc.getScreen_name())) {
                 results.add(doc);
             }
         }
