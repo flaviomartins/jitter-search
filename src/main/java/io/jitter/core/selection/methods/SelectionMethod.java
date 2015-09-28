@@ -30,9 +30,11 @@ public abstract class SelectionMethod {
         int maxSize = 1;
         for (String shardId : rank.keySet()) {
             String shardIdLower = shardId.toLowerCase();
-            int sz = shardStats.getSizes().get(shardIdLower);
-            if (sz > maxSize)
-                maxSize = sz;
+            if (shardStats.getSizes().containsKey(shardIdLower)) {
+                int sz = shardStats.getSizes().get(shardIdLower);
+                if (sz > maxSize)
+                    maxSize = sz;
+            }
         }
 
         HashMap<String, Double> map = new HashMap<>();
