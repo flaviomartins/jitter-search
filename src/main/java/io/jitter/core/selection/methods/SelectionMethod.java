@@ -39,12 +39,14 @@ public abstract class SelectionMethod {
 
         HashMap<String, Double> map = new HashMap<>();
         for (Map.Entry<String, Double> shardScoreEntry : rank.entrySet()) {
-            String shardId = shardScoreEntry.getKey().toLowerCase();
-            int sz = shardStats.getSizes().get(shardId);
-            double norm = (double) sz / maxSize;
-            double origScore = shardScoreEntry.getValue();
-            double newScore = norm * origScore;
-            map.put(shardScoreEntry.getKey(), newScore);
+            String shardIdLower = shardScoreEntry.getKey().toLowerCase();
+            if (shardStats.getSizes().containsKey(shardIdLower)) {
+                int sz = shardStats.getSizes().get(shardIdLower);
+                double norm = (double) sz / maxSize;
+                double origScore = shardScoreEntry.getValue();
+                double newScore = norm * origScore;
+                map.put(shardScoreEntry.getKey(), newScore);
+            }
         }
         return map;
     }
