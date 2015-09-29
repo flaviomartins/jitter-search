@@ -67,7 +67,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         }
 
-        final SearchManager searchManager = configuration.getSearchManagerFactory().build(environment);
+        final SearchManager searchManager = configuration.getSearchManagerFactory().build(environment, configuration.isLive());
         final SearchManagerHealthCheck searchManagerHealthCheck =
                 new SearchManagerHealthCheck(searchManager);
         environment.healthChecks().register("search-manager", searchManagerHealthCheck);
@@ -79,7 +79,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TopTermsResource topTermsResource = new TopTermsResource(searchManager);
         environment.jersey().register(topTermsResource);
 
-        final SelectionManager selectionManager = configuration.getSelectionManagerFactory().build(environment);
+        final SelectionManager selectionManager = configuration.getSelectionManagerFactory().build(environment, configuration.isLive());
         final SelectionManagerHealthCheck selectionManagerHealthCheck =
                 new SelectionManagerHealthCheck(selectionManager);
         environment.healthChecks().register("selection", selectionManagerHealthCheck);

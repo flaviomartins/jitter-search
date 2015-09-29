@@ -32,6 +32,7 @@ public class SelectionManager implements Managed {
 
     private static final QueryParser QUERY_PARSER =
             new QueryParser(IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
+    public static final IDFSimilarity SIMILARITY = new IDFSimilarity();
 
     private DirectoryReader reader;
     private IndexSearcher searcher;
@@ -39,6 +40,8 @@ public class SelectionManager implements Managed {
     private final String indexPath;
     private final String method;
     private final boolean removeDuplicates;
+    private final boolean live;
+
     private Map<String, ImmutableSortedSet<String>> topics;
     private final Set<String> enabledTopics;
 
@@ -46,10 +49,11 @@ public class SelectionManager implements Managed {
     private ShardStats topicsShardStats;
     private TwitterManager twitterManager;
 
-    public SelectionManager(String indexPath, String method, boolean removeDuplicates, Map<String, Set<String>> topics) {
+    public SelectionManager(String indexPath, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
         this.indexPath = indexPath;
         this.method = method;
         this.removeDuplicates = removeDuplicates;
+        this.live = live;
         TreeMap<String, ImmutableSortedSet<String>> treeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         TreeSet<String> treeSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (Map.Entry<String, Set<String>> entry : topics.entrySet()) {
@@ -417,15 +421,17 @@ public class SelectionManager implements Managed {
         try {
             if (reader == null) {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
-            } else {
+                searcher = new IndexSearcher(reader);
+                searcher.setSimilarity(SIMILARITY);
+            } else if (live) {
                 DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
                 if (newReader != null) {
                     reader.close();
                     reader = newReader;
+                    searcher = new IndexSearcher(reader);
+                    searcher.setSimilarity(SIMILARITY);
                 }
             }
-            searcher = new IndexSearcher(reader);
-            searcher.setSimilarity(new IDFSimilarity());
         } catch (IndexNotFoundException e) {
             logger.error(e.getMessage());
         }

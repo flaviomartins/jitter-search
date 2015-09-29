@@ -45,8 +45,8 @@ public class SearchManagerFactory {
         this.stopwords = stopwords;
     }
 
-    public SearchManager build(Environment environment) {
-        final SearchManager searchManager = new SearchManager(indexPath, databasePath, stopwords);
+    public SearchManager build(Environment environment, boolean live) {
+        final SearchManager searchManager = new SearchManager(indexPath, databasePath, live, stopwords);
         environment.lifecycle().manage(searchManager);
         return searchManager;
     }

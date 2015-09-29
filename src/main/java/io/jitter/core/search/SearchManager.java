@@ -37,21 +37,24 @@ public class SearchManager implements Managed {
 
     private static final QueryParser QUERY_PARSER =
             new QueryParser(IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
+    public static final IDFSimilarity SIMILARITY = new IDFSimilarity();
 
     private final String indexPath;
     private final String databasePath;
+    private final boolean live;
     private Stopper stopper;
 
     private DirectoryReader reader;
     private IndexSearcher searcher;
 
-    public SearchManager(String indexPath, String databasePath) {
+    public SearchManager(String indexPath, String databasePath, boolean live) {
         this.indexPath = indexPath;
         this.databasePath = databasePath;
+        this.live = live;
     }
 
-    public SearchManager(String indexPath, String databasePath, String stopwords) {
-        this(indexPath, databasePath);
+    public SearchManager(String indexPath, String databasePath, boolean live, String stopwords) {
+        this(indexPath, databasePath, live);
         stopper = new Stopper(stopwords);
     }
 
@@ -398,15 +401,17 @@ public class SearchManager implements Managed {
         try {
             if (reader == null) {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
-            } else {
+                searcher = new IndexSearcher(reader);
+                searcher.setSimilarity(SIMILARITY);
+            } else if (live) {
                 DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
                 if (newReader != null) {
                     reader.close();
                     reader = newReader;
+                    searcher = new IndexSearcher(reader);
+                    searcher.setSimilarity(SIMILARITY);
                 }
             }
-            searcher = new IndexSearcher(reader);
-            searcher.setSimilarity(new IDFSimilarity());
         } catch (IndexNotFoundException e) {
             logger.error(e.getMessage());
         }

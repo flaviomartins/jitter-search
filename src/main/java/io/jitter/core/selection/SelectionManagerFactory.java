@@ -63,8 +63,8 @@ public class SelectionManagerFactory {
         this.topics = topics;
     }
 
-    public SelectionManager build(Environment environment) {
-        final SelectionManager selectionManager = new SelectionManager(index, method, removeDuplicates, topics);
+    public SelectionManager build(Environment environment, boolean live) {
+        final SelectionManager selectionManager = new SelectionManager(index, method, removeDuplicates, live, topics);
         environment.lifecycle().manage(selectionManager);
         return selectionManager;
     }
