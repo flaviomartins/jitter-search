@@ -403,7 +403,7 @@ public class SearchManager implements Managed {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
                 searcher = new IndexSearcher(reader);
                 searcher.setSimilarity(SIMILARITY);
-            } else if (live) {
+            } else if (live && !reader.isCurrent()) {
                 DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
                 if (newReader != null) {
                     reader.close();
