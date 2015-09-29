@@ -19,7 +19,6 @@ import io.jitter.api.search.SelectSearchResponse;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
 import io.jitter.core.selection.SelectionManager;
-import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.twittertools.api.TResultWrapper;
@@ -36,7 +35,6 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -115,7 +113,7 @@ public class TrecMultiFeedbackResource {
 
         if (fbUseSources.get()) {
             fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
-            selectResults = selectionManager.filterSources(fbSourcesEnabled, selectResults);
+            selectResults = selectionManager.filterCollections(fbSourcesEnabled, selectResults);
         } else {
             fbTopicsEnabled = Iterables.limit(topics.keySet(), fbCols.get());
             selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults);

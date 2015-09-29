@@ -43,9 +43,9 @@ public class SelectionManager implements Managed {
     private final boolean live;
 
     private Map<String, ImmutableSortedSet<String>> topics;
-    private final Set<String> enabledTopics;
+    private final Map<String, String> reverseTopicMap;
 
-    private ShardStats sourcesShardStats;
+    private ShardStats collectionsShardStats;
     private ShardStats topicsShardStats;
     private TwitterManager twitterManager;
 
@@ -54,14 +54,22 @@ public class SelectionManager implements Managed {
         this.method = method;
         this.removeDuplicates = removeDuplicates;
         this.live = live;
+
         TreeMap<String, ImmutableSortedSet<String>> treeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        TreeSet<String> treeSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (Map.Entry<String, Set<String>> entry : topics.entrySet()) {
             treeMap.put(entry.getKey(), new ImmutableSortedSet.Builder<>(String.CASE_INSENSITIVE_ORDER).addAll(entry.getValue()).build());
-            treeSet.addAll(entry.getValue());
         }
+
+        Map<String, String> reverseMap = new HashMap<>();
+        for (Map.Entry<String, Set<String>> entry : topics.entrySet()) {
+            String topic = entry.getKey();
+            for (String col : entry.getValue()) {
+                reverseMap.put(col.toLowerCase(), topic.toLowerCase());
+            }
+        }
+
         this.topics = treeMap;
-        this.enabledTopics = treeSet;
+        this.reverseTopicMap = reverseMap;
     }
 
     @Override
@@ -75,7 +83,7 @@ public class SelectionManager implements Managed {
     }
 
     public void collectStats() throws IOException {
-        Map<String, Integer> sourcesSizes = new HashMap<>();
+        Map<String, Integer> collectionsSizes = new HashMap<>();
         Map<String, Integer> topicsSizes = new HashMap<>();
 
         Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.SCREEN_NAME.name);
@@ -90,24 +98,24 @@ public class SelectionManager implements Managed {
                 continue;
             }
 
-            String source = term.toLowerCase();
+            String collection = term.toLowerCase();
 
-            if (enabledTopics.contains(source)) {
-                sourcesSizes.put(source, docFreq);
-                logger.info("SCAN source: " + source + " " + docFreq);
+            if (reverseTopicMap.keySet().contains(collection)) {
+                collectionsSizes.put(collection, docFreq);
+                logger.info("SCAN collection: " + collection + " " + docFreq);
             } else {
-                logger.warn("SCAN source: " + source + " " + docFreq);
+                logger.warn("SCAN collection: " + collection + " " + docFreq);
             }
 
             termCnt++;
         }
 
-        logger.info("SCAN total sources: " + termCnt);
+        logger.info("SCAN total collections: " + termCnt);
 
         for (String topic : topics.keySet()) {
             int docFreq = 0;
-            for (String source : topics.get(topic)) {
-                Integer sz = sourcesSizes.get(source);
+            for (String collection : topics.get(topic)) {
+                Integer sz = collectionsSizes.get(collection);
                 if (sz != null)
                     docFreq += sz;
             }
@@ -116,10 +124,10 @@ public class SelectionManager implements Managed {
             logger.info("SCAN topics: " + topic + " " + docFreq);
         }
 
-        sourcesShardStats = new ShardStats(sourcesSizes);
+        collectionsShardStats = new ShardStats(collectionsSizes);
         topicsShardStats = new ShardStats(topicsSizes);
 
-        logger.info("SCAN total docs: " + sourcesShardStats.getTotalDocs() + " - " + topicsShardStats.getTotalDocs());
+        logger.info("SCAN total docs: " + collectionsShardStats.getTotalDocs() + " - " + topicsShardStats.getTotalDocs());
     }
 
     @Override
@@ -158,34 +166,41 @@ public class SelectionManager implements Managed {
     }
 
     public SortedMap<String, Double> getRanked(SelectionMethod selectionMethod, List<Document> results, boolean normalize) {
-        Map<String, Double> ranked = selectionMethod.rank(results);
-        if (normalize && sourcesShardStats != null) {
-            Map<String, Double> map = selectionMethod.normalize(ranked, sourcesShardStats);
+        Map<String, Double> rankedCollections = selectionMethod.rank(results);
+        if (normalize && collectionsShardStats != null) {
+            Map<String, Double> map = selectionMethod.normalize(rankedCollections, collectionsShardStats);
             return getSortedMap(map);
         } else {
-            return getSortedMap(ranked);
+            return getSortedMap(rankedCollections);
         }
     }
 
     public SortedMap<String, Double> getRankedTopics(SelectionMethod selectionMethod, List<Document> results, boolean normalize) {
-        Map<String, Double> ranked = selectionMethod.rank(results);
-        Map<String, Double> topicsRanked = new HashMap<>();
-        for (String topic : topics.keySet()) {
-            double sum = 0;
-            for (String collection : topics.get(topic)) {
-                for (String col : ranked.keySet()) {
-                    if (col.equalsIgnoreCase(collection))
-                        sum += ranked.get(col);
-                }
+        Map<String, Double> rankedCollections = selectionMethod.rank(results);
+        Map<String, Double> rankedTopics = new HashMap<>();
+
+        for (String col : rankedCollections.keySet()) {
+            if (reverseTopicMap.containsKey(col.toLowerCase())) {
+                String topic = reverseTopicMap.get(col.toLowerCase()).toLowerCase();
+                double cur = 0;
+
+                if (rankedTopics.containsKey(topic))
+                    cur = rankedTopics.get(topic);
+                else
+                    rankedTopics.put(topic, 0d);
+
+                double sum = cur + rankedCollections.get(col);
+                rankedTopics.put(topic, sum);
+            } else {
+                logger.warn("{} not mapped to a topic!", col);
             }
-            if (sum != 0)
-                topicsRanked.put(topic, sum);
         }
+
         if (normalize && topicsShardStats != null) {
-            Map<String, Double> map = selectionMethod.normalize(topicsRanked, topicsShardStats);
+            Map<String, Double> map = selectionMethod.normalize(rankedTopics, topicsShardStats);
             return getSortedMap(map);
         } else {
-            return getSortedMap(topicsRanked);
+            return getSortedMap(rankedTopics);
         }
     }
 
@@ -206,11 +221,11 @@ public class SelectionManager implements Managed {
         return results;
     }
 
-    public List<Document> filterSources(Iterable<String> selectedSources, List<Document> selectResults) {
-        HashSet<String> sources = Sets.newHashSet(selectedSources);
+    public List<Document> filterCollections(Iterable<String> selectedSources, List<Document> selectResults) {
+        HashSet<String> collections = Sets.newHashSet(selectedSources);
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults) {
-            if (sources.contains(doc.getScreen_name())) {
+            if (collections.contains(doc.getScreen_name())) {
                 results.add(doc);
             }
         }

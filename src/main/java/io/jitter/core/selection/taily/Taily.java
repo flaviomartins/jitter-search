@@ -255,11 +255,11 @@ public class Taily {
     public void buildFromTopics(Map<String, List<String>> topics) throws IOException {
         logger.info("build topics start");
 
-        // Reverse map sources -> topic
+        // Reverse map collections -> topic
         Map<String, String> sourceTopicMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : topics.entrySet()) {
-            for (String source : entry.getValue()) {
-                sourceTopicMap.put(source.toLowerCase(), entry.getKey().toLowerCase());
+            for (String collection : entry.getValue()) {
+                sourceTopicMap.put(collection.toLowerCase(), entry.getKey().toLowerCase());
             }
         }
 
@@ -289,8 +289,8 @@ public class Taily {
 
             // store the shard size (# of docs) feature
             double totalDocCount = 0;
-            for (String source : topics.get(topic)) {
-                totalDocCount += sourceStores.get(source.toLowerCase()).getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
+            for (String collection : topics.get(topic)) {
+                totalDocCount += sourceStores.get(collection.toLowerCase()).getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
             }
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
 
