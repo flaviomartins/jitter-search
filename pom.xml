@@ -9,7 +9,7 @@
 
     <groupId>org.novasearch.jitter</groupId>
     <artifactId>jitter-search</artifactId>
-    <version>0.0.5-SNAPSHOT</version>
+    <version>0.0.6-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Jitter Search</name>
     <url>${jitter.url}</url>
@@ -21,12 +21,14 @@
         <jitter.url>http://www.jitter.io</jitter.url>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <dropwizard.version>0.8.4</dropwizard.version>
-        <!-- Jersey 2.21 matches Dropwizard 0.8.4 -->
-        <jersey.version>2.21</jersey.version>
-        <!-- Update Logback in Dropwizard 0.8.4 -->
+        <dropwizard.version>0.9.0</dropwizard.version>
+        <!-- Jersey 2.22.1 matches Dropwizard 0.9.0 -->
+        <jersey.version>2.22.1</jersey.version>
+        <!-- Logback 1.1.3 matches Dropwizard 0.9.0 -->
         <logback.version>1.1.3</logback.version>
-        <!-- Guava 18.0 is required in Dropwizard 0.8.4 -->
+        <!-- slf4j-api matches Dropwizard 0.9.0 -->
+        <slf4j-api.version>1.7.12</slf4j-api.version>
+        <!-- Guava 18.0 is required in Dropwizard 0.9.0 -->
         <guava.version>18.0</guava.version>
         <lucene.version>4.10.4</lucene.version>
         <twitter4j.version>4.0.4</twitter4j.version>
@@ -34,7 +36,7 @@
         <twitter-text.version>1.13.0</twitter-text.version>
         <twittertools.version>1.4.3</twittertools.version>
         <ranklib.version>2.3</ranklib.version>
-        <sqlite-jdbc.version>3.8.11</sqlite-jdbc.version>
+        <sqlite-jdbc.version>3.8.11.2</sqlite-jdbc.version>
         <je.version>6.4.9</je.version>
     </properties>
 
@@ -97,6 +99,10 @@
                     <groupId>ch.qos.logback</groupId>
                     <artifactId>logback-classic</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -119,6 +125,11 @@
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j-api.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -272,7 +283,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.3.2</version>
+            <version>3.4</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
