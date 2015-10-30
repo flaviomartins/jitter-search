@@ -6,13 +6,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
-import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
-import io.jitter.core.rerank.RecencyReranker;
 import io.jitter.core.search.DocumentComparable;
 import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
-import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -392,16 +389,6 @@ public class SelectionManager implements Managed {
     }
 
     private List<Document> sortResults(List<Document> results, boolean filterRT) {
-        // get the query epoch
-        double queryEpoch = System.currentTimeMillis() / 1000L;
-        // extract raw epochs from results
-        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(results);
-        // groom our hit times wrt to query time
-        List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
-
-        RecencyReranker reranker = new RecencyReranker(results, new LocalExponentialDistribution(0.01), scaledEpochs);
-        results = reranker.getReranked();
-
         int retweetCount = 0;
         SortedSet<DocumentComparable> sortedResults = new TreeSet<>();
         for (Document p : results) {
