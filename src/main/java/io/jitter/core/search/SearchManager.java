@@ -4,7 +4,10 @@ import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.thrift.gen.TResult;
 import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
+import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
+import io.jitter.core.rerank.RecencyReranker;
 import io.jitter.core.similarities.IDFSimilarity;
+import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
@@ -31,6 +34,8 @@ import java.util.TreeSet;
 public class SearchManager implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(SearchManager.class);
+
+    public static final double DAY = 60.0 * 60.0 * 24.0;
 
     public static final int MAX_RESULTS = 10000;
     public static final int MAX_TERMS_RESULTS = 1000;
@@ -173,6 +178,16 @@ public class SearchManager implements Managed {
     }
 
     private List<Document> sortResults(List<Document> results, boolean filterRT) {
+        // get the query epoch
+        double queryEpoch = System.currentTimeMillis() / 1000L;
+        // extract raw epochs from results
+        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(results);
+        // groom our hit times wrt to query time
+        List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
+
+        RecencyReranker reranker = new RecencyReranker(results, new LocalExponentialDistribution(0.01), scaledEpochs);
+        results = reranker.getReranked();
+
         int retweetCount = 0;
         SortedSet<DocumentComparable> sortedResults = new TreeSet<>();
         for (Document p : results) {
