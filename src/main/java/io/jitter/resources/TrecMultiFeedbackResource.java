@@ -177,7 +177,7 @@ public class TrecMultiFeedbackResource {
 
         int totalHits = results != null ? results.size() : 0;
 
-        logger.info(String.format("%4dms %4dhits %s", (endTime - startTime), totalHits, query));
+        logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
         SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(sources, topics, methodName, totalHits, 0, selectResults, results);

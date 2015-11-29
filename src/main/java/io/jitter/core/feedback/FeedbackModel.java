@@ -7,6 +7,7 @@ import io.jitter.core.utils.ScorableComparator;
 import io.jitter.core.utils.Stopper;
 
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 
 
@@ -47,8 +48,9 @@ public abstract class FeedbackModel {
     }
 
     private String toString(int k) {
-        DecimalFormat format = new DecimalFormat("#.#####################");
-
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.ROOT);
+        DecimalFormat df = (DecimalFormat)nf;
+        df.applyPattern("#.#########");
 
         ScorableComparator comparator = new ScorableComparator(true);
         Collections.sort(features, comparator);
@@ -65,7 +67,7 @@ public abstract class FeedbackModel {
         i = 0;
         while (it.hasNext() && i++ < k) {
             KeyValuePair tuple = it.next();
-            b.append(format.format(tuple.getScore() / sum)).append(" ").append(tuple.getKey()).append("\n");
+            b.append(df.format(tuple.getScore() / sum)).append(" ").append(tuple.getKey()).append("\n");
         }
 
         return b.toString();

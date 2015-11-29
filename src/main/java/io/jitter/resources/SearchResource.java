@@ -23,6 +23,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/search")
@@ -72,7 +73,7 @@ public class SearchResource {
 
         int totalHits = results != null ? results.size() : 0;
 
-        logger.info(String.format("%4dms %4dhits %s", (endTime - startTime), totalHits, query));
+        logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
         DocumentsResponse documentsResponse = new DocumentsResponse(totalHits, 0, results);

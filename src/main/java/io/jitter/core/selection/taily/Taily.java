@@ -65,7 +65,7 @@ public class Taily {
         double ctf = termsEnum.totalTermFreq();
         double df = termsEnum.docFreq();
 
-        logger.debug(String.format("term: %s ctf: %d df: %d", term, (int) ctf, (int) df));
+        logger.debug(String.format(Locale.ENGLISH, "term: %s ctf: %d df: %d", term, (int) ctf, (int) df));
 
         // store ctf feature for term
         String ctfFeatKey = term + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
@@ -223,7 +223,7 @@ public class Taily {
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
                     if (shardDataMap.get(shardIdStr).df != 0) {
-                        logger.debug(String.format("shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, term, (int) ctf, shardDataMap.get(shardIdStr).min,
+                        logger.debug(String.format(Locale.ENGLISH, "shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, term, (int) ctf, shardDataMap.get(shardIdStr).min,
                                 (long) shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2));
                         storeTermStats(stores.get(shardIdStr), term, (int) ctf, shardDataMap.get(shardIdStr).min,
@@ -372,7 +372,7 @@ public class Taily {
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
                     if (shardDataMap.get(shardIdStr).df != 0) {
-                        logger.debug(String.format("shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, term, (int) ctf, shardDataMap.get(shardIdStr).min,
+                        logger.debug(String.format(Locale.ENGLISH, "shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, term, (int) ctf, shardDataMap.get(shardIdStr).min,
                                 (long) shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2));
                         storeTermStats(stores.get(shardIdStr), term, (int) ctf, shardDataMap.get(shardIdStr).min,

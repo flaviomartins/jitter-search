@@ -25,7 +25,7 @@ public class Stopper {
             stopwords = new HashSet<>();
 
             // assume our stoplist has one stopword per line
-            List<String> lines = IOUtils.readLines(new FileInputStream(pathToStoplist));
+            List<String> lines = IOUtils.readLines(new FileInputStream(pathToStoplist), "UTF-8");
             for (String line : lines) {
                 stopwords.add(line);
             }

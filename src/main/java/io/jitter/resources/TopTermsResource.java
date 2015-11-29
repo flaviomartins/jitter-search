@@ -17,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/top/terms")
@@ -48,7 +49,7 @@ public class TopTermsResource {
 
         int totalHits = terms != null ? terms.length : 0;
 
-        logger.info(String.format("%4dms %d high freq terms", (endTime - startTime), limit.get()));
+        logger.info(String.format(Locale.ENGLISH, "%4dms %d high freq terms", (endTime - startTime), limit.get()));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
         TermsResponse termsResponse = new TermsResponse(totalHits, 0, terms);

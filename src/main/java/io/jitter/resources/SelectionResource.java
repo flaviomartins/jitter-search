@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -94,7 +95,7 @@ public class SelectionResource {
 
         int totalHits = selectResults != null ? selectResults.size() : 0;
 
-        logger.info(String.format("%4dms %4dhits %s", (endTime - startTime), totalHits, query));
+        logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
         SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(map, methodName, totalHits, 0, selectResults);

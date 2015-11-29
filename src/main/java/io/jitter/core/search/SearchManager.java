@@ -393,7 +393,7 @@ public class SearchManager implements Managed {
             }
             logger.info("Total of {} statuses added", cnt);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("{}", e.getMessage());
         } finally {
             dir.close();
         }

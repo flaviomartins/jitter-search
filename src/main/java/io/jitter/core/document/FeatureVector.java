@@ -8,6 +8,7 @@ import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.util.Version;
 
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 
 
@@ -206,14 +207,16 @@ public class FeatureVector {
     }
 
     private String toString(int k) {
-        DecimalFormat format = new DecimalFormat("#.#########");
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.ROOT);
+        DecimalFormat df = (DecimalFormat)nf;
+        df.applyPattern("#.#########");
         StringBuilder b = new StringBuilder();
         List<KeyValuePair> kvpList = getOrderedFeatures();
         Iterator<KeyValuePair> it = kvpList.iterator();
         int i = 0;
         while (it.hasNext() && i++ < k) {
             KeyValuePair pair = it.next();
-            b.append(format.format(pair.getScore())).append(" ").append(pair.getKey()).append("\n");
+            b.append(df.format(pair.getScore())).append(" ").append(pair.getKey()).append("\n");
         }
         return b.toString();
 

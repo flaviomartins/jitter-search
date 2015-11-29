@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"setId", "setRsv", "setScreen_name", "setEpoch", "setText",
@@ -52,7 +53,7 @@ public class TResultWrapper extends TResult {
         sb.append("qid:").append(qid).append(" ");
         int i = 1;
         for (Float fVal : features) {
-            sb.append(String.format("%d:%f", i, fVal)).append(" ");
+            sb.append(String.format(Locale.ENGLISH, "%d:%f", i, fVal)).append(" ");
             i++;
         }
         sb.append("# ").append(id);
@@ -66,7 +67,7 @@ public class TResultWrapper extends TResult {
         sb.append("qid:").append(1).append(" ");
         int i = 1;
         for (Float fVal : features) {
-            sb.append(String.format("%d:%f", i, fVal)).append(" ");
+            sb.append(String.format(Locale.ENGLISH, "%d:%f", i, fVal)).append(" ");
             i++;
         }
         sb.append("# ").append(id);

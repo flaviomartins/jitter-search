@@ -85,7 +85,7 @@ public class TwitterManager implements Managed {
                     usersMap.put(user.getScreenName(), user);
                 }
             } catch (TwitterException e) {
-                e.printStackTrace();
+                logger.error("{}", e.getMessage());
             }
             remaining -= reqSize;
             i += reqSize;
@@ -121,7 +121,7 @@ public class TwitterManager implements Managed {
                 }
             }
         } catch (TwitterException e) {
-            e.printStackTrace();
+            logger.error("{}", e.getMessage());
         }
     }
 
@@ -203,10 +203,10 @@ public class TwitterManager implements Managed {
                 }
             }
 
-            logger.info(String.format("Total of %s statuses added", cnt));
+            logger.info(String.format(Locale.ENGLISH, "Total of %s statuses added", cnt));
             logger.info("Total elapsed time: " + (System.currentTimeMillis() - startTime) + "ms");
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("{}", e.getMessage());
         } finally {
             dir.close();
             stream.close();
@@ -274,11 +274,11 @@ public class TwitterManager implements Managed {
                         logger.debug(cnt + " statuses indexed");
                     }
                 }
-                logger.info(String.format("Total of %s statuses added", cnt));
+                logger.info(String.format(Locale.ENGLISH, "Total of %s statuses added", cnt));
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("{}", e.getMessage());
         } finally {
             dir.close();
         }
