@@ -233,20 +233,4 @@ public class FeatureVector {
         return z;
     }
 
-
-    public static void main(String[] args) {
-        String text = "This. This is NOT a test, nor is it better than 666!";
-
-        Stopper stopper = new Stopper();
-        stopper.addStopword("this");
-        stopper.addStopword("is");
-        stopper.addStopword("better");
-
-        List<String> terms = AnalyzerUtils.analyze(analyzer, text);
-        for (String term : terms) {
-            System.out.println(term);
-        }
-    }
-
-
 }
