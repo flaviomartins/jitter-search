@@ -66,7 +66,7 @@ public class SelectionManager implements Managed {
         for (Map.Entry<String, Set<String>> entry : topics.entrySet()) {
             String topic = entry.getKey();
             for (String col : entry.getValue()) {
-                reverseMap.put(col.toLowerCase(), topic.toLowerCase());
+                reverseMap.put(col.toLowerCase(Locale.ROOT), topic.toLowerCase(Locale.ROOT));
             }
         }
 
@@ -100,7 +100,7 @@ public class SelectionManager implements Managed {
                 continue;
             }
 
-            String collection = term.toLowerCase();
+            String collection = term.toLowerCase(Locale.ROOT);
 
             if (reverseTopicMap.keySet().contains(collection)) {
                 collectionsSizes.put(collection, docFreq);
@@ -182,8 +182,8 @@ public class SelectionManager implements Managed {
         Map<String, Double> rankedTopics = new HashMap<>();
 
         for (String col : rankedCollections.keySet()) {
-            if (reverseTopicMap.containsKey(col.toLowerCase())) {
-                String topic = reverseTopicMap.get(col.toLowerCase()).toLowerCase();
+            if (reverseTopicMap.containsKey(col.toLowerCase(Locale.ROOT))) {
+                String topic = reverseTopicMap.get(col.toLowerCase(Locale.ROOT)).toLowerCase(Locale.ROOT);
                 double cur = 0;
 
                 if (rankedTopics.containsKey(topic))

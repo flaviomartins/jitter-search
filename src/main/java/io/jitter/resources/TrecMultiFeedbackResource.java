@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -129,7 +130,7 @@ public class TrecMultiFeedbackResource {
                     continue;
                 if ("AND".equals(term) || "OR".equals(term))
                     continue;
-                queryFV.addTerm(term.toLowerCase(), 1.0);
+                queryFV.addTerm(term.toLowerCase(Locale.ROOT), 1.0);
             }
             queryFV.normalizeToOne();
 

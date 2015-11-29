@@ -31,7 +31,7 @@ public class FeedbackRelevanceModel extends FeedbackModel {
             hitIterator = relDocs.iterator();
             while (hitIterator.hasNext()) {
                 Document hit = hitIterator.next();
-                String text = hit.getText().toLowerCase();
+                String text = hit.getText().toLowerCase(Locale.ROOT);
                 FeatureVector docVector = new FeatureVector(text, stopper);
                 vocab.addAll(docVector.getFeatures());
                 fbDocVectors.add(docVector);

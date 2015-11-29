@@ -33,10 +33,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/mf")
@@ -114,7 +111,7 @@ public class MultiFeedbackResource {
             for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query)) {
                 if ("AND".equals(term) || "OR".equals(term))
                     continue;
-                queryFV.addTerm(term.toLowerCase(), 1.0);
+                queryFV.addTerm(term.toLowerCase(Locale.ROOT), 1.0);
             }
             queryFV.normalizeToOne();
 

@@ -38,6 +38,12 @@
         <ranklib.version>2.3</ranklib.version>
         <sqlite-jdbc.version>3.8.11.2</sqlite-jdbc.version>
         <je.version>6.4.9</je.version>
+        <!--
+           It is recommended to set the compiler version globally,
+           as the compiler plugin and the forbidden API checker both
+           use this version
+        -->
+        <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
 
     <developers>
@@ -322,8 +328,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>${maven.compiler.target}</source>
+                    <target>${maven.compiler.target}</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
@@ -370,6 +376,38 @@
                                 </transformer>
                             </transformers>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>de.thetaphi</groupId>
+                <artifactId>forbiddenapis</artifactId>
+                <version>2.0</version>
+                <configuration>
+                    <!-- disallow undocumented classes like sun.misc.Unsafe: -->
+                    <internalRuntimeForbidden>true</internalRuntimeForbidden>
+                    <!--
+                      if the used Java version is too new,
+                      don't fail, just do nothing:
+                    -->
+                    <failOnUnsupportedJava>false</failOnUnsupportedJava>
+                    <bundledSignatures>
+                        <!--
+                          This will automatically choose the right
+                          signatures based on 'maven.compiler.target':
+                        -->
+                        <bundledSignature>jdk-unsafe</bundledSignature>
+                        <bundledSignature>jdk-deprecated</bundledSignature>
+                        <bundledSignature>jdk-system-out</bundledSignature>
+                        <bundledSignature>commons-io-unsafe-2.4</bundledSignature>
+                    </bundledSignatures>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                            <goal>testCheck</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

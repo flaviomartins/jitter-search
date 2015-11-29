@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class Taily {
@@ -130,7 +131,7 @@ public class Taily {
 
         // create FeatureStore dbs for each shard
         for (String screenName : screenNames) {
-            String shardIdStr = screenName.toLowerCase();
+            String shardIdStr = screenName.toLowerCase(Locale.ROOT);
             String cPath = dbPath + "/" + SOURCES_DBENV + "/" + shardIdStr;
 
             // create feature store for shard
@@ -192,7 +193,7 @@ public class Taily {
                         Document doc = indexReader.document(docId);
 
                         // find the shard id, if this doc belongs to any
-                        String currShardId = doc.get(IndexStatuses.StatusField.SCREEN_NAME.name).toLowerCase();
+                        String currShardId = doc.get(IndexStatuses.StatusField.SCREEN_NAME.name).toLowerCase(Locale.ROOT);
 
                         double length = doc.getValues(IndexStatuses.StatusField.TEXT.name).length;
                         double tf = docsEnum.freq();
@@ -218,7 +219,7 @@ public class Taily {
 
             // add term info to correct shard dbs
             for (String screenName : screenNames) {
-                String shardIdStr = screenName.toLowerCase();
+                String shardIdStr = screenName.toLowerCase(Locale.ROOT);
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
                     if (shardDataMap.get(shardIdStr).df != 0) {
@@ -259,7 +260,7 @@ public class Taily {
         Map<String, String> sourceTopicMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : topics.entrySet()) {
             for (String collection : entry.getValue()) {
-                sourceTopicMap.put(collection.toLowerCase(), entry.getKey().toLowerCase());
+                sourceTopicMap.put(collection.toLowerCase(Locale.ROOT), entry.getKey().toLowerCase(Locale.ROOT));
             }
         }
 
@@ -280,7 +281,7 @@ public class Taily {
 
         // create FeatureStore dbs for each shard
         for (String topic : topics.keySet()) {
-            String shardIdStr = topic.toLowerCase();
+            String shardIdStr = topic.toLowerCase(Locale.ROOT);
             String cPath = dbPath + "/" + TOPICS_DBENV + "/" + shardIdStr;
 
             // create feature store for shard
@@ -290,7 +291,7 @@ public class Taily {
             // store the shard size (# of docs) feature
             double totalDocCount = 0;
             for (String collection : topics.get(topic)) {
-                totalDocCount += sourceStores.get(collection.toLowerCase()).getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
+                totalDocCount += sourceStores.get(collection.toLowerCase(Locale.ROOT)).getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
             }
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
 
@@ -341,7 +342,7 @@ public class Taily {
                         Document doc = indexReader.document(docId);
 
                         // find the shard id, if this doc belongs to any
-                        String currShardId = sourceTopicMap.get(doc.get(IndexStatuses.StatusField.SCREEN_NAME.name).toLowerCase());
+                        String currShardId = sourceTopicMap.get(doc.get(IndexStatuses.StatusField.SCREEN_NAME.name).toLowerCase(Locale.ROOT));
 
                         double length = doc.getValues(IndexStatuses.StatusField.TEXT.name).length;
                         double tf = docsEnum.freq();
@@ -367,7 +368,7 @@ public class Taily {
 
             // add term info to correct shard dbs
             for (String topic : topics.keySet()) {
-                String shardIdStr = topic.toLowerCase();
+                String shardIdStr = topic.toLowerCase(Locale.ROOT);
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
                     if (shardDataMap.get(shardIdStr).df != 0) {

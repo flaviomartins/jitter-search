@@ -107,7 +107,7 @@ public class SelectSearchResource {
             for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query)) {
                 if ("AND".equals(term) || "OR".equals(term))
                     continue;
-                queryFV.addTerm(term.toLowerCase(), 1.0);
+                queryFV.addTerm(term.toLowerCase(Locale.ROOT), 1.0);
             }
             queryFV.normalizeToOne();
 

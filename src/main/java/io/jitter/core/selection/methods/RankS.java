@@ -22,6 +22,8 @@ public class RankS extends SelectionMethod {
 
     @Override
     public Map<String, Double> rank(List<Document> results) {
+        Map<String, Double> counts = getCounts(results);
+
         double minRsv = 0;
         if (useScores) {
             minRsv = getMinRsv(results);
@@ -30,7 +32,12 @@ public class RankS extends SelectionMethod {
         HashMap<String, Double> map = new HashMap<>();
         int j = 1;
         int step = 1;
+        String topShard = null;
         for (Document result : results) {
+            if (j == 1) {
+                topShard = result.getScreen_name();
+            }
+
             double r = getStepFactor(step);
             if (useScores) {
                 if (minRsv < 0) {
@@ -53,6 +60,13 @@ public class RankS extends SelectionMethod {
             }
             j++;
         }
+
+        if (counts.containsKey(topShard)) {
+            if (counts.get(topShard) == 1) {
+                map.remove(topShard);
+            }
+        }
+
         return map;
     }
 
