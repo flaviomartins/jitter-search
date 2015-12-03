@@ -46,7 +46,8 @@ public class TrecMicroblogAPIWrapper implements Managed {
     public TrecMicroblogAPIWrapper(String host, int port, String group, String token, String cacheDir, boolean useCache, String collectDb, String stopwords, @Nullable String stats) {
         this(host, port, group, token, cacheDir, useCache, collectDb);
         stopper = new Stopper(stopwords);
-        collectionStats = new TrecCollectionStats(stats);
+        if (stats != null)
+            collectionStats = new TrecCollectionStats(stats);
     }
 
     @Override
