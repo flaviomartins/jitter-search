@@ -8,8 +8,6 @@ import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
 import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
 import io.jitter.core.rerank.RecencyReranker;
-import io.jitter.core.similarities.IDFSimilarity;
-import io.jitter.core.twittertools.api.TrecCollectionStats;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
@@ -19,6 +17,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.LMDirichletSimilarity;
+import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
@@ -45,7 +44,7 @@ public class SearchManager implements Managed {
 
     private static final QueryParser QUERY_PARSER =
             new QueryParser(IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
-    public static final IDFSimilarity SIMILARITY = new IDFSimilarity();
+    public static final Similarity SIMILARITY = new LMDirichletSimilarity(2500);
 
     private final String indexPath;
     private final String databasePath;
