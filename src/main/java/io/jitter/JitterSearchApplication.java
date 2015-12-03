@@ -113,8 +113,16 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.jersey().register(multiFeedbackResource);
 
         final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper = configuration.getTrecMicroblogAPIWrapperFactory().build(environment);
+
         final TrecMultiFeedbackResource trecMultiFeedbackResource = new TrecMultiFeedbackResource(trecMicroblogAPIWrapper, selectionManager);
         environment.jersey().register(trecMultiFeedbackResource);
+
+//        final TrecRMTSResource trecRMTSResource = new TrecRMTSResource(trecMicroblogAPIWrapper, selectionManager);
+//        environment.jersey().register(trecRMTSResource);
+
+        final RMTSResource RMTSResource = new RMTSResource(searchManager, selectionManager);
+        environment.jersey().register(RMTSResource);
+
 
         if (configuration.isLive()) {
             OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getOAuth1Factory().build();

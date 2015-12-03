@@ -32,6 +32,7 @@ public class RecencyReranker extends SearchReranker {
             if (Double.isInfinite(recency) || Double.isNaN(recency))
                 recency = -1000.0;
             Document updatedResult = new Document(origResult);
+            updatedResult.getFeatures().add((float)density);
             updatedResult.setRsv(origResult.getRsv() + recency);
             updatedResults.add(updatedResult);
         }

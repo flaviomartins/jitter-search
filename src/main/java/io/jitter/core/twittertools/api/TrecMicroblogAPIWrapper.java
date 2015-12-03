@@ -4,6 +4,7 @@ import cc.twittertools.search.api.TrecSearchThriftClient;
 import cc.twittertools.thrift.gen.TResult;
 import com.google.common.base.Preconditions;
 import io.dropwizard.lifecycle.Managed;
+import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.core.utils.Stopper;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -28,6 +29,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
     private final boolean useCache;
     private final String collectDb;
     private Stopper stopper;
+    private CollectionStats collectionStats;
 
     public TrecMicroblogAPIWrapper(String host, int port, @Nullable String group,
                                    @Nullable String token, @Nullable String cacheDir, boolean useCache, @Nullable String collectDb) {
@@ -41,9 +43,10 @@ public class TrecMicroblogAPIWrapper implements Managed {
             createDatabase();
     }
 
-    public TrecMicroblogAPIWrapper(String host, int port, String group, String token, String cacheDir, boolean useCache, String collectDb, String stopwords) {
+    public TrecMicroblogAPIWrapper(String host, int port, String group, String token, String cacheDir, boolean useCache, String collectDb, String stopwords, @Nullable String stats) {
         this(host, port, group, token, cacheDir, useCache, collectDb);
         stopper = new Stopper(stopwords);
+        collectionStats = new TrecCollectionStats(stats);
     }
 
     @Override
@@ -62,6 +65,14 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
     public void setStopper(Stopper stopper) {
         this.stopper = stopper;
+    }
+
+    public CollectionStats getCollectionStats() {
+        return collectionStats;
+    }
+
+    public void setCollectionStats(TrecCollectionStats collectionStats) {
+        this.collectionStats = collectionStats;
     }
 
     public List<TResultWrapper> search(String query, long maxId, int numResults)  throws TException,

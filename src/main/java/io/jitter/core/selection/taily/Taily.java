@@ -1,6 +1,7 @@
 package io.jitter.core.selection.taily;
 
 import cc.twittertools.index.IndexStatuses;
+import io.jitter.core.features.IndriFeature;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;

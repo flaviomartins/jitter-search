@@ -4,6 +4,7 @@ import cc.twittertools.thrift.gen.TResult;
 import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.learning.DenseDataPoint;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.jitter.api.search.Document;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,12 +18,16 @@ public class TResultWrapper extends TResult {
     private ArrayList<Float> features;
     private Map<String, Float> properties;
 
+    public TResultWrapper() {
+        super();
+        features = new ArrayList<>();
+        properties = new HashMap<>();
+    }
+
     public TResultWrapper(TResult other) {
         super(other);
         features = new ArrayList<>();
         properties = new HashMap<>();
-        // Add score to features
-        features.add((float) other.rsv);
     }
 
     public TResultWrapper(TResultWrapper other) {

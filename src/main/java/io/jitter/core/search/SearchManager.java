@@ -4,9 +4,12 @@ import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.thrift.gen.TResult;
 import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
+import io.jitter.api.collectionstatistics.CollectionStats;
+import io.jitter.api.collectionstatistics.IndexCollectionStats;
 import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
 import io.jitter.core.rerank.RecencyReranker;
 import io.jitter.core.similarities.IDFSimilarity;
+import io.jitter.core.twittertools.api.TrecCollectionStats;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
@@ -431,5 +434,9 @@ public class SearchManager implements Managed {
             logger.error(e.getMessage());
         }
         return searcher;
+    }
+
+    public CollectionStats getCollectionStats() {
+        return new IndexCollectionStats(reader, IndexStatuses.StatusField.TEXT.name);
     }
 }

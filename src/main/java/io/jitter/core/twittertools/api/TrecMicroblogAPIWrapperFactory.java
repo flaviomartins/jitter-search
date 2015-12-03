@@ -28,6 +28,9 @@ public class TrecMicroblogAPIWrapperFactory {
     @NotEmpty
     private String stopwords;
 
+    @NotEmpty
+    private String stats;
+
     @JsonProperty
     public String getHost() {
         return host;
@@ -69,12 +72,22 @@ public class TrecMicroblogAPIWrapperFactory {
     }
 
     @JsonProperty
+    public String getStats() {
+        return stats;
+    }
+
+    @JsonProperty
+    public void setStats(String stats) {
+        this.stats = stats;
+    }
+
+    @JsonProperty
     public void setStopwords(String stopwords) {
         this.stopwords = stopwords;
     }
 
     public TrecMicroblogAPIWrapper build(Environment environment) {
-        final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper = new TrecMicroblogAPIWrapper(host, port, group, token, cacheDir, useCache, collectDb, stopwords);
+        final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper = new TrecMicroblogAPIWrapper(host, port, group, token, cacheDir, useCache, collectDb, stopwords, stats);
         environment.lifecycle().manage(trecMicroblogAPIWrapper);
         return trecMicroblogAPIWrapper;
     }

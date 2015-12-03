@@ -1,4 +1,4 @@
-package io.jitter.core.selection.taily;
+package io.jitter.core.features;
 
 public class IndriFeature {
     public static final int DEFAULT_MU = 2500;
