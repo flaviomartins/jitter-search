@@ -28,7 +28,6 @@ public class TrecMicroblogAPIWrapperFactory {
     @NotEmpty
     private String stopwords;
 
-    @NotEmpty
     private String stats;
 
     @JsonProperty
