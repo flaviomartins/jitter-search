@@ -95,7 +95,10 @@ public class RMTSResource {
         List<Document> selectResults = null;
         List<Document> results = null;
 
-        long[] epochs = Epochs.parseEpochRange(epoch.get());
+        long[] epochs = new long[2];
+        if (epoch.isPresent()) {
+            Epochs.parseEpochRange(epoch.get());
+        }
 
         long startTime = System.currentTimeMillis();
 

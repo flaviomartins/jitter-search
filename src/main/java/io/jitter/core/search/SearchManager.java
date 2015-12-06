@@ -6,9 +6,6 @@ import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
-import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
-import io.jitter.core.rerank.RecencyReranker;
-import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
@@ -180,16 +177,6 @@ public class SearchManager implements Managed {
     }
 
     private List<Document> sortResults(List<Document> results, boolean filterRT) {
-        // get the query epoch
-        double queryEpoch = System.currentTimeMillis() / 1000L;
-        // extract raw epochs from results
-        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(results);
-        // groom our hit times wrt to query time
-        List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
-
-        RecencyReranker reranker = new RecencyReranker(results, new LocalExponentialDistribution(0.01), scaledEpochs);
-        results = reranker.getReranked();
-
         int retweetCount = 0;
         SortedSet<DocumentComparable> sortedResults = new TreeSet<>();
         for (Document p : results) {
