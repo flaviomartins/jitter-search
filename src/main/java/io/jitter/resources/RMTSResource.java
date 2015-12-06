@@ -11,6 +11,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Doubles;
 import com.twitter.Extractor;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
@@ -295,6 +296,8 @@ public class RMTSResource {
             result.getFeatures().add((float) Math.log(1 + result.getFollowers_count()));
 
             result.getFeatures().add((float) bm25);
+
+            result.getFeatures().add((float) Doubles.max(tfValues));
         }
     }
 
@@ -333,9 +336,12 @@ public class RMTSResource {
 //            String rel = qrels.getRelString(qid, docno);
             String rel = "0";
 
-            Document updatedResult = new Document(results.get(j));
-            updatedResult.setRsv(scores[k]);
-            finalResults.add(updatedResult);
+            float maxTF = l.get(k).getFeatureValue(21);
+            if (maxTF < 5) {
+                Document updatedResult = new Document(results.get(k));
+                updatedResult.setRsv(scores[k]);
+                finalResults.add(updatedResult);
+            }
 
 //            System.out.println(String.format("%s Q0 %s %d %." + (int) (6 + Math.ceil(Math.log10(numResults))) + "f %s # rel = %s, rt = %s, text = %s", qid, docno, (j + 1),
 //                    scores[k], runTag, rel, results.get(j).getRetweeted_status_id(), results.get(j).getText().replaceAll("\\r?\\n", " --linebreak-- ")));
