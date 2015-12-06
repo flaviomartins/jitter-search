@@ -21,7 +21,6 @@ import io.jitter.core.feedback.FeedbackRelevanceModel;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
-import io.jitter.core.twittertools.api.TResultWrapper;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.jitter.core.utils.AnalyzerUtils;
 import org.slf4j.Logger;
@@ -85,7 +84,7 @@ public class TrecMultiFeedbackResource {
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
         List<Document> selectResults = null;
-        List<TResultWrapper> results = null;
+        List<Document> results = null;
 
         long startTime = System.currentTimeMillis();
 

@@ -30,7 +30,6 @@ import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.twittertools.api.TResultWrapper;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
-import io.jitter.core.twittertools.api.TrecCollectionStats;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.Epochs;
 import io.jitter.core.utils.TimeUtils;
@@ -91,15 +90,16 @@ public class TrecRMTSResource {
                                        @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                        @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
                                        @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
+                                       @QueryParam("numRerank") @DefaultValue("1000") IntParam numRerank,
                                        @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
         List<Document> selectResults = null;
-        List<TResultWrapper> results = null;
+        List<Document> results = null;
 
-        long[] epochs = new long[2];
+        long[] epochs = Epochs.parseEpochRange(epoch.get());
 
         long startTime = System.currentTimeMillis();
 
@@ -107,7 +107,6 @@ public class TrecRMTSResource {
             if (maxId.isPresent()) {
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
-                epochs = Epochs.parseEpochRange(epoch.get());
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
             } else {
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
@@ -143,7 +142,7 @@ public class TrecRMTSResource {
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;
-        double queryEpoch = epoch.isPresent() ? epochs[0] : currentEpoch;
+        double queryEpoch = epoch.isPresent() ? epochs[1] : currentEpoch;
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {
@@ -153,6 +152,9 @@ public class TrecRMTSResource {
                 results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !retweets.get());
             }
         }
+
+        score(query, queryEpoch, results);
+        results = rankRankLib(query, results, numRerank.get(), limit.get(), "RMTS");
 
         long endTime = System.currentTimeMillis();
 
@@ -310,8 +312,7 @@ public class TrecRMTSResource {
         }
     }
 
-    public List<Document> rankRankLib(String query, List<Document> results, int numResults, String runTag) {
-        int numRerank = 1000;
+    public List<Document> rankRankLib(String query, List<Document> results, int numRerank, int numResults, String runTag) {
         RankerFactory rFact = new RankerFactory();
         Ranker ranker = rFact.loadRanker("ltr-all.model");
         int[] features = ranker.getFeatures();

@@ -86,6 +86,7 @@ public class RMTSResource {
                                        @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                        @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                        @QueryParam("fbTopics") @DefaultValue("3") IntParam fbTopics,
+                                       @QueryParam("numRerank") @DefaultValue("1000") IntParam numRerank,
                                        @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -94,7 +95,7 @@ public class RMTSResource {
         List<Document> selectResults = null;
         List<Document> results = null;
 
-        long[] epochs = new long[2];
+        long[] epochs = Epochs.parseEpochRange(epoch.get());
 
         long startTime = System.currentTimeMillis();
 
@@ -102,7 +103,6 @@ public class RMTSResource {
             if (maxId.isPresent()) {
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
-                epochs = Epochs.parseEpochRange(epoch.get());
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
             } else {
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
@@ -124,21 +124,20 @@ public class RMTSResource {
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;
-        double queryEpoch = epoch.isPresent() ? epochs[0] : currentEpoch;
+        double queryEpoch = epoch.isPresent() ? epochs[1] : currentEpoch;
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                results = searchManager.search(query, limit.get(), !retweets.get(), maxId.get());
+                results = searchManager.search(query, numRerank.get(), !retweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
-                epochs = Epochs.parseEpochRange(epoch.get());
-                results = searchManager.search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
+                results = searchManager.search(query, numRerank.get(), !retweets.get(), epochs[0], epochs[1]);
             } else {
-                results = searchManager.search(query, limit.get(), !retweets.get());
+                results = searchManager.search(query, numRerank.get(), !retweets.get());
             }
         }
 
         score(query, queryEpoch, results);
-        results = rankRankLib(query, results, 1000, "RMTS");
+        results = rankRankLib(query, results, numRerank.get(), limit.get(), "RMTS");
 
         long endTime = System.currentTimeMillis();
 
@@ -296,8 +295,7 @@ public class RMTSResource {
         }
     }
 
-    public List<Document> rankRankLib(String query, List<Document> results, int numResults, String runTag) {
-        int numRerank = 1000;
+    public List<Document> rankRankLib(String query, List<Document> results, int numRerank, int numResults, String runTag) {
         RankerFactory rFact = new RankerFactory();
         Ranker ranker = rFact.loadRanker("ltr-all.model");
         int[] features = ranker.getFeatures();

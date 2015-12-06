@@ -5,6 +5,7 @@ import cc.twittertools.thrift.gen.TResult;
 import com.google.common.base.Preconditions;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
+import io.jitter.api.search.Document;
 import io.jitter.core.utils.Stopper;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -76,13 +77,13 @@ public class TrecMicroblogAPIWrapper implements Managed {
         this.collectionStats = collectionStats;
     }
 
-    public List<TResultWrapper> search(String query, long maxId, int numResults)  throws TException,
+    public List<Document> search(String query, long maxId, int numResults)  throws TException,
             IOException, ClassNotFoundException {
         return search(query, maxId, numResults, false);
     }
 
     @SuppressWarnings("unchecked")
-    public List<TResultWrapper> search(String query, long maxId, int numResults, boolean filterRT) throws TException,
+    public List<Document> search(String query, long maxId, int numResults, boolean filterRT) throws TException,
             IOException, ClassNotFoundException {
 
         int numResultsToFetch = Math.min(MAX_NUM_RESULTS, 3 * numResults);
@@ -121,7 +122,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
         Iterator<TResult> resultIt = results.iterator();
 
         LongOpenHashSet seenSet = new LongOpenHashSet();
-        List<TResultWrapper> updatedResults = new ArrayList<>(results.size());
+        List<Document> updatedResults = new ArrayList<>(results.size());
         while (resultIt.hasNext()) {
             TResult origResult = resultIt.next();
 
@@ -138,7 +139,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
             seenSet.add(origResult.getId());
 
-            TResultWrapper updatedResult = new TResultWrapper(origResult);
+            Document updatedResult = new Document(origResult);
             updatedResults.add(updatedResult);
         }
 
