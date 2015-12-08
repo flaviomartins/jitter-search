@@ -141,7 +141,12 @@ public class RMTSResource {
         }
 
         score(query, queryEpoch, results);
-        results = rankRankLib(query, results, numRerank.get(), limit.get(), "RMTS");
+
+        try {
+            results = rankRankLib(query, results, numRerank.get(), limit.get(), "RMTS");
+        } catch (SecurityException e) {
+            logger.warn("RankLib caught calling System.exit(int).");
+        }
 
         long endTime = System.currentTimeMillis();
 

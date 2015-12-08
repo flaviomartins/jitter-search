@@ -10,6 +10,7 @@ import io.jitter.core.stream.SampleStream;
 import io.jitter.core.stream.UserStream;
 import io.jitter.core.twitter.OAuth1;
 import io.jitter.core.twitter.manager.TwitterManager;
+import io.jitter.core.utils.NoExitSecurityManager;
 import io.jitter.health.SearchManagerHealthCheck;
 import io.jitter.health.TailyManagerHealthCheck;
 import io.jitter.health.TwitterManagerHealthCheck;
@@ -36,6 +37,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
     final static Logger logger = LoggerFactory.getLogger(JitterSearchApplication.class);
 
     public static void main(String[] args) throws Exception {
+        System.setSecurityManager(new NoExitSecurityManager());
         new JitterSearchApplication().run(args);
     }
 
