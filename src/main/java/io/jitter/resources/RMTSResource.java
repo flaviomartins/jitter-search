@@ -21,6 +21,7 @@ import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectDocumentsResponse;
 import io.jitter.api.search.SelectSearchResponse;
 import io.jitter.core.features.BM25Feature;
+import io.jitter.core.filter.NaiveLanguageFilter;
 import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
 import io.jitter.core.rerank.KDEReranker;
@@ -167,11 +168,10 @@ public class RMTSResource {
 //            RetweetFilter rtFilter = new RetweetFilter(results);
 //            results = rtFilter.getFiltered();
 //        }
-//
-//        if (filterLang) {
-//            langFilter.setResults(results);
-//            results = langFilter.getFiltered();
-//        }
+
+        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
+        langFilter.setResults(results);
+        results = langFilter.getFiltered();
 
 //        List<Document> results = tResults;
 
