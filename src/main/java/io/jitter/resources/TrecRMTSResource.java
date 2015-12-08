@@ -177,9 +177,6 @@ public class TrecRMTSResource {
     }
 
     protected void score(String query, double queryEpoch, List<Document> results) {
-        for (Document result : results) {
-            result.getFeatures().add((float) result.getRsv());
-        }
 //        if (filterRT) {
 //            RetweetFilter rtFilter = new RetweetFilter(results);
 //            results = rtFilter.getFiltered();
@@ -189,8 +186,12 @@ public class TrecRMTSResource {
         langFilter.setResults(results);
         results = langFilter.getFiltered();
 
-//        List<Document> results = tResults;
 
+        for (Document result : results) {
+            result.getFeatures().add((float) result.getRsv());
+        }
+
+//        List<Document> results = tResults;
 
         // extract raw epochs from results
         List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(results);

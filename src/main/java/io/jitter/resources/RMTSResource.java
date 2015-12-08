@@ -161,9 +161,6 @@ public class RMTSResource {
     }
 
     protected void score(String query, double queryEpoch, List<Document> results) {
-        for (Document result : results) {
-            result.getFeatures().add((float) result.getRsv());
-        }
 //        if (filterRT) {
 //            RetweetFilter rtFilter = new RetweetFilter(results);
 //            results = rtFilter.getFiltered();
@@ -175,6 +172,9 @@ public class RMTSResource {
 
 //        List<Document> results = tResults;
 
+        for (Document result : results) {
+            result.getFeatures().add((float) result.getRsv());
+        }
 
         // extract raw epochs from results
         List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(results);
