@@ -141,6 +141,10 @@ public class RMTSResource {
             }
         }
 
+        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
+        langFilter.setResults(results);
+        results = langFilter.getFiltered();
+
         score(query, queryEpoch, results);
 
         try {
@@ -161,17 +165,6 @@ public class RMTSResource {
     }
 
     protected void score(String query, double queryEpoch, List<Document> results) {
-//        if (filterRT) {
-//            RetweetFilter rtFilter = new RetweetFilter(results);
-//            results = rtFilter.getFiltered();
-//        }
-
-        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
-        langFilter.setResults(results);
-        results = langFilter.getFiltered();
-
-//        List<Document> results = tResults;
-
         for (Document result : results) {
             result.getFeatures().add((float) result.getRsv());
         }
