@@ -66,8 +66,11 @@ public class RMTSReranker extends SearchReranker {
 //            method = KDE.METHOD.valueOf(kdeMethod);
 //        }
 
-        KDEReranker kdeReranker = new KDEReranker(results, queryEpoch, method, KDEReranker.WEIGHT.UNIFORM, 1.0);
-        results = kdeReranker.getReranked();
+        for (Document result : results) {
+            result.getFeatures().add(0f);
+        }
+//        KDEReranker kdeReranker = new KDEReranker(results, queryEpoch, method, KDEReranker.WEIGHT.UNIFORM, 1.0);
+//        results = kdeReranker.getReranked();
         KDEReranker kdeReranker1 = new KDEReranker(results, queryEpoch, method, KDEReranker.WEIGHT.SCORE, 1.0);
         results = kdeReranker1.getReranked();
 
