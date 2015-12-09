@@ -58,7 +58,7 @@ public class TResultWrapper extends TResult {
         sb.append("qid:").append(qid).append(" ");
         int i = 1;
         for (Float fVal : features) {
-            sb.append(String.format(Locale.ENGLISH, "%d:%f", i, fVal)).append(" ");
+            sb.append(String.format(Locale.ROOT, "%d:%f", i, fVal)).append(" ");
             i++;
         }
         sb.append("# ").append(id);
@@ -72,7 +72,7 @@ public class TResultWrapper extends TResult {
         sb.append("qid:").append(1).append(" ");
         int i = 1;
         for (Float fVal : features) {
-            sb.append(String.format(Locale.ENGLISH, "%d:%f", i, fVal)).append(" ");
+            sb.append(String.format(Locale.ROOT, "%d:%f", i, fVal)).append(" ");
             i++;
         }
         sb.append("# ").append(id);
