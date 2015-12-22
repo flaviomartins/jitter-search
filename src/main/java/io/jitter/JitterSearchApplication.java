@@ -111,19 +111,28 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final SelectSearchResource selectSearchResource = new SelectSearchResource(searchManager, selectionManager);
         environment.jersey().register(selectSearchResource);
 
+        final RM3FeedbackResource rm3FeedbackResource = new RM3FeedbackResource(searchManager);
+        environment.jersey().register(rm3FeedbackResource);
+
         final MultiFeedbackResource multiFeedbackResource = new MultiFeedbackResource(searchManager, selectionManager);
         environment.jersey().register(multiFeedbackResource);
 
+        final RMTSResource RMTSResource = new RMTSResource(searchManager, selectionManager);
+        environment.jersey().register(RMTSResource);
+
+
+        // TREC
+
         final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper = configuration.getTrecMicroblogAPIWrapperFactory().build(environment);
+
+        final TrecRM3FeedbackResource trecRM3FeedbackResource = new TrecRM3FeedbackResource(trecMicroblogAPIWrapper);
+        environment.jersey().register(trecRM3FeedbackResource);
 
         final TrecMultiFeedbackResource trecMultiFeedbackResource = new TrecMultiFeedbackResource(trecMicroblogAPIWrapper, selectionManager);
         environment.jersey().register(trecMultiFeedbackResource);
 
-//        final TrecRMTSResource trecRMTSResource = new TrecRMTSResource(trecMicroblogAPIWrapper, selectionManager);
-//        environment.jersey().register(trecRMTSResource);
-
-        final RMTSResource RMTSResource = new RMTSResource(searchManager, selectionManager);
-        environment.jersey().register(RMTSResource);
+        final TrecRMTSResource trecRMTSResource = new TrecRMTSResource(trecMicroblogAPIWrapper, selectionManager);
+        environment.jersey().register(trecRMTSResource);
 
 
         if (configuration.isLive()) {
