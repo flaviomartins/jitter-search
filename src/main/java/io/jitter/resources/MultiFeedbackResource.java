@@ -7,19 +7,18 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
+import io.jitter.api.search.SelectFeedbackDocumentsResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.Document;
-import io.jitter.api.search.SelectDocumentsResponse;
 import io.jitter.api.search.SelectSearchResponse;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.selection.SelectionManager;
-import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.utils.AnalyzerUtils;
@@ -160,7 +159,7 @@ public class MultiFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(sources, topics, methodName, totalHits, 0, selectResults, results);
+        SelectFeedbackDocumentsResponse documentsResponse = new SelectFeedbackDocumentsResponse(sources, topics, methodName, selectResults.size(), fbTerms.get(), totalHits, 0, selectResults, results);
         return new SelectSearchResponse(responseHeader, documentsResponse);
     }
 }

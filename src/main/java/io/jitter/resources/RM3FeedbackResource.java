@@ -7,7 +7,7 @@ import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.Document;
-import io.jitter.api.search.DocumentsResponse;
+import io.jitter.api.search.FeedbackDocumentsResponse;
 import io.jitter.api.search.SearchResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
@@ -135,7 +135,7 @@ public class RM3FeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        DocumentsResponse documentsResponse = new DocumentsResponse(totalHits, 0, results);
+        FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(selectResults.size(), fbTerms.get(), totalHits, 0, results);
         return new SearchResponse(responseHeader, documentsResponse);
     }
 }
