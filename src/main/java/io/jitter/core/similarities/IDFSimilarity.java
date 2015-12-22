@@ -1,6 +1,5 @@
 package io.jitter.core.similarities;
 
-import org.apache.lucene.index.FieldInvertState;
 import org.apache.lucene.search.similarities.DefaultSimilarity;
 
 public class IDFSimilarity extends DefaultSimilarity {

@@ -8,7 +8,7 @@ import java.util.List;
 public class TimeUtils {
 
     public static List<Double> extractEpochsFromResults(List<Document> results) {
-        List<Double> epochs = new ArrayList<Double>(results.size());
+        List<Double> epochs = new ArrayList<>(results.size());
         for (Document result : results) {
             epochs.add((double) result.getEpoch());
         }
@@ -16,7 +16,7 @@ public class TimeUtils {
     }
 
     public static List<Double> adjustEpochsToLandmark(List<Double> epochs, double landmark, double scaleDenominator) {
-        List<Double> scaled = new ArrayList<Double>(epochs.size());
+        List<Double> scaled = new ArrayList<>(epochs.size());
         for (Double rawEpoch : epochs) {
             scaled.add(TimeUtils.adjustEpochToLandmark(rawEpoch, landmark, scaleDenominator));
         }

@@ -77,7 +77,7 @@ public class KDEReranker extends SearchReranker {
         Iterator<Document> resultIt = results.iterator();
         Iterator<Double> epochIt = scaledEpochs.iterator();
 
-        List<Document> updatedResults = new ArrayList<Document>(results.size());
+        List<Document> updatedResults = new ArrayList<>(results.size());
         while (resultIt.hasNext()) {
             TResultWrapper origResult = resultIt.next();
             double scaledEpoch = epochIt.next();

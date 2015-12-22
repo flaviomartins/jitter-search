@@ -4,7 +4,6 @@ import cc.twittertools.thrift.gen.TResult;
 import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.learning.DenseDataPoint;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.jitter.api.search.Document;
 
 import java.util.ArrayList;
 import java.util.HashMap;

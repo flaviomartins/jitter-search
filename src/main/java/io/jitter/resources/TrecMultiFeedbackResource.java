@@ -147,9 +147,9 @@ public class TrecMultiFeedbackResource {
             fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
             if (fbUseSources.get()) {
-                logger.info("Sources: {}\n fbDocs: {} Feature Vector:\n{}", Joiner.on(", ").join(fbSourcesEnabled), selectResults.size(), fbVector.toString());
+                logger.info("Sources: {}\n fbDocs: {} Feature Vector:\n{}", Joiner.on(", ").join(fbSourcesEnabled != null ? fbSourcesEnabled : null), selectResults.size(), fbVector.toString());
             } else {
-                logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", Joiner.on(", ").join(fbTopicsEnabled), selectResults.size(), fbVector.toString());
+                logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", Joiner.on(", ").join(fbTopicsEnabled != null ? fbTopicsEnabled : null), selectResults.size(), fbVector.toString());
             }
 
             StringBuilder builder = new StringBuilder();

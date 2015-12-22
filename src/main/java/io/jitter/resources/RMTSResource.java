@@ -80,7 +80,7 @@ public class RMTSResource {
 
         long[] epochs = new long[2];
         if (epoch.isPresent()) {
-            Epochs.parseEpochRange(epoch.get());
+            epochs = Epochs.parseEpochRange(epoch.get());
         }
 
         long startTime = System.currentTimeMillis();
@@ -103,10 +103,6 @@ public class RMTSResource {
 
         Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
         Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
-
-        if (topics.size() > 0) {
-
-        }
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;

@@ -94,7 +94,7 @@ public class RM3FeedbackResource {
             queryFV.normalizeToOne();
 
             // cap results
-            selectResults = selectResults.subList(0, Math.min(fbDocs.get(), selectResults.size()));
+            selectResults = selectResults.subList(0, Math.min(fbDocs.get(), selectResults != null ? selectResults.size() : 0));
 
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
@@ -135,7 +135,7 @@ public class RM3FeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(selectResults.size(), fbTerms.get(), totalHits, 0, results);
+        FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(selectResults != null ? selectResults.size() : 0, fbTerms.get(), totalHits, 0, results);
         return new SearchResponse(responseHeader, documentsResponse);
     }
 }

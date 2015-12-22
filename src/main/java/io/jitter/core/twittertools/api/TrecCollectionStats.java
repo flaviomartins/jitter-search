@@ -34,8 +34,8 @@ public class TrecCollectionStats implements CollectionStats {
     public TrecCollectionStats(String pathToStatsFile) {
         try {
 
-            documentFrequency = new HashMap<String, Integer>(5861050);
-            collectionFrequency = new HashMap<String, Integer>(5861050);
+            documentFrequency = new HashMap<>(5861050);
+            collectionFrequency = new HashMap<>(5861050);
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(new File(pathToStatsFile)))));
             String line = reader.readLine();

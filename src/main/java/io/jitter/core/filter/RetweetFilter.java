@@ -17,7 +17,7 @@ public class RetweetFilter extends SearchFilter {
     protected void filter() {
         Iterator<Document> resultIt = results.iterator();
 
-        List<Document> updatedResults = new ArrayList<Document>();
+        List<Document> updatedResults = new ArrayList<>();
         while (resultIt.hasNext()) {
             Document origResult = resultIt.next();
 

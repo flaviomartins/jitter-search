@@ -84,7 +84,7 @@ public class TrecRMTSResource {
 
         long[] epochs = new long[2];
         if (epoch.isPresent()) {
-            Epochs.parseEpochRange(epoch.get());
+            epochs = Epochs.parseEpochRange(epoch.get());
         }
 
         long startTime = System.currentTimeMillis();
@@ -108,8 +108,8 @@ public class TrecRMTSResource {
         Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
         Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
-        Iterable<String> fbSourcesEnabled = null;
-        Iterable<String> fbTopicsEnabled = null;
+        Iterable<String> fbSourcesEnabled;
+        Iterable<String> fbTopicsEnabled;
 
         if (fbUseSources.get()) {
             fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
@@ -120,10 +120,6 @@ public class TrecRMTSResource {
             if (reScore.get()) {
                 selectResults = selectionManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), selectResults);
             }
-        }
-
-        if (sources.size() > 0 && topics.size() > 0) {
-
         }
 
         // get the query epoch

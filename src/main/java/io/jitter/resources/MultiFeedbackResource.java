@@ -159,7 +159,7 @@ public class MultiFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectFeedbackDocumentsResponse documentsResponse = new SelectFeedbackDocumentsResponse(sources, topics, methodName, selectResults.size(), fbTerms.get(), totalHits, 0, selectResults, results);
+        SelectFeedbackDocumentsResponse documentsResponse = new SelectFeedbackDocumentsResponse(sources, topics, methodName, selectResults != null ? selectResults.size() : 0, fbTerms.get(), totalHits, 0, selectResults, results);
         return new SelectSearchResponse(responseHeader, documentsResponse);
     }
 }

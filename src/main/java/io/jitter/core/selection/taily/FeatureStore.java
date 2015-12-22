@@ -45,6 +45,11 @@ public class FeatureStore {
                 isDirectory = dirFile.mkdirs();
             }
 
+            // FIXME: Should we do something else here?
+            if (!isDirectory) {
+                throw new RuntimeException("Cannot create directory " + dirFile.getAbsolutePath());
+            }
+
             // Instantiate the Environment. This opens it and also possibly
             // creates it.
             dbEnv = new Environment(dirFile, envConfig);
