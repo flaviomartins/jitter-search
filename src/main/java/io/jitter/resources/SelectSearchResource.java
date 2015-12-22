@@ -14,7 +14,6 @@ import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.selection.SelectionManager;
-import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.utils.AnalyzerUtils;
@@ -124,7 +123,7 @@ public class SelectSearchResource {
             fbVector.normalizeToOne();
             fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
-            logger.info("Feature Vector for topic {}:\n{}", topic.get(), fbVector.toString());
+            logger.info("Topic: {}\n fbDocs: {} Feature Vector:\n{}", topic.get(), selectResults.size(), fbVector.toString());
 
             StringBuilder builder = new StringBuilder();
             Iterator<String> terms = fbVector.iterator();
