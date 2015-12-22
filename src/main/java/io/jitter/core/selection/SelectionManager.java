@@ -280,58 +280,58 @@ public class SelectionManager implements Managed {
                 }
             }
         }
-        return sortResults(results, false);
+        return sortResults(results, results.size(), false);
     }
 
     public List<Document> searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
-        int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
+        int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query);
 
         TopDocs rs = getSearcher().search(q, numResults);
 
-        List<Document> sorted = getSorted(rs, filterRT);
+        List<Document> sorted = getSorted(rs, n, filterRT);
 
         return filterTopic(topicName, sorted);
     }
 
     public List<Document> search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
-        int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
+        int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query);
 
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
         TopDocs rs = getSearcher().search(q, filter, numResults);
 
-        return getSorted(rs, filterRT);
+        return getSorted(rs, n, filterRT);
     }
 
     public List<Document> search(String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
-        int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
+        int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query);
 
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
         TopDocs rs = getSearcher().search(q, filter, numResults);
 
-        return getSorted(rs, filterRT);
+        return getSorted(rs, n, filterRT);
     }
 
     public List<Document> search(String query, int n, boolean filterRT) throws IOException, ParseException {
-        int numResults = n > MAX_RESULTS ? MAX_RESULTS : n;
+        int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query);
 
         TopDocs rs = getSearcher().search(q, numResults);
 
-        return getSorted(rs, filterRT);
+        return getSorted(rs, n, filterRT);
     }
 
     public List<Document> search(String query, int n) throws IOException, ParseException {
-        int numResults = n > 10000 ? 10000 : n;
+        int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query);
 
         TopDocs rs = getSearcher().search(q, numResults);
 
-        return getSorted(rs, false);
+        return getSorted(rs, n, false);
     }
 
     private List<Document> getResults(TopDocs rs) throws IOException {
@@ -383,15 +383,19 @@ public class SelectionManager implements Managed {
         return results;
     }
 
-    private List<Document> getSorted(TopDocs rs, boolean filterRT) throws IOException {
+    private List<Document> getSorted(TopDocs rs, int n, boolean filterRT) throws IOException {
         List<Document> results = getResults(rs);
-        return sortResults(results, filterRT);
+        return sortResults(results, n, filterRT);
     }
 
-    private List<Document> sortResults(List<Document> results, boolean filterRT) {
+    private List<Document> sortResults(List<Document> results, int n, boolean filterRT) {
+        int count = 0;
         int retweetCount = 0;
         SortedSet<DocumentComparable> sortedResults = new TreeSet<>();
         for (Document p : results) {
+            if (count >= n)
+                break;
+
             // Throw away retweets.
             if (filterRT && p.getRetweeted_status_id() != 0) {
                 retweetCount++;
@@ -399,6 +403,7 @@ public class SelectionManager implements Managed {
             }
 
             sortedResults.add(new DocumentComparable(p));
+            count += 1;
         }
         if (filterRT) {
             logger.info("filter_rt count: {}", retweetCount);
