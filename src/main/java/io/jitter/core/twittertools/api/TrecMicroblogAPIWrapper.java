@@ -25,6 +25,8 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
     public static final int MAX_NUM_RESULTS = 10000;
 
+    private final String host;
+    private final int port;
     private final TrecSearchThriftClient client;
     private final String cacheDir;
     private final boolean useCache;
@@ -36,6 +38,8 @@ public class TrecMicroblogAPIWrapper implements Managed {
                                    @Nullable String token, @Nullable String cacheDir, boolean useCache, @Nullable String collectDb) {
         Preconditions.checkNotNull(host);
         Preconditions.checkArgument(port > 0);
+        this.host = host;
+        this.port = port;
         this.client = new TrecSearchThriftClient(host, port, group, token);
         this.cacheDir = cacheDir;
         this.useCache = useCache;
@@ -88,7 +92,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
         int numResultsToFetch = Math.min(MAX_NUM_RESULTS, 3 * numResults);
 
-        String cacheFileName = DigestUtils.shaHex(query + maxId + numResultsToFetch);
+        String cacheFileName = DigestUtils.shaHex(host + port + query + maxId + numResultsToFetch);
         File f = new File(cacheDir + cacheFileName);
         List<TResult> results;
         boolean fromCache = false;
