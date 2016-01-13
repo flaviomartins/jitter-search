@@ -33,9 +33,7 @@ import java.util.TreeSet;
 public class SearchManager implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(SearchManager.class);
-
-    public static final double DAY = 60.0 * 60.0 * 24.0;
-
+    
     public static final int MAX_RESULTS = 10000;
     public static final int MAX_TERMS_RESULTS = 1000;
 
@@ -86,50 +84,51 @@ public class SearchManager implements Managed {
         this.stopper = stopper;
     }
 
-    public TopDocs isearch(String query, Filter filter, int n) throws IOException, ParseException {
+    public TopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
         int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query);
 
         TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
         getSearcher().search(q, filter, totalHitCountCollector);
-        logger.info("totalHitCounter: " + totalHitCountCollector.getTotalHits());
+        int totalHits = totalHitCountCollector.getTotalHits();
 
+        TopDocs rs;
         if (filter != null )
-            return getSearcher().search(q, filter, numResults);
+            rs = getSearcher().search(q, filter, numResults);
         else
-            return getSearcher().search(q, numResults);
+            rs = getSearcher().search(q, numResults);
+
+        List<Document> sorted = getSorted(rs, n, filterRT);
+
+        return new TopDocuments(totalHits, sorted);
     }
 
-    public TopDocs isearch(String query, int n) throws IOException, ParseException {
-        return isearch(query, null, n);
+    public TopDocuments isearch(String query, int n, boolean filterRT) throws IOException, ParseException {
+        return isearch(query, null, n, filterRT);
     }
 
-    public List<Document> search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
+    public TopDocuments isearch(String query, int n) throws IOException, ParseException {
+        return isearch(query, null, n, false);
+    }
+
+    public TopDocuments search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
-        TopDocs rs = isearch(query, filter, n);
-
-        return getSorted(rs, n, filterRT);
+        return isearch(query, filter, n, filterRT);
     }
 
-    public List<Document> search(String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
+    public TopDocuments search(String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
-        TopDocs rs = isearch(query, filter, n);
-
-        return getSorted(rs, n, filterRT);
+        return isearch(query, filter, n, filterRT);
     }
 
-    public List<Document> search(String query, int n, boolean filterRT) throws IOException, ParseException {
-        TopDocs rs = isearch(query, n);
-
-        return getSorted(rs, n, filterRT);
+    public TopDocuments search(String query, int n, boolean filterRT) throws IOException, ParseException {
+        return isearch(query, n, filterRT);
     }
 
-    public List<Document> search(String query, int n) throws IOException, ParseException {
-        TopDocs rs = isearch(query, n);
-
-        return getSorted(rs, n, false);
+    public TopDocuments search(String query, int n) throws IOException, ParseException {
+        return isearch(query, n);
     }
 
     private List<Document> getResults(TopDocs rs) throws IOException {

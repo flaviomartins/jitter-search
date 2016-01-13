@@ -54,9 +54,7 @@ public class NaiveLanguageFilter extends SearchFilter {
         text = CharMatcher.INVISIBLE.replaceFrom(text, " ");
         // Replace unicode whitespace
         text = CharMatcher.WHITESPACE.replaceFrom(text, " ");
-        // Remove other stuff
-        boolean isASCII = CharMatcher.ASCII.matchesAllOf(text);
-        return isASCII;
+        return CharMatcher.ASCII.matchesAllOf(text);
     }
 
 }

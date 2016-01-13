@@ -71,7 +71,7 @@ public class TailyResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %s", (endTime - startTime), query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(map, "Taily", 0, 0, null);
+        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(map, "Taily", 0, 0);
         return new SelectionResponse(responseHeader, documentsResponse);
     }
 }

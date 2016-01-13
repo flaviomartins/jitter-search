@@ -6,13 +6,13 @@ import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectDocumentsResponse;
 import io.jitter.api.search.SelectSearchResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
 import io.jitter.core.search.SearchManager;
+import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
@@ -74,8 +74,8 @@ public class SelectSearchResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        List<Document> selectResults = null;
-        List<Document> results = null;
+        TopDocuments selectResults = null;
+        TopDocuments results = null;
 
         long startTime = System.currentTimeMillis();
 
@@ -93,14 +93,14 @@ public class SelectSearchResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults, normalize.get());
+        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
         Map<String, Double> sources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
 
-        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
+        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
         Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
         if (topic.isPresent()) {
-            selectResults = selectionManager.filterTopic(topic.get(), selectResults);
+            selectResults = selectionManager.filterTopic(topic.get(), selectResults.scoreDocs);
 
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query)) {
@@ -111,11 +111,11 @@ public class SelectSearchResource {
             queryFV.normalizeToOne();
 
             // cap results
-            selectResults = selectResults.subList(0, Math.min(fbDocs.get(), selectResults.size()));
+            selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
 
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
-            fb.setRes(selectResults);
+            fb.setRes(selectResults.scoreDocs);
             fb.build(searchManager.getStopper());
 
             FeatureVector fbVector = fb.asFeatureVector();
@@ -123,7 +123,7 @@ public class SelectSearchResource {
             fbVector.normalizeToOne();
             fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
-            logger.info("Topic: {}\n fbDocs: {} Feature Vector:\n{}", topic.get(), selectResults.size(), fbVector.toString());
+            logger.info("Topic: {}\n fbDocs: {} Feature Vector:\n{}", topic.get(), selectResults.scoreDocs.size(), fbVector.toString());
 
             StringBuilder builder = new StringBuilder();
             Iterator<String> terms = fbVector.iterator();
@@ -150,7 +150,7 @@ public class SelectSearchResource {
 
         long endTime = System.currentTimeMillis();
 
-        int totalHits = results != null ? results.size() : 0;
+        int totalHits = results != null ? results.totalHits : 0;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 

@@ -56,9 +56,9 @@ public class KDEReranker extends SearchReranker {
                 int jj = 0;
 //                (n/2)(n+1)
 //                double lambda = 1.0 / (results.size()/2.0)*(results.size()+1);
-                double lambda = 1.0 / (results.size()/2.0);
+//                double lambda = 1.0 / (results.size()/2.0);
                 while (resultIt1.hasNext()) {
-                    TResultWrapper result = resultIt1.next();
+                    resultIt1.next();
 //                    double weight = lambda * Math.exp(-1.0 * lambda * (j+1));
 //                    double weight = 1.0 / Math.pow(j+1, 2);
                     double weight = 1.0 / (jj+1 + 60);

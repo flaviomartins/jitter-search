@@ -7,11 +7,11 @@ import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectDocumentsResponse;
 import io.jitter.api.search.SelectSearchResponse;
 import io.jitter.core.filter.NaiveLanguageFilter;
 import io.jitter.core.rerank.RMTSReranker;
+import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
@@ -29,7 +29,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -79,8 +78,8 @@ public class TrecRMTSResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        List<Document> selectResults = null;
-        List<Document> results = null;
+        TopDocuments selectResults = null;
+        TopDocuments results = null;
 
         long[] epochs = new long[2];
         if (epoch.isPresent()) {
@@ -102,10 +101,10 @@ public class TrecRMTSResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults, normalize.get());
+        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
         Map<String, Double> sources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
 
-        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
+        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
         Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
         Iterable<String> fbSourcesEnabled;
@@ -113,12 +112,12 @@ public class TrecRMTSResource {
 
         if (fbUseSources.get()) {
             fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
-            selectResults = selectionManager.filterCollections(fbSourcesEnabled, selectResults);
+            selectResults = selectionManager.filterCollections(fbSourcesEnabled, selectResults.scoreDocs);
         } else {
             fbTopicsEnabled = Iterables.limit(topics.keySet(), fbCols.get());
-            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults);
+            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults.scoreDocs);
             if (reScore.get()) {
-                selectResults = selectionManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), selectResults);
+                selectResults = selectionManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), selectResults.scoreDocs);
             }
         }
 
@@ -136,15 +135,15 @@ public class TrecRMTSResource {
         }
 
         NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
-        langFilter.setResults(results);
-        results = langFilter.getFiltered();
+        langFilter.setResults(results.scoreDocs);
+        results.scoreDocs = langFilter.getFiltered();
 
-        RMTSReranker rmtsReranker = new RMTSReranker(query, queryEpoch, results, trecMicroblogAPIWrapper.getCollectionStats(), limit.get(), numRerank.get());
-        results = rmtsReranker.getReranked();
+        RMTSReranker rmtsReranker = new RMTSReranker(query, queryEpoch, results.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit.get(), numRerank.get());
+        results.scoreDocs = rmtsReranker.getReranked();
 
         long endTime = System.currentTimeMillis();
 
-        int totalHits = results != null ? results.size() : 0;
+        int totalHits = results.totalHits;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 

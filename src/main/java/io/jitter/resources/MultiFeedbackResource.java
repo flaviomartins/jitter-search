@@ -9,11 +9,11 @@ import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.search.SelectFeedbackDocumentsResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectSearchResponse;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
@@ -77,8 +77,8 @@ public class MultiFeedbackResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        List<Document> selectResults = null;
-        List<Document> results = null;
+        TopDocuments selectResults = null;
+        TopDocuments results = null;
 
         long startTime = System.currentTimeMillis();
 
@@ -96,15 +96,15 @@ public class MultiFeedbackResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults, normalize.get());
+        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
         Map<String, Double> sources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
 
-        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
+        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
         Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
         if (topics.size() > 0) {
             Iterable<String> fbTopicsEnabled = Iterables.limit(topics.keySet(), fbTopics.get());
-            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults);
+            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults.scoreDocs);
 
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query)) {
@@ -115,11 +115,11 @@ public class MultiFeedbackResource {
             queryFV.normalizeToOne();
 
             // cap results
-            selectResults = selectResults.subList(0, Math.min(fbDocs.get(), selectResults.size()));
+            selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
 
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
-            fb.setRes(selectResults);
+            fb.setRes(selectResults.scoreDocs);
             fb.build(searchManager.getStopper());
 
             FeatureVector fbVector = fb.asFeatureVector();
@@ -127,7 +127,7 @@ public class MultiFeedbackResource {
             fbVector.normalizeToOne();
             fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
-            logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", Joiner.on(", ").join(fbTopicsEnabled), selectResults.size(), fbVector.toString());
+            logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", Joiner.on(", ").join(fbTopicsEnabled), selectResults.scoreDocs.size(), fbVector.toString());
 
             StringBuilder builder = new StringBuilder();
             Iterator<String> terms = fbVector.iterator();
@@ -154,12 +154,13 @@ public class MultiFeedbackResource {
 
         long endTime = System.currentTimeMillis();
 
-        int totalHits = results != null ? results.size() : 0;
+        int totalFbDocs = selectResults.scoreDocs.size();
+        int totalHits = results != null ? results.totalHits : 0;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectFeedbackDocumentsResponse documentsResponse = new SelectFeedbackDocumentsResponse(sources, topics, methodName, selectResults != null ? selectResults.size() : 0, fbTerms.get(), totalHits, 0, selectResults, results);
+        SelectFeedbackDocumentsResponse documentsResponse = new SelectFeedbackDocumentsResponse(sources, topics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, selectResults, results);
         return new SelectSearchResponse(responseHeader, documentsResponse);
     }
 }

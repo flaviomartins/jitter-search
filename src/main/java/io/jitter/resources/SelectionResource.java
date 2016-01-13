@@ -6,9 +6,9 @@ import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.Document;
 import io.jitter.api.selection.SelectionDocumentsResponse;
 import io.jitter.api.selection.SelectionResponse;
+import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
@@ -24,7 +24,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -62,7 +61,7 @@ public class SelectionResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        List<Document> selectResults = null;
+        TopDocuments selectResults = null;
 
         long startTime = System.currentTimeMillis();
 
@@ -82,16 +81,16 @@ public class SelectionResource {
 
         Map<String, Double> ranked;
         if (topics.get()) {
-            ranked = selectionManager.getRankedTopics(selectionMethod, selectResults, normalize.get());
+            ranked = selectionManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
         } else {
-            ranked = selectionManager.getRanked(selectionMethod, selectResults, normalize.get());
+            ranked = selectionManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
         }
 
         Map<String, Double> map = selectionManager.limit(selectionMethod, ranked, maxCol.get(), minRanks);
 
         long endTime = System.currentTimeMillis();
 
-        int totalHits = selectResults != null ? selectResults.size() : 0;
+        int totalHits = selectResults.totalHits;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 

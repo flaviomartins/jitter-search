@@ -189,6 +189,7 @@ public class RMTSReranker extends SearchReranker {
         }
     }
 
+    @SuppressWarnings("UnusedAssignment")
     public List<Document> rankRankLib(String query, List<Document> results, String runTag) {
         RankerFactory rFact = new RankerFactory();
         Ranker ranker = rFact.loadRanker("ltr-all.model");

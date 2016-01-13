@@ -6,10 +6,10 @@ import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.Document;
 import io.jitter.api.search.DocumentsResponse;
 import io.jitter.api.search.SearchResponse;
 import io.jitter.core.search.SearchManager;
+import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
@@ -22,7 +22,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -54,7 +53,7 @@ public class SearchResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or("empty"), "UTF-8");
-        List<Document> results = null;
+        TopDocuments results = null;
 
         long startTime = System.currentTimeMillis();
 
@@ -71,7 +70,7 @@ public class SearchResource {
 
         long endTime = System.currentTimeMillis();
 
-        int totalHits = results != null ? results.size() : 0;
+        int totalHits = results != null ? results.totalHits : 0;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 

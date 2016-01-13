@@ -6,6 +6,7 @@ import com.google.common.base.Preconditions;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
+import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Stopper;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -81,13 +82,13 @@ public class TrecMicroblogAPIWrapper implements Managed {
         this.collectionStats = collectionStats;
     }
 
-    public List<Document> search(String query, long maxId, int numResults)  throws TException,
+    public TopDocuments search(String query, long maxId, int numResults)  throws TException,
             IOException, ClassNotFoundException {
         return search(query, maxId, numResults, false);
     }
 
     @SuppressWarnings("unchecked")
-    public List<Document> search(String query, long maxId, int numResults, boolean filterRT) throws TException,
+    public TopDocuments search(String query, long maxId, int numResults, boolean filterRT) throws TException,
             IOException, ClassNotFoundException {
 
         int numResultsToFetch = Math.min(MAX_NUM_RESULTS, 3 * numResults);
@@ -147,7 +148,8 @@ public class TrecMicroblogAPIWrapper implements Managed {
             updatedResults.add(updatedResult);
         }
 
-        return updatedResults.subList(0, Math.min(updatedResults.size(), numResults));
+        List<Document> documents = updatedResults.subList(0, Math.min(updatedResults.size(), numResults));
+        return new TopDocuments(documents);
     }
 
     private void createDatabase() {

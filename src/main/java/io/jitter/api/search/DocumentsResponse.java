@@ -2,6 +2,7 @@ package io.jitter.api.search;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.jitter.core.search.TopDocuments;
 
 import java.util.List;
 
@@ -10,16 +11,22 @@ public class DocumentsResponse {
 
     private int numFound;
     private int start;
-    private List<Document> docs;
+    private List<?> docs;
 
     public DocumentsResponse() {
         // Jackson deserialization
     }
 
-    public DocumentsResponse(int numFound, int start, List<Document> docs) {
+    public DocumentsResponse(int numFound, int start, List<?> docs) {
         this.numFound = numFound;
         this.start = start;
         this.docs = docs;
+    }
+
+    public DocumentsResponse(int numFound, int start, TopDocuments topDocuments) {
+        this.numFound = numFound;
+        this.start = start;
+        this.docs = topDocuments.scoreDocs;
     }
 
     @JsonProperty
@@ -33,7 +40,7 @@ public class DocumentsResponse {
     }
 
     @JsonProperty
-    public List<Document> getDocs() {
+    public List<?> getDocs() {
         return docs;
     }
 }

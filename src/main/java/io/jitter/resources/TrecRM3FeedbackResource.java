@@ -10,6 +10,7 @@ import io.jitter.api.search.*;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
+import io.jitter.core.search.TopDocuments;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.jitter.core.utils.AnalyzerUtils;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -26,7 +27,6 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -67,8 +67,8 @@ public class TrecRM3FeedbackResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        List<Document> selectResults = null;
-        List<Document> results = null;
+        TopDocuments selectResults = null;
+        TopDocuments results = null;
 
         long startTime = System.currentTimeMillis();
 
@@ -92,11 +92,11 @@ public class TrecRM3FeedbackResource {
             queryFV.normalizeToOne();
 
             // cap results
-            selectResults = selectResults.subList(0, Math.min(fbDocs.get(), selectResults != null ? selectResults.size() : 0));
+            selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
 
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
-            fb.setRes(selectResults);
+            fb.setRes(selectResults.scoreDocs);
             fb.build(trecMicroblogAPIWrapper.getStopper());
 
             FeatureVector fbVector = fb.asFeatureVector();
@@ -104,7 +104,7 @@ public class TrecRM3FeedbackResource {
             fbVector.normalizeToOne();
             fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
-            logger.info("fbDocs: {} Feature Vector:\n{}", selectResults.size(), fbVector.toString());
+            logger.info("fbDocs: {} Feature Vector:\n{}", selectResults.scoreDocs.size(), fbVector.toString());
 
             StringBuilder builder = new StringBuilder();
             Iterator<String> terms = fbVector.iterator();
@@ -128,12 +128,13 @@ public class TrecRM3FeedbackResource {
 
         long endTime = System.currentTimeMillis();
 
-        int totalHits = results != null ? results.size() : 0;
+        int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
+        int totalHits = results != null ? results.totalHits : 0;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(selectResults != null ? selectResults.size() : 0, fbTerms.get(), totalHits, 0, results);
+        FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(totalFbDocs, fbTerms.get(), totalHits, 0, results);
         return new SearchResponse(responseHeader, documentsResponse);
     }
 }
