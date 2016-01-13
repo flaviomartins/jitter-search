@@ -284,52 +284,55 @@ public class SelectionManager implements Managed {
     }
 
     public List<Document> searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
-        int numResults = Math.min(MAX_RESULTS, 3 * n);
-        Query q = QUERY_PARSER.parse(query);
-
-        TopDocs rs = getSearcher().search(q, numResults);
+        TopDocs rs = isearch(query, n);
 
         List<Document> sorted = getSorted(rs, n, filterRT);
 
         return filterTopic(topicName, sorted);
     }
-
-    public List<Document> search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
+    
+    public TopDocs isearch(String query, Filter filter, int n) throws IOException, ParseException {
         int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query);
+        
+        TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
+        getSearcher().search(q, filter, totalHitCountCollector);
+        logger.info("totalHitCounter: " + totalHitCountCollector.getTotalHits());
+        
+        if (filter != null )
+            return getSearcher().search(q, filter, numResults);
+        else
+            return getSearcher().search(q, numResults);
+    }
 
+    public TopDocs isearch(String query, int n) throws IOException, ParseException {
+        return isearch(query, null, n);
+    }
+
+    public List<Document> search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
-        TopDocs rs = getSearcher().search(q, filter, numResults);
+        TopDocs rs = isearch(query, filter, n);
 
         return getSorted(rs, n, filterRT);
     }
 
     public List<Document> search(String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
-        int numResults = Math.min(MAX_RESULTS, 3 * n);
-        Query q = QUERY_PARSER.parse(query);
-
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
-        TopDocs rs = getSearcher().search(q, filter, numResults);
+        TopDocs rs = isearch(query, filter, n);
 
         return getSorted(rs, n, filterRT);
     }
 
     public List<Document> search(String query, int n, boolean filterRT) throws IOException, ParseException {
-        int numResults = Math.min(MAX_RESULTS, 3 * n);
-        Query q = QUERY_PARSER.parse(query);
-
-        TopDocs rs = getSearcher().search(q, numResults);
+        TopDocs rs = isearch(query, n);
 
         return getSorted(rs, n, filterRT);
     }
 
     public List<Document> search(String query, int n) throws IOException, ParseException {
-        int numResults = Math.min(MAX_RESULTS, 3 * n);
-        Query q = QUERY_PARSER.parse(query);
-
-        TopDocs rs = getSearcher().search(q, numResults);
+        TopDocs rs = isearch(query, n);
 
         return getSorted(rs, n, false);
     }
