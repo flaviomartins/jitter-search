@@ -128,7 +128,7 @@ public class TrecRM3FeedbackResource {
 
         long endTime = System.currentTimeMillis();
 
-        int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
+        int totalFbDocs = selectResults != null ? selectResults.totalHits : 0;
         int totalHits = results != null ? results.totalHits : 0;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));

@@ -6,12 +6,15 @@ import com.google.common.base.Preconditions;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
+import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
+import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.Stopper;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.lucene.util.Version;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nullable;
@@ -20,6 +23,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 public class TrecMicroblogAPIWrapper implements Managed {
     private static final Logger LOG = Logger.getLogger(TrecMicroblogAPIWrapper.class);
@@ -148,8 +152,21 @@ public class TrecMicroblogAPIWrapper implements Managed {
             updatedResults.add(updatedResult);
         }
 
+        int totalDF = 0;
+        if (collectionStats != null) {
+            for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false, false), query)) {
+                if (term.isEmpty())
+                    continue;
+                if ("AND".equals(term) || "OR".equals(term))
+                    continue;
+                totalDF += collectionStats.getDF(term);
+            }
+        }
+
         List<Document> documents = updatedResults.subList(0, Math.min(updatedResults.size(), numResults));
-        return new TopDocuments(documents);
+        
+        int totalHits = totalDF > 0 ? totalDF : documents.size();
+        return new TopDocuments(totalHits, documents);
     }
 
     private void createDatabase() {

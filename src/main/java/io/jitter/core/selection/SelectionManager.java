@@ -290,22 +290,22 @@ public class SelectionManager implements Managed {
     }
     
     public TopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
-        int numResults = Math.min(MAX_RESULTS, 3 * n);
+//        int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query);
         
-        TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
-        getSearcher().search(q, filter, totalHitCountCollector);
-        int totalHits = totalHitCountCollector.getTotalHits();
+//        TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
+//        getSearcher().search(q, filter, totalHitCountCollector);
+//        int totalHits = totalHitCountCollector.getTotalHits();
         
         TopDocs rs;
         if (filter != null )
-            rs = getSearcher().search(q, filter, numResults);
+            rs = getSearcher().search(q, filter, reader.numDocs());
         else
-            rs = getSearcher().search(q, numResults);
+            rs = getSearcher().search(q, reader.numDocs());
 
         List<Document> sorted = getSorted(rs, n, filterRT);
         
-        return new TopDocuments(totalHits, sorted);
+        return new TopDocuments(sorted);
     }
 
     public TopDocuments isearch(String query, int n, boolean filterRT) throws IOException, ParseException {
@@ -391,13 +391,9 @@ public class SelectionManager implements Managed {
     }
 
     private List<Document> sortResults(List<Document> results, int n, boolean filterRT) {
-        int count = 0;
         int retweetCount = 0;
         SortedSet<DocumentComparable> sortedResults = new TreeSet<>();
         for (Document p : results) {
-            if (count >= n)
-                break;
-
             // Throw away retweets.
             if (filterRT && p.getRetweeted_status_id() != 0) {
                 retweetCount++;
@@ -405,7 +401,6 @@ public class SelectionManager implements Managed {
             }
 
             sortedResults.add(new DocumentComparable(p));
-            count += 1;
         }
         if (filterRT) {
             logger.info("filter_rt count: {}", retweetCount);

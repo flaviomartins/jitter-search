@@ -46,7 +46,10 @@ public final class StopperTweetAnalyzer extends StopwordAnalyzerBase {
         this(matchVersion, stopWords, stemming, false);
     }
 
-    @SuppressWarnings("SameParameterValue")
+    public StopperTweetAnalyzer(Version matchVersion, boolean stemming, boolean preserveCaps) {
+        this(matchVersion, STOP_WORDS_SET, stemming, preserveCaps);
+    }
+    
     public StopperTweetAnalyzer(Version matchVersion, boolean stemming) {
         this(matchVersion, STOP_WORDS_SET, stemming);
     }

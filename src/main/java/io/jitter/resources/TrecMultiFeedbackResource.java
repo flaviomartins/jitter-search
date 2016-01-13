@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
+import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectFeedbackDocumentsResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
@@ -34,6 +35,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -101,10 +103,12 @@ public class TrecMultiFeedbackResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
+        List<Document> topSelDocs = selectResults.scoreDocs.subList(0, Math.min(sLimit.get(), selectResults.scoreDocs.size()));
+
+        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, topSelDocs, normalize.get());
         Map<String, Double> sources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
 
-        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
+        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, topSelDocs, normalize.get());
         Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
         Iterable<String> fbSourcesEnabled = null;
@@ -173,7 +177,7 @@ public class TrecMultiFeedbackResource {
 
         long endTime = System.currentTimeMillis();
 
-        int totalFbDocs = selectResults.scoreDocs.size();
+        int totalFbDocs = selectResults.totalHits;
         int totalHits = results != null ? results.totalHits : 0;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
