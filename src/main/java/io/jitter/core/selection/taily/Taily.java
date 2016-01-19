@@ -24,7 +24,9 @@ import java.util.Map;
 public class Taily {
     private static final Logger logger = LoggerFactory.getLogger(Taily.class);
 
-    private final Analyzer analyzer = IndexStatuses.ANALYZER;
+    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
+    private static final QueryParser QUERY_PARSER =
+            new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
 
     public static final String CORPUS_DBENV = "corpus";
     public static final String SOURCES_DBENV = "sources";
@@ -145,12 +147,14 @@ public class Taily {
             // store the shard size (# of docs) feature
 //            Term t = new Term(IndexStatuses.StatusField.SCREEN_NAME.name, shardIdStr);
 //            Query q = new TermQuery(t);
-            Query q = (new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer)).parse(IndexStatuses.StatusField.SCREEN_NAME.name + ":" + shardIdStr);
-            TopDocs topDocs = indexSearcher.search(q, 10);
-            double totalDocCount = topDocs.totalHits;
-            store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
+            Query q = QUERY_PARSER.parse(IndexStatuses.StatusField.SCREEN_NAME.name + ":" + shardIdStr);
 
-            logger.info("build sources {}: {} = {}", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, (int) totalDocCount);
+            TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
+            indexSearcher.search(q, totalHitCountCollector);
+            int totalDocCount = totalHitCountCollector.getTotalHits();
+            store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, totalDocCount);
+
+            logger.info("build sources {}: {} = {}", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount);
         }
 
         // get the total term length of the collection (for Indri scoring)
