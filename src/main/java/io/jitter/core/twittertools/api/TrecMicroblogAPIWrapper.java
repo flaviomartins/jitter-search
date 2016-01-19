@@ -96,6 +96,8 @@ public class TrecMicroblogAPIWrapper implements Managed {
             IOException, ClassNotFoundException {
 
         int numResultsToFetch = Math.min(MAX_NUM_RESULTS, 3 * numResults);
+        
+        query = query.replaceAll(",", "");
 
         String cacheFileName = DigestUtils.shaHex(host + port + query + maxId + numResultsToFetch);
         File f = new File(cacheDir + cacheFileName);

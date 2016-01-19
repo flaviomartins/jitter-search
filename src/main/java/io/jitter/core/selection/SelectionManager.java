@@ -295,11 +295,26 @@ public class SelectionManager implements Managed {
     
     public TopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
 //        int numResults = Math.min(MAX_RESULTS, 3 * n);
-        Query q = QUERY_PARSER.parse(query);
+        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
         
 //        TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
 //        getSearcher().search(q, filter, totalHitCountCollector);
 //        int totalHits = totalHitCountCollector.getTotalHits();
+
+        Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.TEXT.name);
+        TermsEnum termEnum = terms.iterator(null);
+        final BytesRefBuilder bytes = new BytesRefBuilder();
+
+        int totalDF = 0;
+        for (String term : AnalyzerUtils.analyze(analyzer, query)) {
+            if (term.isEmpty())
+                continue;
+            if ("AND".equals(term) || "OR".equals(term))
+                continue;
+            bytes.copyChars(term);
+            termEnum.seekExact(bytes.toBytesRef());
+            totalDF += termEnum.docFreq();
+        }
         
         TopDocs rs;
         if (filter != null )
@@ -309,7 +324,7 @@ public class SelectionManager implements Managed {
 
         List<Document> sorted = getSorted(rs, n, filterRT);
         
-        return new TopDocuments(sorted);
+        return new TopDocuments(totalDF, sorted);
     }
 
     public TopDocuments isearch(String query, int n, boolean filterRT) throws IOException, ParseException {

@@ -88,7 +88,7 @@ public class SearchManager implements Managed {
 
     public TopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
         int numResults = Math.min(MAX_RESULTS, 3 * n);
-        Query q = QUERY_PARSER.parse(query);
+        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
 
         TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
         getSearcher().search(q, filter, totalHitCountCollector);
