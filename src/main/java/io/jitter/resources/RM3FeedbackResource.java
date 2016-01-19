@@ -36,6 +36,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class RM3FeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(RM3FeedbackResource.class);
 
+    private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
+
     private final AtomicLong counter;
     private final SearchManager searchManager;
 
@@ -83,7 +85,7 @@ public class RM3FeedbackResource {
 
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = new FeatureVector(null);
-            for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query)) {
+            for (String term : AnalyzerUtils.analyze(analyzer, query)) {
                 if (term.isEmpty())
                     continue;
                 if ("AND".equals(term) || "OR".equals(term))

@@ -3,6 +3,7 @@ package io.jitter.core.selection.taily;
 import cc.twittertools.index.IndexStatuses;
 import org.apache.commons.math3.distribution.GammaDistribution;
 import io.jitter.core.utils.AnalyzerUtils;
+import org.apache.lucene.analysis.Analyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +12,8 @@ import java.util.*;
 
 public class ShardRanker {
     private static final Logger logger = LoggerFactory.getLogger(ShardRanker.class);
+
+    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
 
     // array of FeatureStore pointers
     // stores[0] is the whole collection store; stores[1] onwards is each shard; length is numShards+1
@@ -76,7 +79,7 @@ public class ShardRanker {
 
     // tokenize, stem and do stopword removal
     private List<String> _getStems(String query) {
-        List<String> stems = AnalyzerUtils.analyze(IndexStatuses.ANALYZER, query);
+        List<String> stems = AnalyzerUtils.analyze(analyzer, query);
         // remove empty stems
         stems.removeAll(Arrays.asList("", null));
         return stems;

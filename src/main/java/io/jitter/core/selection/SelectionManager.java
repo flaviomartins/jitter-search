@@ -9,15 +9,18 @@ import io.jitter.api.search.Document;
 import io.jitter.core.search.DocumentComparable;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.methods.RankS;
+import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
+import io.jitter.core.utils.AnalyzerUtils;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.*;
-import io.jitter.core.selection.methods.SelectionMethod;
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +34,9 @@ public class SelectionManager implements Managed {
     
     public static final int MAX_RESULTS = 10000;
 
+    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
     private static final QueryParser QUERY_PARSER =
-            new QueryParser(IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
+            new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
     public static final IDFSimilarity SIMILARITY = new IDFSimilarity();
 
     private DirectoryReader reader;

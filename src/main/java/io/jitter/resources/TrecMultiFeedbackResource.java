@@ -45,6 +45,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TrecMultiFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(TrecMultiFeedbackResource.class);
 
+    private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
+
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
     private final SelectionManager selectionManager;
@@ -127,7 +129,7 @@ public class TrecMultiFeedbackResource {
 
         if (sources.size() > 0 && topics.size() > 0) {
             FeatureVector queryFV = new FeatureVector(null);
-            for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query)) {
+            for (String term : AnalyzerUtils.analyze(analyzer, query)) {
                 if (term.isEmpty())
                     continue;
                 if ("AND".equals(term) || "OR".equals(term))

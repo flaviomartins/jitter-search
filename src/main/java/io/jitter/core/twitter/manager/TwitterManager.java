@@ -5,6 +5,7 @@ import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexWriter;
@@ -24,6 +25,8 @@ import java.util.*;
 public class TwitterManager implements Managed {
 
     private final static Logger logger = LoggerFactory.getLogger(TwitterManager.class);
+
+    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
 
     private static final int MAX_USERS_LOOKUP = 100;
     private static final int MAX_STATUSES_REQUEST = 200;
@@ -147,7 +150,7 @@ public class TwitterManager implements Managed {
         StatusStream stream = new JsonStatusCorpusReader(file);
 
         Directory dir = FSDirectory.open(new File(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, IndexStatuses.ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();
@@ -215,7 +218,7 @@ public class TwitterManager implements Managed {
 
     public void indexLive(String indexPath, boolean removeDuplicates) throws IOException {
         Directory dir = FSDirectory.open(new File(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, IndexStatuses.ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();

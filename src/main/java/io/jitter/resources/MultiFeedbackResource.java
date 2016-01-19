@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MultiFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(MultiFeedbackResource.class);
 
+    private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
+
     private final AtomicLong counter;
     private final SearchManager searchManager;
     private final SelectionManager selectionManager;
@@ -107,7 +109,7 @@ public class MultiFeedbackResource {
             selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults.scoreDocs);
 
             FeatureVector queryFV = new FeatureVector(null);
-            for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false), query)) {
+            for (String term : AnalyzerUtils.analyze(analyzer, query)) {
                 if ("AND".equals(term) || "OR".equals(term))
                     continue;
                 queryFV.addTerm(term.toLowerCase(Locale.ROOT), 1.0);

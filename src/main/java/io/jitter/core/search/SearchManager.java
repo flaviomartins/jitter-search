@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
@@ -37,8 +38,9 @@ public class SearchManager implements Managed {
     public static final int MAX_RESULTS = 10000;
     public static final int MAX_TERMS_RESULTS = 1000;
 
+    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
     private static final QueryParser QUERY_PARSER =
-            new QueryParser(IndexStatuses.StatusField.TEXT.name, IndexStatuses.ANALYZER);
+            new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
     public static final Similarity SIMILARITY = new LMDirichletSimilarity(2500);
 
     private final String indexPath;

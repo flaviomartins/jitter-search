@@ -1,12 +1,12 @@
 package io.jitter.core.twittertools.api;
 
+import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.search.api.TrecSearchThriftClient;
 import cc.twittertools.thrift.gen.TResult;
 import com.google.common.base.Preconditions;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.Stopper;
@@ -14,7 +14,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nullable;
@@ -23,12 +23,12 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 
 public class TrecMicroblogAPIWrapper implements Managed {
     private static final Logger LOG = Logger.getLogger(TrecMicroblogAPIWrapper.class);
 
-    public static final int MAX_NUM_RESULTS = 10000;
+    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
+    private static final int MAX_NUM_RESULTS = 10000;
 
     private final String host;
     private final int port;
@@ -154,7 +154,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
         int totalDF = 0;
         if (collectionStats != null) {
-            for (String term : AnalyzerUtils.analyze(new StopperTweetAnalyzer(Version.LUCENE_43, false, false), query)) {
+            for (String term : AnalyzerUtils.analyze(analyzer, query)) {
                 if (term.isEmpty())
                     continue;
                 if ("AND".equals(term) || "OR".equals(term))

@@ -2,6 +2,7 @@ package io.jitter.core.stream;
 
 import cc.twittertools.index.IndexStatuses;
 import io.dropwizard.lifecycle.Managed;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexWriter;
@@ -22,6 +23,8 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
 
     private static final Logger logger = LoggerFactory.getLogger(LiveStreamIndexer.class);
 
+    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
+
     private final AtomicLong counter;
     private final String indexPath;
     private final int commitEvery;
@@ -37,7 +40,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         this.stringField = stringField;
 
         Directory dir = FSDirectory.open(new File(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
         textOptions = new FieldType();

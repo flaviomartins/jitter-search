@@ -1,6 +1,6 @@
 package io.jitter.core.rerank;
 
-import cc.twittertools.index.TweetAnalyzer;
+import cc.twittertools.index.IndexStatuses;
 import ciir.umass.edu.features.LinearNormalizer;
 import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.learning.RankList;
@@ -18,7 +18,7 @@ import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
 import io.jitter.core.twittertools.api.TResultWrapper;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.TimeUtils;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.analysis.Analyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +28,7 @@ import java.util.List;
 public class RMTSReranker extends SearchReranker {
     private static final Logger logger = LoggerFactory.getLogger(RMTSReranker.class);
 
+    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
     private static final double DAY = 60.0 * 60.0 * 24.0;
 
     private final String query;
@@ -88,10 +89,10 @@ public class RMTSReranker extends SearchReranker {
 
         Extractor extractor = new Extractor();
 
-        List<String> queryTerms = AnalyzerUtils.analyze(new TweetAnalyzer(Version.LUCENE_43, true), query);
+        List<String> queryTerms = AnalyzerUtils.analyze(analyzer, query);
 
         for (TResultWrapper result : results) {
-            List<String> terms = AnalyzerUtils.analyze(new TweetAnalyzer(Version.LUCENE_43, true), result.getText());
+            List<String> terms = AnalyzerUtils.analyze(analyzer, result.getText());
 
             double[] tfValues = new double[queryTerms.size()];
 
