@@ -39,6 +39,10 @@ public class JitterSearchConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private SelectionManagerFactory shardsManagerFactory = new SelectionManagerFactory();
+
+    @Valid
+    @NotNull
     private TailyManagerFactory tailyManagerFactory = new TailyManagerFactory();
 
     @Valid
@@ -73,6 +77,16 @@ public class JitterSearchConfiguration extends Configuration {
     @JsonProperty("selection")
     public void setSelectionManagerFactory(SelectionManagerFactory selectionManagerFactory) {
         this.selectionManagerFactory = selectionManagerFactory;
+    }
+
+    @JsonProperty("shards")
+    public SelectionManagerFactory getShardsManagerFactory() {
+        return shardsManagerFactory;
+    }
+
+    @JsonProperty("shards")
+    public void setShardsManagerFactory(SelectionManagerFactory shardsManagerFactory) {
+        this.shardsManagerFactory = shardsManagerFactory;
     }
 
     @JsonProperty("taily")

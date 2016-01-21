@@ -50,14 +50,17 @@ public class TrecMultiFeedbackResource {
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
     private final SelectionManager selectionManager;
+    private final SelectionManager shardsManager;
 
-    public TrecMultiFeedbackResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager) throws IOException {
+    public TrecMultiFeedbackResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager, SelectionManager shardsManager) throws IOException {
         Preconditions.checkNotNull(trecMicroblogAPIWrapper);
         Preconditions.checkNotNull(selectionManager);
+        Preconditions.checkNotNull(shardsManager);
 
         counter = new AtomicLong();
         this.trecMicroblogAPIWrapper = trecMicroblogAPIWrapper;
         this.selectionManager = selectionManager;
+        this.shardsManager = shardsManager;
     }
 
     @GET
@@ -87,6 +90,8 @@ public class TrecMultiFeedbackResource {
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
         TopDocuments selectResults = null;
+        TopDocuments shardResults = null;
+
         TopDocuments results = null;
 
         long startTime = System.currentTimeMillis();
@@ -107,27 +112,40 @@ public class TrecMultiFeedbackResource {
 
         List<Document> topSelDocs = selectResults.scoreDocs.subList(0, Math.min(sLimit.get(), selectResults.scoreDocs.size()));
 
-        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, topSelDocs, normalize.get());
-        Map<String, Double> sources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
+        Map<String, Double> rankedSources = shardsManager.getRanked(selectionMethod, topSelDocs, normalize.get());
+        Map<String, Double> sources = shardsManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
 
-        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, topSelDocs, normalize.get());
-        Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
+        Map<String, Double> rankedTopics = shardsManager.getRankedTopics(selectionMethod, topSelDocs, normalize.get());
+        Map<String, Double> topics = shardsManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
         Iterable<String> fbSourcesEnabled = null;
         Iterable<String> fbTopicsEnabled = null;
 
-        if (fbUseSources.get()) {
-            fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
-            selectResults = selectionManager.filterCollections(fbSourcesEnabled, selectResults.scoreDocs);
-        } else {
-            fbTopicsEnabled = Iterables.limit(topics.keySet(), fbCols.get());
-            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults.scoreDocs);
-            if (reScore.get()) {
-                selectResults = selectionManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), selectResults.scoreDocs);
+        if (q.isPresent()) {
+            if (maxId.isPresent()) {
+                shardResults = shardsManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+            } else if (epoch.isPresent()) {
+                long[] epochs = Epochs.parseEpochRange(epoch.get());
+                shardResults = shardsManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+            } else {
+                shardResults = shardsManager.search(query, sLimit.get(), !sRetweets.get());
             }
         }
 
-        if (sources.size() > 0 && topics.size() > 0) {
+        if (selectResults.scoreDocs.size() > 0) {
+            if (fbUseSources.get()) {
+                fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
+                shardResults = shardsManager.filterCollections(fbSourcesEnabled, shardResults.scoreDocs);
+            } else {
+                fbTopicsEnabled = Iterables.limit(topics.keySet(), fbCols.get());
+                shardResults = shardsManager.filterTopics(fbTopicsEnabled, shardResults.scoreDocs);
+                if (reScore.get()) {
+                    shardResults = shardsManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), shardResults.scoreDocs);
+                }
+            }
+        }
+
+        if (shardResults.scoreDocs.size() > 0) {
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(analyzer, query)) {
                 if (term.isEmpty())
@@ -139,11 +157,11 @@ public class TrecMultiFeedbackResource {
             queryFV.normalizeToOne();
 
             // cap results
-            selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
+            shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs.get(), shardResults.scoreDocs.size()));
 
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
-            fb.setRes(selectResults.scoreDocs);
+            fb.setRes(shardResults.scoreDocs);
             fb.build(trecMicroblogAPIWrapper.getStopper());
 
             FeatureVector fbVector = fb.asFeatureVector();
@@ -152,9 +170,9 @@ public class TrecMultiFeedbackResource {
             fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
             if (fbUseSources.get()) {
-                logger.info("Sources: {}\n fbDocs: {} Feature Vector:\n{}", Joiner.on(", ").join(fbSourcesEnabled), selectResults.scoreDocs.size(), fbVector.toString());
+                logger.info("Sources: {}\n fbDocs: {} Feature Vector:\n{}", fbSourcesEnabled != null ? Joiner.on(", ").join(fbSourcesEnabled) : "all", shardResults.scoreDocs.size(), fbVector.toString());
             } else {
-                logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", Joiner.on(", ").join(fbTopicsEnabled), selectResults.scoreDocs.size(), fbVector.toString());
+                logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", fbTopicsEnabled != null ? Joiner.on(", ").join(fbTopicsEnabled) : "all", shardResults.scoreDocs.size(), fbVector.toString());
             }
 
             StringBuilder builder = new StringBuilder();
@@ -179,13 +197,13 @@ public class TrecMultiFeedbackResource {
 
         long endTime = System.currentTimeMillis();
 
-        int totalFbDocs = selectResults.totalHits;
+        int totalFbDocs = shardResults.totalHits;
         int totalHits = results != null ? results.totalHits : 0;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectFeedbackDocumentsResponse documentsResponse = new SelectFeedbackDocumentsResponse(sources, topics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, selectResults, results);
+        SelectFeedbackDocumentsResponse documentsResponse = new SelectFeedbackDocumentsResponse(sources, topics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, shardResults, results);
         return new SelectSearchResponse(responseHeader, documentsResponse);
     }
 }
