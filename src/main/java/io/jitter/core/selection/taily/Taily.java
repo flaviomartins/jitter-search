@@ -2,11 +2,8 @@ package io.jitter.core.selection.taily;
 
 import cc.twittertools.index.IndexStatuses;
 import io.jitter.core.features.IndriFeature;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
@@ -23,10 +20,6 @@ import java.util.Map;
 
 public class Taily {
     private static final Logger logger = LoggerFactory.getLogger(Taily.class);
-
-    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
-    private static final QueryParser QUERY_PARSER =
-            new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
 
     public static final String CORPUS_DBENV = "corpus";
     public static final String SOURCES_DBENV = "sources";
@@ -126,7 +119,7 @@ public class Taily {
         logger.info("build corpus end");
     }
 
-    public void buildFromSources(List<String> screenNames) throws IOException, ParseException {
+    public void buildFromSources(List<String> screenNames) throws IOException {
         logger.info("build sources start");
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
@@ -144,14 +137,14 @@ public class Taily {
             FeatureStore store = new FeatureStore(cPath, false);
             stores.put(shardIdStr, store);
 
-            // store the shard size (# of docs) feature
-//            Term t = new Term(IndexStatuses.StatusField.SCREEN_NAME.name, shardIdStr);
-//            Query q = new TermQuery(t);
-            Query q = QUERY_PARSER.parse(IndexStatuses.StatusField.SCREEN_NAME.name + ":" + shardIdStr);
+            Term t = new Term(IndexStatuses.StatusField.SCREEN_NAME.name, shardIdStr);
+            Query q = new TermQuery(t);
 
             TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
             indexSearcher.search(q, totalHitCountCollector);
             int totalDocCount = totalHitCountCollector.getTotalHits();
+
+            // store the shard size (# of docs) feature
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, totalDocCount);
 
             logger.info("build sources {}: {} = {}", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount);

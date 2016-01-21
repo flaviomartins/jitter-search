@@ -6,6 +6,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexWriter;
@@ -150,7 +152,12 @@ public class TwitterManager implements Managed {
         StatusStream stream = new JsonStatusCorpusReader(file);
 
         Directory dir = FSDirectory.open(new File(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, analyzer);
+        
+        Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
+        fieldAnalyzers.put(IndexStatuses.StatusField.SCREEN_NAME.name, new SimpleAnalyzer());
+        PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(analyzer, fieldAnalyzers);
+
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, perFieldAnalyzerWrapper);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();
@@ -158,6 +165,12 @@ public class TwitterManager implements Managed {
         textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         textOptions.setStored(true);
         textOptions.setTokenized(true);
+        
+        final FieldType screenNameOptions = new FieldType();
+        screenNameOptions.setIndexed(true);
+        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        screenNameOptions.setStored(true);
+        screenNameOptions.setTokenized(true);
 
         int cnt = 0;
         cc.twittertools.corpus.data.Status status;
@@ -171,7 +184,7 @@ public class TwitterManager implements Managed {
                 Document doc = new Document();
                 doc.add(new LongField(IndexStatuses.StatusField.ID.name, status.getId(), Field.Store.YES));
                 doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getEpoch(), Field.Store.YES));
-                doc.add(new StringField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getScreenname(), Field.Store.YES));
+                doc.add(new Field(IndexStatuses.StatusField.SCREEN_NAME.name, status.getScreenname(), screenNameOptions));
 
                 doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
 
@@ -218,7 +231,12 @@ public class TwitterManager implements Managed {
 
     public void indexLive(String indexPath, boolean removeDuplicates) throws IOException {
         Directory dir = FSDirectory.open(new File(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, analyzer);
+
+        Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
+        fieldAnalyzers.put(IndexStatuses.StatusField.SCREEN_NAME.name, new SimpleAnalyzer());
+        PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(analyzer, fieldAnalyzers);
+
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, perFieldAnalyzerWrapper);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();
@@ -227,6 +245,12 @@ public class TwitterManager implements Managed {
         textOptions.setStored(true);
         textOptions.setTokenized(true);
 
+        final FieldType screenNameOptions = new FieldType();
+        screenNameOptions.setIndexed(true);
+        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        screenNameOptions.setStored(true);
+        screenNameOptions.setTokenized(true);
+        
         int cnt = 0;
         try (IndexWriter writer = new IndexWriter(dir, config)) {
             for (String screenName : getUsers()) {
@@ -241,7 +265,7 @@ public class TwitterManager implements Managed {
                     org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
                     doc.add(new LongField(IndexStatuses.StatusField.ID.name, status.getId(), Field.Store.YES));
                     doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getCreatedAt().getTime(), Field.Store.YES));
-                    doc.add(new TextField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), Field.Store.YES));
+                    doc.add(new Field(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), screenNameOptions));
 
                     doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
 
