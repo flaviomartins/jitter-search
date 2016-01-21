@@ -1,14 +1,14 @@
 package io.jitter.core.twittertools.api;
 
 import io.jitter.api.collectionstatistics.CollectionStats;
+import io.jitter.core.selection.taily.FeatureStore;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
@@ -16,6 +16,8 @@ public class TrecCollectionStats implements CollectionStats {
     private static final Logger LOG = Logger.getLogger(TrecCollectionStats.class);
 
     public static final Pattern TAB_PATTERN = Pattern.compile("\\t", Pattern.DOTALL);
+    public static final String CORPUS_DBENV = "corpus";
+    public static final String dbPath = "stats";
 
     private static final int TERM_COLUMN = 0;
     private static final int DF_COLUMN = 1;
@@ -23,8 +25,7 @@ public class TrecCollectionStats implements CollectionStats {
 
     private static final int DEFAULT_COLLECTION_SIZE = 243271538;
 
-    private Map<String, Integer> documentFrequency;
-    private Map<String, Integer> collectionFrequency;
+    private FeatureStore corpusStore;
 
     private int collectionSize = DEFAULT_COLLECTION_SIZE;
 
@@ -32,54 +33,80 @@ public class TrecCollectionStats implements CollectionStats {
     private int cumulativeCollectionFrequency;
 
     public TrecCollectionStats(String pathToStatsFile) {
-        try {
+        File statsStorePath = new File(dbPath + "/" + CORPUS_DBENV);
+        if (!statsStorePath.isDirectory()) {
+            corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(new File(pathToStatsFile)))));
+                String line = reader.readLine();
+                for (int i = 0; line != null; i++) {
+                    String[] toks = TAB_PATTERN.split(line);
+                    if (toks == null || toks.length != 3) {
+                        LOG.error("bad stats line");
+                        continue;
+                    }
 
-            documentFrequency = new HashMap<>(5861050);
-            collectionFrequency = new HashMap<>(5861050);
+                    String term = toks[TERM_COLUMN];
+                    int df = Integer.parseInt(toks[DF_COLUMN]);
+                    int cf = Integer.parseInt(toks[CF_COLUMN]);
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(new File(pathToStatsFile)))));
-            String line = reader.readLine();
-            for (int i = 0; line != null; i++) {
-                String[] toks = TAB_PATTERN.split(line);
-                if (toks == null || toks.length != 3) {
-                    LOG.error("bad stats line");
-                    continue;
+                    // if reading first line
+                    if (i == 0) {
+                        cumulativeDocumentFrequency = df;
+                        cumulativeCollectionFrequency = cf;
+                        
+                        String dfFeatKey = FeatureStore.SIZE_FEAT_SUFFIX;
+                        corpusStore.putFeature(dfFeatKey, df, cf);
+
+                        String ctfFeatKey = FeatureStore.TERM_SIZE_FEAT_SUFFIX;
+                        corpusStore.putFeature(ctfFeatKey, df, cf);
+
+                        line = reader.readLine();
+                        continue;
+                    }
+
+                    // get and store shard df feature for term
+                    String dfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.SIZE_FEAT_SUFFIX;
+                    corpusStore.putFeature(dfFeatKey, df, cf);
+
+                    // store ctf feature for term
+                    String ctfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
+                    corpusStore.putFeature(ctfFeatKey, cf, cf);
+
+                    line = reader.readLine();
                 }
-
-                String term = toks[TERM_COLUMN];
-                int df = Integer.parseInt(toks[DF_COLUMN]);
-                int cf = Integer.parseInt(toks[CF_COLUMN]);
-
-                // if reading first line
-                if (i == 0) {
-                    cumulativeDocumentFrequency = df;
-                    cumulativeCollectionFrequency = cf;
-                    continue;
-                }
-
-                documentFrequency.put(term, df);
-                collectionFrequency.put(term, cf);
-
-                line = reader.readLine();
+            } catch (Exception e) {
+                LOG.error("died trying to read stats file: " + pathToStatsFile);
+                System.exit(-1);
             }
-        } catch (Exception e) {
-            LOG.error("died trying to read stats file: " + pathToStatsFile);
-            System.exit(-1);
+            corpusStore.close();
         }
+
+        corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
+
+        String dfFeatKey = FeatureStore.SIZE_FEAT_SUFFIX;
+        cumulativeDocumentFrequency = (int) corpusStore.getFeature(dfFeatKey);
+
+        String ctfFeatKey = FeatureStore.TERM_SIZE_FEAT_SUFFIX;
+        cumulativeCollectionFrequency = (int) corpusStore.getFeature(ctfFeatKey);
     }
 
     public int getDF(String term) {
-        if (!documentFrequency.containsKey(term.toLowerCase())) {
+        String dfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.SIZE_FEAT_SUFFIX;
+        int df = (int) corpusStore.getFeature(dfFeatKey);
+        if (df == -1) {
             return 10;
         }
-        return documentFrequency.get(term.toLowerCase());
+        return df;
     }
 
     public long getCF(String term) {
-        if (!collectionFrequency.containsKey(term.toLowerCase())) {
+        String ctfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
+        int cf = (int) corpusStore.getFeature(ctfFeatKey);
+        if (cf == -1) {
             return 10;
         }
-        return collectionFrequency.get(term.toLowerCase());
+        return cf;
     }
 
     public double getIDF(String term) {
