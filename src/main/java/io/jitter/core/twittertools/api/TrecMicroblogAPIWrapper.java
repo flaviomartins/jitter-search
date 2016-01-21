@@ -8,26 +8,30 @@ import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
 import io.jitter.core.search.TopDocuments;
-import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.Stopper;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.Query;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nullable;
 import java.io.*;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class TrecMicroblogAPIWrapper implements Managed {
     private static final Logger LOG = Logger.getLogger(TrecMicroblogAPIWrapper.class);
 
     private static final Analyzer analyzer = IndexStatuses.ANALYZER;
+    private static final QueryParser QUERY_PARSER =
+            new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
+
     private static final int MAX_NUM_RESULTS = 10000;
 
     private final String host;
@@ -86,14 +90,14 @@ public class TrecMicroblogAPIWrapper implements Managed {
         this.collectionStats = collectionStats;
     }
 
-    public TopDocuments search(String query, long maxId, int numResults)  throws TException,
-            IOException, ClassNotFoundException {
+    public TopDocuments search(String query, long maxId, int numResults) throws TException,
+            IOException, ClassNotFoundException, ParseException {
         return search(query, maxId, numResults, false);
     }
 
     @SuppressWarnings("unchecked")
     public TopDocuments search(String query, long maxId, int numResults, boolean filterRT) throws TException,
-            IOException, ClassNotFoundException {
+            IOException, ClassNotFoundException, ParseException {
 
         int numResultsToFetch = Math.min(MAX_NUM_RESULTS, 3 * numResults);
         
@@ -156,12 +160,14 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
         int totalDF = 0;
         if (collectionStats != null) {
-            for (String term : AnalyzerUtils.analyze(analyzer, query)) {
-                if (term.isEmpty())
+            Query q = QUERY_PARSER.parse(query);
+            Set<Term> queryTerms = new TreeSet<>();
+            q.extractTerms(queryTerms);
+            for (Term term : queryTerms) {
+                String text = term.text();
+                if (text.isEmpty())
                     continue;
-                if ("AND".equals(term) || "OR".equals(term))
-                    continue;
-                totalDF += collectionStats.getDF(term);
+                totalDF += collectionStats.getDF(text);
             }
         }
 

@@ -12,7 +12,6 @@ import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
-import io.jitter.core.utils.AnalyzerUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -306,12 +305,13 @@ public class SelectionManager implements Managed {
         final BytesRefBuilder bytes = new BytesRefBuilder();
 
         int totalDF = 0;
-        for (String term : AnalyzerUtils.analyze(analyzer, query)) {
-            if (term.isEmpty())
+        Set<Term> queryTerms = new TreeSet<>();
+        q.extractTerms(queryTerms);
+        for (Term term : queryTerms) {
+            String text = term.text();
+            if (text.isEmpty())
                 continue;
-            if ("AND".equals(term) || "OR".equals(term))
-                continue;
-            bytes.copyChars(term);
+            bytes.copyChars(text);
             termEnum.seekExact(bytes.toBytesRef());
             totalDF += termEnum.docFreq();
         }
