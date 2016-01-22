@@ -3,23 +3,18 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.SelectDocumentsResponse;
 import io.jitter.api.search.SelectSearchResponse;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
-import io.jitter.core.document.FeatureVector;
-import io.jitter.core.feedback.FeedbackRelevanceModel;
-import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
-import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,19 +33,17 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SelectSearchResource {
     private static final Logger logger = LoggerFactory.getLogger(SelectSearchResource.class);
 
-    private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
-
     private final AtomicLong counter;
-    private final SearchManager searchManager;
     private final SelectionManager selectionManager;
+    private final SelectionManager shardsManager;
 
-    public SelectSearchResource(SearchManager searchManager, SelectionManager selectionManager) throws IOException {
-        Preconditions.checkNotNull(searchManager);
+    public SelectSearchResource(SelectionManager selectionManager, SelectionManager shardsManager) throws IOException {
         Preconditions.checkNotNull(selectionManager);
+        Preconditions.checkNotNull(shardsManager);
 
         counter = new AtomicLong();
-        this.searchManager = searchManager;
         this.selectionManager = selectionManager;
+        this.shardsManager = shardsManager;
     }
 
     @GET
@@ -64,20 +57,17 @@ public class SelectSearchResource {
                                        @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
                                        @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
                                        @QueryParam("method") @DefaultValue("crcsexp") String method,
+                                       @QueryParam("topics") @DefaultValue("false") BooleanParam topics,
                                        @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                        @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
                                        @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
-                                       @QueryParam("topic") Optional<String> topic,
-                                       @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
-                                       @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
-                                       @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                        @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
         TopDocuments selectResults = null;
-        TopDocuments results = null;
+        TopDocuments shardResults = null;
 
         long startTime = System.currentTimeMillis();
 
@@ -95,69 +85,44 @@ public class SelectSearchResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
-        Map<String, Double> sources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
+        Map<String, Double> rankedSources = shardsManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
+        Map<String, Double> selectedSources = shardsManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
 
-        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
-        Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
-
-        if (topic.isPresent()) {
-            selectResults = selectionManager.filterTopic(topic.get(), selectResults.scoreDocs);
-
-            FeatureVector queryFV = new FeatureVector(null);
-            for (String term : AnalyzerUtils.analyze(analyzer, query)) {
-                if ("AND".equals(term) || "OR".equals(term))
-                    continue;
-                queryFV.addTerm(term.toLowerCase(Locale.ROOT), 1.0);
-            }
-            queryFV.normalizeToOne();
-
-            // cap results
-            selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
-
-            FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
-            fb.setOriginalQueryFV(queryFV);
-            fb.setRes(selectResults.scoreDocs);
-            fb.build(searchManager.getStopper());
-
-            FeatureVector fbVector = fb.asFeatureVector();
-            fbVector.pruneToSize(fbTerms.get());
-            fbVector.normalizeToOne();
-            fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
-
-            logger.info("Topic: {}\n fbDocs: {} Feature Vector:\n{}", topic.get(), selectResults.scoreDocs.size(), fbVector.toString());
-
-            StringBuilder builder = new StringBuilder();
-            Iterator<String> terms = fbVector.iterator();
-            while (terms.hasNext()) {
-                String term = terms.next();
-                double prob = fbVector.getFeatureWeight(term);
-                if (prob < 0)
-                    continue;
-                builder.append('"').append(term).append('"').append("^").append(prob).append(" ");
-            }
-            query = builder.toString().trim();
-        }
+        Map<String, Double> rankedTopics = shardsManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
+        Map<String, Double> selectedTopics = shardsManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                results = searchManager.search(query, limit.get(), !retweets.get(), maxId.get());
+                shardResults = shardsManager.search(query, limit.get(), !retweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
                 long[] epochs = Epochs.parseEpochRange(epoch.get());
-                results = searchManager.search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
+                shardResults = shardsManager.search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
             } else {
-                results = searchManager.search(query, limit.get(), !retweets.get());
+                shardResults = shardsManager.search(query, limit.get(), !retweets.get());
+            }
+        }
+
+        int totalHits = shardResults != null ? shardResults.totalHits : 0;
+
+        Iterable<String> enabledSources = null;
+        Iterable<String> enabledTopics = null;
+
+        if (selectResults.scoreDocs.size() > 0) {
+            if (!topics.get()) {
+                enabledSources = Iterables.limit(selectedSources.keySet(), maxCol.get());
+                shardResults = shardsManager.filterCollections(enabledSources, shardResults.scoreDocs);
+            } else {
+                enabledTopics = Iterables.limit(selectedTopics.keySet(), maxCol.get());
+                shardResults = shardsManager.filterTopics(enabledTopics, shardResults.scoreDocs);
             }
         }
 
         long endTime = System.currentTimeMillis();
 
-        int totalHits = results != null ? results.totalHits : 0;
-
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(sources, topics, methodName, totalHits, 0, selectResults, results);
+        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(selectedSources, selectedTopics, methodName, totalHits, 0, selectResults, shardResults);
         return new SelectSearchResponse(responseHeader, documentsResponse);
     }
 }

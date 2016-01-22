@@ -93,7 +93,7 @@ public class SelectionResource {
             rankedCollections = shardsManager.getRankedTopics(selectionMethod, topSelDocs, normalize.get());
         }
         
-        Map<String, Double> collections = shardsManager.limit(selectionMethod, rankedCollections, maxCol.get(), minRanks);
+        Map<String, Double> selectedCollections = shardsManager.limit(selectionMethod, rankedCollections, maxCol.get(), minRanks);
 
         long endTime = System.currentTimeMillis();
 
@@ -102,7 +102,7 @@ public class SelectionResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(collections, methodName, totalHits, 0, selectResults);
+        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(selectedCollections, methodName, totalHits, 0, selectResults);
         return new SelectionResponse(responseHeader, documentsResponse);
     }
 }

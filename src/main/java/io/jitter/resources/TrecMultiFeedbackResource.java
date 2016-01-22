@@ -118,9 +118,6 @@ public class TrecMultiFeedbackResource {
         Map<String, Double> rankedTopics = shardsManager.getRankedTopics(selectionMethod, topSelDocs, normalize.get());
         Map<String, Double> topics = shardsManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
-        Iterable<String> fbSourcesEnabled = null;
-        Iterable<String> fbTopicsEnabled = null;
-
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 shardResults = shardsManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
@@ -131,6 +128,9 @@ public class TrecMultiFeedbackResource {
                 shardResults = shardsManager.search(query, sLimit.get(), !sRetweets.get());
             }
         }
+        
+        Iterable<String> fbSourcesEnabled = null;
+        Iterable<String> fbTopicsEnabled = null;
 
         if (selectResults.scoreDocs.size() > 0) {
             if (fbUseSources.get()) {
