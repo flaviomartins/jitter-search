@@ -410,9 +410,13 @@ public class SelectionManager implements Managed {
     }
 
     private List<Document> sortResults(List<Document> results, int n, boolean filterRT) {
+        int count = 0;
         int retweetCount = 0;
         SortedSet<DocumentComparable> sortedResults = new TreeSet<>();
         for (Document p : results) {
+            if (count >= n)
+                break;
+
             // Throw away retweets.
             if (filterRT && p.getRetweeted_status_id() != 0) {
                 retweetCount++;
@@ -420,6 +424,7 @@ public class SelectionManager implements Managed {
             }
 
             sortedResults.add(new DocumentComparable(p));
+            count += 1;
         }
         if (filterRT) {
             logger.info("filter_rt count: {}", retweetCount);
