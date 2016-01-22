@@ -1,11 +1,13 @@
 package io.jitter.api.selection;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.jitter.core.selection.SelectionTopDocuments;
 
 import java.util.List;
 import java.util.Map;
 
+@JsonPropertyOrder({"method", "c_sel", "collections", "numFound", "start", "selectDocs"})
 public class SelectionDocumentsResponse {
 
     private Map<String, Double> collections;
@@ -13,19 +15,19 @@ public class SelectionDocumentsResponse {
     private int c_sel;
     private int numFound;
     private int start;
-    private List<?> docs;
+    private List<?> selectDocs;
 
     public SelectionDocumentsResponse() {
         // Jackson deserialization
     }
 
-    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int c_sel, int numFound, int start, List<?> docs) {
+    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int c_sel, int numFound, int start, List<?> selectDocs) {
         this.collections = collections;
         this.method = method;
         this.c_sel = c_sel;
         this.numFound = numFound;
         this.start = start;
-        this.docs = docs;
+        this.selectDocs = selectDocs;
     }
 
     public SelectionDocumentsResponse(Map<String, Double> collections, String method, int start, SelectionTopDocuments topDocuments) {
@@ -34,7 +36,7 @@ public class SelectionDocumentsResponse {
         this.method = method;
         this.numFound = topDocuments.totalHits;
         this.start = start;
-        this.docs = topDocuments.scoreDocs;
+        this.selectDocs = topDocuments.scoreDocs;
     }
 
     public SelectionDocumentsResponse(Map<String, Double> collections, String method, int c_sel, int numFound, int start) {
@@ -43,7 +45,7 @@ public class SelectionDocumentsResponse {
         this.c_sel = c_sel;
         this.numFound = numFound;
         this.start = start;
-        this.docs = null;
+        this.selectDocs = null;
     }
 
     @JsonProperty
@@ -62,8 +64,8 @@ public class SelectionDocumentsResponse {
     }
 
     @JsonProperty
-    public List<?> getDocs() {
-        return docs;
+    public List<?> getSelectDocs() {
+        return selectDocs;
     }
 
     @JsonProperty

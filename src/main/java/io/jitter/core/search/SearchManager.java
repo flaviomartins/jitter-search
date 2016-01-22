@@ -210,6 +210,8 @@ public class SearchManager implements Managed {
         int duplicateCount = 0;
         double rsvPrev = 0;
         for (DocumentComparable sortedResult : sortedResults) {
+            if (i > n + 1)
+                break;
             Document result = sortedResult.getDocument();
             double rsvCurr = result.rsv;
             if (Math.abs(rsvCurr - rsvPrev) > 0.0000001) {

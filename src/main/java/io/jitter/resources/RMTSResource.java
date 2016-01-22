@@ -13,6 +13,7 @@ import io.jitter.core.rerank.RMTSReranker;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;
+import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.utils.Epochs;
@@ -74,7 +75,7 @@ public class RMTSResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        TopDocuments selectResults = null;
+        SelectionTopDocuments selectResults = null;
         TopDocuments results = null;
 
         long[] epochs = new long[2];
@@ -131,7 +132,7 @@ public class RMTSResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(sources, topics, methodName, totalHits, 0, selectResults, results);
+        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(sources, topics, methodName, 0, selectResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

@@ -232,7 +232,10 @@ public class SelectionManager implements Managed {
                 results.add(doc);
             }
         }
-        return new SelectionTopDocuments(results.size(), results);
+
+        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
+        selectionTopDocuments.setC_r(results.size());
+        return selectionTopDocuments;
     }
 
     public SelectionTopDocuments filterTopics(Iterable<String> selectedTopics, List<Document> selectResults) {
@@ -244,7 +247,10 @@ public class SelectionManager implements Managed {
                 }
             }
         }
-        return new SelectionTopDocuments(results.size(), results);
+
+        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
+        selectionTopDocuments.setC_r(results.size());
+        return selectionTopDocuments;
     }
 
     public Map<String,Double> limit(SelectionMethod selectionMethod, Map<String, Double> ranking, int maxCol, double minRanks) {
@@ -325,6 +331,7 @@ public class SelectionManager implements Managed {
 
         SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(rs.totalHits, sorted);
         selectionTopDocuments.setC_sel(totalDF);
+        selectionTopDocuments.setC_r(rs.totalHits);
         return selectionTopDocuments;
     }
 
@@ -437,6 +444,8 @@ public class SelectionManager implements Managed {
         int duplicateCount = 0;
         double rsvPrev = 0;
         for (DocumentComparable sortedResult : sortedResults) {
+            if (i > n + 1)
+                break;
             Document result = sortedResult.getDocument();
             double rsvCurr = result.rsv;
             if (Math.abs(rsvCurr - rsvPrev) > 0.0000001) {

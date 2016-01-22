@@ -11,6 +11,7 @@ import io.jitter.api.search.SelectionSearchDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;
+import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.utils.Epochs;
@@ -66,8 +67,8 @@ public class SelectSearchResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        TopDocuments selectResults = null;
-        TopDocuments shardResults = null;
+        SelectionTopDocuments selectResults = null;
+        SelectionTopDocuments shardResults = null;
 
         long startTime = System.currentTimeMillis();
 
@@ -102,10 +103,8 @@ public class SelectSearchResource {
             }
         }
 
-        int totalHits = shardResults != null ? shardResults.totalHits : 0;
-
-        Iterable<String> enabledSources = null;
-        Iterable<String> enabledTopics = null;
+        Iterable<String> enabledSources;
+        Iterable<String> enabledTopics;
 
         if (selectResults.scoreDocs.size() > 0) {
             if (!topics.get()) {
@@ -119,10 +118,10 @@ public class SelectSearchResource {
 
         long endTime = System.currentTimeMillis();
 
-        logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
+        logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), shardResults.totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selectedSources, selectedTopics, methodName, totalHits, 0, selectResults, shardResults);
+        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selectedSources, selectedTopics, methodName, 0, selectResults, shardResults);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }
