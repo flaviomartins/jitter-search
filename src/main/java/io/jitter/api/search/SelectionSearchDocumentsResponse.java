@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 @JsonPropertyOrder({"numFound", "start", "method", "sources", "topics", "selectDocs", "docs"})
-public class SelectDocumentsResponse {
+public class SelectionSearchDocumentsResponse {
 
     private Map<String, Double> sources;
     private Map<String, Double> topics;
@@ -18,11 +18,11 @@ public class SelectDocumentsResponse {
     private List<?> selectDocs;
     private List<?> docs;
 
-    public SelectDocumentsResponse() {
+    public SelectionSearchDocumentsResponse() {
         // Jackson deserialization
     }
 
-    public SelectDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, List<Document> selectDocs, List<?> docs) {
+    public SelectionSearchDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, List<Document> selectDocs, List<?> docs) {
         this.sources = sources;
         this.topics = topics;
         this.method = method;
@@ -32,7 +32,7 @@ public class SelectDocumentsResponse {
         this.docs = docs;
     }
 
-    public SelectDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, TopDocuments selectTopDocuments, TopDocuments topDocuments) {
+    public SelectionSearchDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, TopDocuments selectTopDocuments, TopDocuments topDocuments) {
         this.sources = sources;
         this.topics = topics;
         this.method = method;

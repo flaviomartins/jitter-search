@@ -11,6 +11,7 @@ import io.jitter.api.selection.SelectionDocumentsResponse;
 import io.jitter.api.selection.SelectionResponse;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;
+import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.utils.Epochs;
@@ -66,7 +67,7 @@ public class SelectionResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        TopDocuments selectResults = null;
+        SelectionTopDocuments selectResults = null;
 
         long startTime = System.currentTimeMillis();
 
@@ -102,7 +103,7 @@ public class SelectionResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(selectedCollections, methodName, totalHits, 0, selectResults);
+        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(selectedCollections, methodName, 0, selectResults);
         return new SelectionResponse(responseHeader, documentsResponse);
     }
 }

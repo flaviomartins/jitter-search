@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 @JsonPropertyOrder({"numFound", "start", "fbDocs", "fbTerms", "method", "sources", "topics", "selectDocs",  "docs"})
-public class SelectFeedbackDocumentsResponse extends SelectDocumentsResponse {
+public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocumentsResponse {
 
     private Map<String, Double> sources;
     private Map<String, Double> topics;
@@ -20,11 +20,11 @@ public class SelectFeedbackDocumentsResponse extends SelectDocumentsResponse {
     private List<?> selectDocs;
     private List<?> docs;
 
-    public SelectFeedbackDocumentsResponse() {
+    public SelectionFeedbackDocumentsResponse() {
         // Jackson deserialization
     }
 
-    public SelectFeedbackDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int fbDocs, int fbTerms, int numFound, int start, List<?> selectDocs, List<?> docs) {
+    public SelectionFeedbackDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int fbDocs, int fbTerms, int numFound, int start, List<?> selectDocs, List<?> docs) {
         this.sources = sources;
         this.topics = topics;
         this.method = method;
@@ -36,7 +36,7 @@ public class SelectFeedbackDocumentsResponse extends SelectDocumentsResponse {
         this.docs = docs;
     }
 
-    public SelectFeedbackDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int fbDocs, int fbTerms, int numFound, int start, TopDocuments selectTopDocuments, TopDocuments topDocuments) {
+    public SelectionFeedbackDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int fbDocs, int fbTerms, int numFound, int start, TopDocuments selectTopDocuments, TopDocuments topDocuments) {
         this.sources = sources;
         this.topics = topics;
         this.method = method;

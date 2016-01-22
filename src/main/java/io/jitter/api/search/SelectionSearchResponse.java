@@ -3,16 +3,16 @@ package io.jitter.api.search;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.jitter.api.ResponseHeader;
 
-public class SelectSearchResponse {
+public class SelectionSearchResponse {
 
     private ResponseHeader responseHeader;
-    private SelectDocumentsResponse response;
+    private SelectionSearchDocumentsResponse response;
 
-    public SelectSearchResponse() {
+    public SelectionSearchResponse() {
         // Jackson deserialization
     }
 
-    public SelectSearchResponse(ResponseHeader responseHeader, SelectDocumentsResponse response) {
+    public SelectionSearchResponse(ResponseHeader responseHeader, SelectionSearchDocumentsResponse response) {
         this.responseHeader = responseHeader;
         this.response = response;
     }
@@ -23,7 +23,7 @@ public class SelectSearchResponse {
     }
 
     @JsonProperty
-    public SelectDocumentsResponse getResponse() {
+    public SelectionSearchDocumentsResponse getResponse() {
         return response;
     }
 

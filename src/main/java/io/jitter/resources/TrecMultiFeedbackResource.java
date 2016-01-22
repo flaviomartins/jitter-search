@@ -8,7 +8,7 @@ import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.search.Document;
-import io.jitter.api.search.SelectFeedbackDocumentsResponse;
+import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Epochs;
@@ -16,7 +16,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
 import org.apache.thrift.TException;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.SelectSearchResponse;
+import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
 import io.jitter.core.selection.SelectionManager;
@@ -65,26 +65,26 @@ public class TrecMultiFeedbackResource {
 
     @GET
     @Timed
-    public SelectSearchResponse search(@QueryParam("q") Optional<String> q,
-                                       @QueryParam("fq") Optional<String> fq,
-                                       @QueryParam("limit") @DefaultValue("1000") IntParam limit,
-                                       @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
-                                       @QueryParam("maxId") Optional<Long> maxId,
-                                       @QueryParam("epoch") Optional<String> epoch,
-                                       @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
-                                       @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
-                                       @QueryParam("method") @DefaultValue("crcsexp") String method,
-                                       @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
-                                       @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
-                                       @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
-                                       @QueryParam("reScore") @DefaultValue("false") BooleanParam reScore,
-                                       @QueryParam("topic") Optional<String> topic,
-                                       @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
-                                       @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
-                                       @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
-                                       @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
-                                       @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
-                                       @Context UriInfo uriInfo)
+    public SelectionSearchResponse search(@QueryParam("q") Optional<String> q,
+                                          @QueryParam("fq") Optional<String> fq,
+                                          @QueryParam("limit") @DefaultValue("1000") IntParam limit,
+                                          @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
+                                          @QueryParam("maxId") Optional<Long> maxId,
+                                          @QueryParam("epoch") Optional<String> epoch,
+                                          @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
+                                          @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
+                                          @QueryParam("method") @DefaultValue("crcsexp") String method,
+                                          @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
+                                          @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
+                                          @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
+                                          @QueryParam("reScore") @DefaultValue("false") BooleanParam reScore,
+                                          @QueryParam("topic") Optional<String> topic,
+                                          @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
+                                          @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
+                                          @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
+                                          @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
+                                          @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
+                                          @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -203,7 +203,7 @@ public class TrecMultiFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectFeedbackDocumentsResponse documentsResponse = new SelectFeedbackDocumentsResponse(sources, topics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, shardResults, results);
-        return new SelectSearchResponse(responseHeader, documentsResponse);
+        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(sources, topics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, shardResults, results);
+        return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

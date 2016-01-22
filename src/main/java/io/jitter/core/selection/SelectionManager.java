@@ -7,7 +7,6 @@ import com.google.common.collect.Sets;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.search.DocumentComparable;
-import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.similarities.IDFSimilarity;
@@ -215,17 +214,17 @@ public class SelectionManager implements Managed {
         return sortedMap;
     }
 
-    public TopDocuments filterTopic(String selectedTopic, List<Document> selectResults) {
+    public SelectionTopDocuments filterTopic(String selectedTopic, List<Document> selectResults) {
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults) {
             if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
                 results.add(doc);
             }
         }
-        return new TopDocuments(results.size(), results);
+        return new SelectionTopDocuments(results.size(), results);
     }
 
-    public TopDocuments filterCollections(Iterable<String> selectedSources, List<Document> selectResults) {
+    public SelectionTopDocuments filterCollections(Iterable<String> selectedSources, List<Document> selectResults) {
         HashSet<String> collections = Sets.newHashSet(selectedSources);
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults) {
@@ -233,10 +232,10 @@ public class SelectionManager implements Managed {
                 results.add(doc);
             }
         }
-        return new TopDocuments(results.size(), results);
+        return new SelectionTopDocuments(results.size(), results);
     }
 
-    public TopDocuments filterTopics(Iterable<String> selectedTopics, List<Document> selectResults) {
+    public SelectionTopDocuments filterTopics(Iterable<String> selectedTopics, List<Document> selectResults) {
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults) {
             for (String selectedTopic: selectedTopics) {
@@ -245,7 +244,7 @@ public class SelectionManager implements Managed {
                 }
             }
         }
-        return new TopDocuments(results.size(), results);
+        return new SelectionTopDocuments(results.size(), results);
     }
 
     public Map<String,Double> limit(SelectionMethod selectionMethod, Map<String, Double> ranking, int maxCol, double minRanks) {
@@ -270,7 +269,7 @@ public class SelectionManager implements Managed {
         return map;
     }
 
-    public TopDocuments reScoreSelected(Iterable<Map.Entry<String, Double>> selectedTopics, List<Document> selectResults) {
+    public SelectionTopDocuments reScoreSelected(Iterable<Map.Entry<String, Double>> selectedTopics, List<Document> selectResults) {
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults) {
             Document updatedDocument = new Document(doc);
@@ -283,16 +282,16 @@ public class SelectionManager implements Managed {
             }
         }
         List<Document> documents = sortResults(results, results.size(), false);
-        return new TopDocuments(documents.size(), documents);
+        return new SelectionTopDocuments(documents.size(), documents);
     }
 
-    public TopDocuments searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
-        TopDocuments sorted = isearch(query, n, filterRT);
+    public SelectionTopDocuments searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
+        SelectionTopDocuments sorted = isearch(query, n, filterRT);
         
         return filterTopic(topicName, sorted.scoreDocs);
     }
     
-    public TopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
+    public SelectionTopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
 //        int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
         
@@ -323,35 +322,37 @@ public class SelectionManager implements Managed {
             rs = getSearcher().search(q, reader.numDocs());
 
         List<Document> sorted = getSorted(rs, n, filterRT);
-        
-        return new TopDocuments(totalDF, sorted);
+
+        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(rs.totalHits, sorted);
+        selectionTopDocuments.setC_sel(totalDF);
+        return selectionTopDocuments;
     }
 
-    public TopDocuments isearch(String query, int n, boolean filterRT) throws IOException, ParseException {
+    public SelectionTopDocuments isearch(String query, int n, boolean filterRT) throws IOException, ParseException {
         return isearch(query, null, n, filterRT);
     }
 
-    public TopDocuments isearch(String query, int n) throws IOException, ParseException {
+    public SelectionTopDocuments isearch(String query, int n) throws IOException, ParseException {
         return isearch(query, null, n, false);
     }
 
-    public TopDocuments search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
+    public SelectionTopDocuments search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
         return isearch(query, filter, n, filterRT);
     }
 
-    public TopDocuments search(String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
+    public SelectionTopDocuments search(String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
         return isearch(query, filter, n, filterRT);
     }
 
-    public TopDocuments search(String query, int n, boolean filterRT) throws IOException, ParseException {
+    public SelectionTopDocuments search(String query, int n, boolean filterRT) throws IOException, ParseException {
         return isearch(query, n, filterRT);
     }
 
-    public TopDocuments search(String query, int n) throws IOException, ParseException {
+    public SelectionTopDocuments search(String query, int n) throws IOException, ParseException {
         return isearch(query, n, false);
     }
 

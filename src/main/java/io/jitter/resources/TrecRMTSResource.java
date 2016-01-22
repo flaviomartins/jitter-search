@@ -7,8 +7,8 @@ import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.SelectDocumentsResponse;
-import io.jitter.api.search.SelectSearchResponse;
+import io.jitter.api.search.SelectionSearchDocumentsResponse;
+import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.filter.NaiveLanguageFilter;
 import io.jitter.core.rerank.RMTSReranker;
 import io.jitter.core.search.TopDocuments;
@@ -53,27 +53,27 @@ public class TrecRMTSResource {
 
     @GET
     @Timed
-    public SelectSearchResponse search(@QueryParam("q") Optional<String> q,
-                                       @QueryParam("fq") Optional<String> fq,
-                                       @QueryParam("limit") @DefaultValue("1000") IntParam limit,
-                                       @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
-                                       @QueryParam("maxId") Optional<Long> maxId,
-                                       @QueryParam("epoch") Optional<String> epoch,
-                                       @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
-                                       @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
-                                       @QueryParam("method") @DefaultValue("crcsexp") String method,
-                                       @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
-                                       @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
-                                       @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
-                                       @QueryParam("reScore") @DefaultValue("false") BooleanParam reScore,
-                                       @QueryParam("topic") Optional<String> topic,
-                                       @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
-                                       @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
-                                       @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
-                                       @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
-                                       @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
-                                       @QueryParam("numRerank") @DefaultValue("1000") IntParam numRerank,
-                                       @Context UriInfo uriInfo)
+    public SelectionSearchResponse search(@QueryParam("q") Optional<String> q,
+                                          @QueryParam("fq") Optional<String> fq,
+                                          @QueryParam("limit") @DefaultValue("1000") IntParam limit,
+                                          @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
+                                          @QueryParam("maxId") Optional<Long> maxId,
+                                          @QueryParam("epoch") Optional<String> epoch,
+                                          @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
+                                          @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
+                                          @QueryParam("method") @DefaultValue("crcsexp") String method,
+                                          @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
+                                          @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
+                                          @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
+                                          @QueryParam("reScore") @DefaultValue("false") BooleanParam reScore,
+                                          @QueryParam("topic") Optional<String> topic,
+                                          @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
+                                          @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
+                                          @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
+                                          @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
+                                          @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
+                                          @QueryParam("numRerank") @DefaultValue("1000") IntParam numRerank,
+                                          @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -148,7 +148,7 @@ public class TrecRMTSResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(sources, topics, methodName, totalHits, 0, selectResults, results);
-        return new SelectSearchResponse(responseHeader, documentsResponse);
+        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(sources, topics, methodName, totalHits, 0, selectResults, results);
+        return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

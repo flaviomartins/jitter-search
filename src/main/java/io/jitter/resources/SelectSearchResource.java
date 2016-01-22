@@ -7,8 +7,8 @@ import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.SelectDocumentsResponse;
-import io.jitter.api.search.SelectSearchResponse;
+import io.jitter.api.search.SelectionSearchDocumentsResponse;
+import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.methods.SelectionMethod;
@@ -48,20 +48,20 @@ public class SelectSearchResource {
 
     @GET
     @Timed
-    public SelectSearchResponse search(@QueryParam("q") Optional<String> q,
-                                       @QueryParam("fq") Optional<String> fq,
-                                       @QueryParam("limit") @DefaultValue("1000") IntParam limit,
-                                       @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
-                                       @QueryParam("maxId") Optional<Long> maxId,
-                                       @QueryParam("epoch") Optional<String> epoch,
-                                       @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
-                                       @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
-                                       @QueryParam("method") @DefaultValue("crcsexp") String method,
-                                       @QueryParam("topics") @DefaultValue("false") BooleanParam topics,
-                                       @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
-                                       @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
-                                       @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
-                                       @Context UriInfo uriInfo)
+    public SelectionSearchResponse search(@QueryParam("q") Optional<String> q,
+                                          @QueryParam("fq") Optional<String> fq,
+                                          @QueryParam("limit") @DefaultValue("1000") IntParam limit,
+                                          @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
+                                          @QueryParam("maxId") Optional<Long> maxId,
+                                          @QueryParam("epoch") Optional<String> epoch,
+                                          @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
+                                          @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
+                                          @QueryParam("method") @DefaultValue("crcsexp") String method,
+                                          @QueryParam("topics") @DefaultValue("false") BooleanParam topics,
+                                          @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
+                                          @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
+                                          @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
+                                          @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -122,7 +122,7 @@ public class SelectSearchResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectDocumentsResponse documentsResponse = new SelectDocumentsResponse(selectedSources, selectedTopics, methodName, totalHits, 0, selectResults, shardResults);
-        return new SelectSearchResponse(responseHeader, documentsResponse);
+        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selectedSources, selectedTopics, methodName, totalHits, 0, selectResults, shardResults);
+        return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

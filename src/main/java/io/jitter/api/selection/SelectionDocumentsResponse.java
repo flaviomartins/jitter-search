@@ -1,7 +1,7 @@
 package io.jitter.api.selection;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.jitter.core.search.TopDocuments;
+import io.jitter.core.selection.SelectionTopDocuments;
 
 import java.util.List;
 import java.util.Map;
@@ -10,6 +10,7 @@ public class SelectionDocumentsResponse {
 
     private Map<String, Double> collections;
     private String method;
+    private int c_sel;
     private int numFound;
     private int start;
     private List<?> docs;
@@ -18,25 +19,28 @@ public class SelectionDocumentsResponse {
         // Jackson deserialization
     }
 
-    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int numFound, int start, List<?> docs) {
+    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int c_sel, int numFound, int start, List<?> docs) {
         this.collections = collections;
         this.method = method;
+        this.c_sel = c_sel;
         this.numFound = numFound;
         this.start = start;
         this.docs = docs;
     }
 
-    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int numFound, int start, TopDocuments topDocuments) {
+    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int start, SelectionTopDocuments topDocuments) {
         this.collections = collections;
+        this.c_sel = topDocuments.c_sel;
         this.method = method;
-        this.numFound = numFound;
+        this.numFound = topDocuments.totalHits;
         this.start = start;
         this.docs = topDocuments.scoreDocs;
     }
 
-    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int numFound, int start) {
+    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int c_sel, int numFound, int start) {
         this.collections = collections;
         this.method = method;
+        this.c_sel = c_sel;
         this.numFound = numFound;
         this.start = start;
         this.docs = null;
@@ -65,5 +69,10 @@ public class SelectionDocumentsResponse {
     @JsonProperty
     public String getMethod() {
         return method;
+    }
+
+    @JsonProperty
+    public int getC_sel() {
+        return c_sel;
     }
 }
