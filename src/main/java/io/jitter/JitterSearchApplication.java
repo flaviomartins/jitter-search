@@ -107,7 +107,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.jersey().register(tailyResource);
         environment.admin().addTask(new TailyManagerIndexTask(tailyManager));
 
-        final SelectionResource selectionResource = new SelectionResource(selectionManager);
+        final SelectionResource selectionResource = new SelectionResource(selectionManager, shardsManager);
         environment.jersey().register(selectionResource);
 
         final SelectSearchResource selectSearchResource = new SelectSearchResource(searchManager, selectionManager);

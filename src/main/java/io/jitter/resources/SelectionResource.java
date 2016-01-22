@@ -6,6 +6,7 @@ import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
+import io.jitter.api.search.Document;
 import io.jitter.api.selection.SelectionDocumentsResponse;
 import io.jitter.api.selection.SelectionResponse;
 import io.jitter.core.search.TopDocuments;
@@ -24,6 +25,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,12 +37,15 @@ public class SelectionResource {
 
     private final AtomicLong counter;
     private final SelectionManager selectionManager;
+    private final SelectionManager shardsManager;
 
-    public SelectionResource(SelectionManager selectionManager) throws IOException {
+    public SelectionResource(SelectionManager selectionManager, SelectionManager shardsManager) throws IOException {
         Preconditions.checkNotNull(selectionManager);
+        Preconditions.checkNotNull(shardsManager);
 
         counter = new AtomicLong();
         this.selectionManager = selectionManager;
+        this.shardsManager = shardsManager;
     }
 
     @GET
@@ -79,14 +84,16 @@ public class SelectionResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> ranked;
-        if (topics.get()) {
-            ranked = selectionManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
-        } else {
-            ranked = selectionManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
-        }
+        List<Document> topSelDocs = selectResults.scoreDocs.subList(0, Math.min(limit.get(), selectResults.scoreDocs.size()));
 
-        Map<String, Double> map = selectionManager.limit(selectionMethod, ranked, maxCol.get(), minRanks);
+        Map<String, Double> rankedCollections;
+        if (!topics.get()) {
+            rankedCollections = shardsManager.getRanked(selectionMethod, topSelDocs, normalize.get());
+        } else {
+            rankedCollections = shardsManager.getRankedTopics(selectionMethod, topSelDocs, normalize.get());
+        }
+        
+        Map<String, Double> collections = shardsManager.limit(selectionMethod, rankedCollections, maxCol.get(), minRanks);
 
         long endTime = System.currentTimeMillis();
 
@@ -95,7 +102,7 @@ public class SelectionResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(map, methodName, totalHits, 0, selectResults);
+        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(collections, methodName, totalHits, 0, selectResults);
         return new SelectionResponse(responseHeader, documentsResponse);
     }
 }
