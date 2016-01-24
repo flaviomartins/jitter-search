@@ -8,6 +8,7 @@ import io.jitter.api.search.Document;
 import io.jitter.core.search.DocumentComparable;
 import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
+import io.jitter.core.shards.ShardStatsBuilder;
 import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.shards.ShardStats;
 import io.jitter.core.similarities.IDFSimilarity;
@@ -47,8 +48,9 @@ public class SelectionManager implements Managed {
     private final boolean live;
 
     private Map<String, ImmutableSortedSet<String>> topics;
-    private final Map<String, String> reverseTopicMap;
 
+    private ShardStatsBuilder shardStatsBuilder;
+    private Map<String, String> reverseTopicMap;
     private ShardStats collectionsShardStats;
     private ShardStats topicsShardStats;
 
@@ -65,23 +67,15 @@ public class SelectionManager implements Managed {
         for (Map.Entry<String, Set<String>> entry : topics.entrySet()) {
             treeMap.put(entry.getKey(), new ImmutableSortedSet.Builder<>(String.CASE_INSENSITIVE_ORDER).addAll(entry.getValue()).build());
         }
-
-        Map<String, String> reverseMap = new HashMap<>();
-        for (Map.Entry<String, Set<String>> entry : topics.entrySet()) {
-            String topic = entry.getKey();
-            for (String col : entry.getValue()) {
-                reverseMap.put(col.toLowerCase(Locale.ROOT), topic.toLowerCase(Locale.ROOT));
-            }
-        }
-
         this.topics = treeMap;
-        this.reverseTopicMap = reverseMap;
     }
 
     @Override
     public void start() throws Exception {
         try {
             searcher = getSearcher();
+            shardStatsBuilder = new ShardStatsBuilder(reader, topics);
+            reverseTopicMap = shardStatsBuilder.getReverseTopicMap();
             collectStats();
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -89,51 +83,9 @@ public class SelectionManager implements Managed {
     }
 
     public void collectStats() throws IOException {
-        Map<String, Integer> collectionsSizes = new HashMap<>();
-        Map<String, Integer> topicsSizes = new HashMap<>();
-
-        Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.SCREEN_NAME.name);
-        TermsEnum termEnum = terms.iterator(null);
-
-        int termCnt = 0;
-        BytesRef bytesRef;
-        while ((bytesRef = termEnum.next()) != null) {
-            String term = bytesRef.utf8ToString();
-            int docFreq = termEnum.docFreq();
-            if (term.isEmpty()) {
-                continue;
-            }
-
-            String collection = term.toLowerCase(Locale.ROOT);
-
-            if (reverseTopicMap.keySet().contains(collection)) {
-                collectionsSizes.put(collection, docFreq);
-                logger.info("SCAN collection: " + collection + " " + docFreq);
-            } else {
-                logger.warn("SCAN collection: " + collection + " " + docFreq);
-            }
-
-            termCnt++;
-        }
-
-        logger.info("SCAN total collections: " + termCnt);
-
-        for (String topic : topics.keySet()) {
-            int docFreq = 0;
-            for (String collection : topics.get(topic)) {
-                Integer sz = collectionsSizes.get(collection);
-                if (sz != null)
-                    docFreq += sz;
-            }
-
-            topicsSizes.put(topic, docFreq);
-            logger.info("SCAN topics: " + topic + " " + docFreq);
-        }
-
-        collectionsShardStats = new ShardStats(collectionsSizes);
-        topicsShardStats = new ShardStats(topicsSizes);
-
-        logger.info("SCAN total docs: " + collectionsShardStats.getTotalDocs() + " - " + topicsShardStats.getTotalDocs());
+        shardStatsBuilder.collectStats();
+        collectionsShardStats = shardStatsBuilder.getCollectionsShardStats();
+        topicsShardStats = shardStatsBuilder.getTopicsShardStats();
     }
 
     @Override
