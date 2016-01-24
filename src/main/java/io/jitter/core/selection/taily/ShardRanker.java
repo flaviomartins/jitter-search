@@ -1,6 +1,7 @@
 package io.jitter.core.selection.taily;
 
 import cc.twittertools.index.IndexStatuses;
+import com.google.common.collect.Lists;
 import org.apache.commons.math3.distribution.GammaDistribution;
 import io.jitter.core.utils.AnalyzerUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -83,6 +84,18 @@ public class ShardRanker {
         // remove empty stems
         stems.removeAll(Arrays.asList("", null));
         return stems;
+    }
+
+    public int getDF(String shardId, String stem) {
+        int i = Lists.newArrayList(_shardIds).indexOf(shardId);
+        if (i > 0) {
+            // get term's shard df
+            String dfFeat = stem + FeatureStore.SIZE_FEAT_SUFFIX;
+            double df = _stores[i].getFeature(dfFeat);
+            if (df > 0)
+                return (int) df;
+        }
+        return 10;
     }
 
     class QueryFeats {

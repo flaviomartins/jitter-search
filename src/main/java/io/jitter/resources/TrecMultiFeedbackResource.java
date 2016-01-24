@@ -136,10 +136,10 @@ public class TrecMultiFeedbackResource {
         if (selectResults.scoreDocs.size() > 0) {
             if (fbUseSources.get()) {
                 fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
-                shardResults = shardsManager.filterCollections(fbSourcesEnabled, shardResults);
+                shardResults = shardsManager.filterCollections(query, fbSourcesEnabled, shardResults);
             } else {
                 fbTopicsEnabled = Iterables.limit(topics.keySet(), fbCols.get());
-                shardResults = shardsManager.filterTopics(fbTopicsEnabled, shardResults);
+                shardResults = shardsManager.filterTopics(query, fbTopicsEnabled, shardResults);
                 if (reScore.get()) {
                     shardResults = shardsManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), shardResults.scoreDocs);
                 }

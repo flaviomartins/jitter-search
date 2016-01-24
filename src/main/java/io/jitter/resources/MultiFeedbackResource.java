@@ -107,7 +107,7 @@ public class MultiFeedbackResource {
 
         if (topics.size() > 0) {
             Iterable<String> fbTopicsEnabled = Iterables.limit(topics.keySet(), fbTopics.get());
-            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults);
+            selectResults = selectionManager.filterTopics(query, fbTopicsEnabled, selectResults);
 
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(analyzer, query)) {

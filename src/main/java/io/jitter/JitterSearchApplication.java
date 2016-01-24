@@ -69,6 +69,12 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         }
 
+        final TwitterManager twitterManager = configuration.getTwitterManagerFactory().build(environment);
+        final TwitterManagerHealthCheck twitterManagerHealthCheck =
+                new TwitterManagerHealthCheck(twitterManager);
+        environment.healthChecks().register("twitter-manager", twitterManagerHealthCheck);
+        environment.admin().addTask(new TwitterManagerArchiveTask(twitterManager));
+
         final SearchManager searchManager = configuration.getSearchManagerFactory().build(environment, configuration.isLive());
         final SearchManagerHealthCheck searchManagerHealthCheck =
                 new SearchManagerHealthCheck(searchManager);
@@ -82,26 +88,21 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.jersey().register(topTermsResource);
 
         final SelectionManager selectionManager = configuration.getSelectionManagerFactory().build(environment, configuration.isLive());
+        // indexing
+        selectionManager.setTwitterManager(twitterManager);
         final SelectionManagerHealthCheck selectionManagerHealthCheck =
                 new SelectionManagerHealthCheck(selectionManager);
         environment.healthChecks().register("selection", selectionManagerHealthCheck);
         environment.admin().addTask(new SelectionManagerIndexTask(selectionManager));
         environment.admin().addTask(new SelectionManagerStatsTask(selectionManager));
 
-        final SelectionManager shardsManager = configuration.getShardsManagerFactory().build(environment, configuration.isLive());
-
         final TailyManager tailyManager = configuration.getTailyManagerFactory().build(environment);
         final TailyManagerHealthCheck tailyManagerHealthCheck =
                 new TailyManagerHealthCheck(tailyManager);
         environment.healthChecks().register("taily", tailyManagerHealthCheck);
 
-        final TwitterManager twitterManager = configuration.getTwitterManagerFactory().build(environment);
-        final TwitterManagerHealthCheck twitterManagerHealthCheck =
-                new TwitterManagerHealthCheck(twitterManager);
-        environment.healthChecks().register("twitter-manager", twitterManagerHealthCheck);
-        environment.admin().addTask(new TwitterManagerArchiveTask(twitterManager));
-        selectionManager.setTwitterManager(twitterManager);
-
+        final SelectionManager shardsManager = configuration.getShardsManagerFactory().build(environment, configuration.isLive());
+        shardsManager.setTailyManager(tailyManager);
 
         final TailyResource tailyResource = new TailyResource(tailyManager);
         environment.jersey().register(tailyResource);

@@ -42,6 +42,14 @@ public class TailyManager implements Managed {
     public Map<String,Double> getRankedTopics(String query) {
         return topicsRanker.rank(query);
     }
+    
+    public int getDF(String source, String stem) {
+        return topicsRanker.getDF(source, stem);
+    }
+
+    public int getDFTopics(String topic, String stem) {
+        return topicsRanker.getDF(topic, stem);
+    }
 
     @Override
     public void start() throws Exception {

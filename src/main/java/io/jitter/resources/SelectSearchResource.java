@@ -109,10 +109,10 @@ public class SelectSearchResource {
         if (selectResults.scoreDocs.size() > 0) {
             if (!topics.get()) {
                 enabledSources = Iterables.limit(selectedSources.keySet(), maxCol.get());
-                shardResults = shardsManager.filterCollections(enabledSources, shardResults);
+                shardResults = shardsManager.filterCollections(query, enabledSources, shardResults);
             } else {
                 enabledTopics = Iterables.limit(selectedTopics.keySet(), maxCol.get());
-                shardResults = shardsManager.filterTopics(enabledTopics, shardResults);
+                shardResults = shardsManager.filterTopics(query, enabledTopics, shardResults);
             }
         }
         
