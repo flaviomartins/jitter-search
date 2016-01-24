@@ -94,12 +94,12 @@ public class SelectSearchResource {
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                shardResults = shardsManager.search(query, limit.get(), !retweets.get(), maxId.get());
+                shardResults = shardsManager.search(query, Short.MAX_VALUE, !retweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
                 long[] epochs = Epochs.parseEpochRange(epoch.get());
-                shardResults = shardsManager.search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
+                shardResults = shardsManager.search(query, Short.MAX_VALUE, !retweets.get(), epochs[0], epochs[1]);
             } else {
-                shardResults = shardsManager.search(query, limit.get(), !retweets.get());
+                shardResults = shardsManager.search(query, Short.MAX_VALUE, !retweets.get());
             }
         }
 
@@ -109,12 +109,14 @@ public class SelectSearchResource {
         if (selectResults.scoreDocs.size() > 0) {
             if (!topics.get()) {
                 enabledSources = Iterables.limit(selectedSources.keySet(), maxCol.get());
-                shardResults = shardsManager.filterCollections(enabledSources, shardResults.scoreDocs);
+                shardResults = shardsManager.filterCollections(enabledSources, shardResults);
             } else {
                 enabledTopics = Iterables.limit(selectedTopics.keySet(), maxCol.get());
-                shardResults = shardsManager.filterTopics(enabledTopics, shardResults.scoreDocs);
+                shardResults = shardsManager.filterTopics(enabledTopics, shardResults);
             }
         }
+        
+        shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(limit.get(), shardResults.scoreDocs.size()));
 
         long endTime = System.currentTimeMillis();
 

@@ -214,20 +214,23 @@ public class SelectionManager implements Managed {
         return sortedMap;
     }
 
-    public SelectionTopDocuments filterTopic(String selectedTopic, List<Document> selectResults) {
+    public SelectionTopDocuments filterTopic(String selectedTopic, SelectionTopDocuments selectResults) {
         List<Document> results = new ArrayList<>();
-        for (Document doc : selectResults) {
+        for (Document doc : selectResults.scoreDocs) {
             if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
                 results.add(doc);
             }
         }
-        return new SelectionTopDocuments(results.size(), results);
+
+        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
+        selectionTopDocuments.setC_r(results.size());
+        return selectionTopDocuments;
     }
 
-    public SelectionTopDocuments filterCollections(Iterable<String> selectedSources, List<Document> selectResults) {
+    public SelectionTopDocuments filterCollections(Iterable<String> selectedSources, SelectionTopDocuments selectResults) {
         HashSet<String> collections = Sets.newHashSet(selectedSources);
         List<Document> results = new ArrayList<>();
-        for (Document doc : selectResults) {
+        for (Document doc : selectResults.scoreDocs) {
             if (collections.contains(doc.getScreen_name())) {
                 results.add(doc);
             }
@@ -238,9 +241,9 @@ public class SelectionManager implements Managed {
         return selectionTopDocuments;
     }
 
-    public SelectionTopDocuments filterTopics(Iterable<String> selectedTopics, List<Document> selectResults) {
+    public SelectionTopDocuments filterTopics(Iterable<String> selectedTopics, SelectionTopDocuments selectResults) {
         List<Document> results = new ArrayList<>();
-        for (Document doc : selectResults) {
+        for (Document doc : selectResults.scoreDocs) {
             for (String selectedTopic: selectedTopics) {
                 if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
                     results.add(doc);
@@ -294,7 +297,7 @@ public class SelectionManager implements Managed {
     public SelectionTopDocuments searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
         SelectionTopDocuments sorted = isearch(query, n, filterRT);
         
-        return filterTopic(topicName, sorted.scoreDocs);
+        return filterTopic(topicName, sorted);
     }
     
     public SelectionTopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {

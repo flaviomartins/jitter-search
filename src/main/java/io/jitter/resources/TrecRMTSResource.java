@@ -113,10 +113,10 @@ public class TrecRMTSResource {
 
         if (fbUseSources.get()) {
             fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
-            selectResults = selectionManager.filterCollections(fbSourcesEnabled, selectResults.scoreDocs);
+            selectResults = selectionManager.filterCollections(fbSourcesEnabled, selectResults);
         } else {
             fbTopicsEnabled = Iterables.limit(topics.keySet(), fbCols.get());
-            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults.scoreDocs);
+            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults);
             if (reScore.get()) {
                 selectResults = selectionManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), selectResults.scoreDocs);
             }

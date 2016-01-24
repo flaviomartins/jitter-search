@@ -11,6 +11,7 @@ import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
+import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
@@ -89,8 +90,8 @@ public class TrecMultiFeedbackResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        TopDocuments selectResults = null;
-        TopDocuments shardResults = null;
+        SelectionTopDocuments selectResults = null;
+        SelectionTopDocuments shardResults = null;
 
         TopDocuments results = null;
 
@@ -135,10 +136,10 @@ public class TrecMultiFeedbackResource {
         if (selectResults.scoreDocs.size() > 0) {
             if (fbUseSources.get()) {
                 fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
-                shardResults = shardsManager.filterCollections(fbSourcesEnabled, shardResults.scoreDocs);
+                shardResults = shardsManager.filterCollections(fbSourcesEnabled, shardResults);
             } else {
                 fbTopicsEnabled = Iterables.limit(topics.keySet(), fbCols.get());
-                shardResults = shardsManager.filterTopics(fbTopicsEnabled, shardResults.scoreDocs);
+                shardResults = shardsManager.filterTopics(fbTopicsEnabled, shardResults);
                 if (reScore.get()) {
                     shardResults = shardsManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), shardResults.scoreDocs);
                 }

@@ -10,6 +10,7 @@ import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
+import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
@@ -79,7 +80,7 @@ public class MultiFeedbackResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        TopDocuments selectResults = null;
+        SelectionTopDocuments selectResults = null;
         TopDocuments results = null;
 
         long startTime = System.currentTimeMillis();
@@ -106,7 +107,7 @@ public class MultiFeedbackResource {
 
         if (topics.size() > 0) {
             Iterable<String> fbTopicsEnabled = Iterables.limit(topics.keySet(), fbTopics.get());
-            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults.scoreDocs);
+            selectResults = selectionManager.filterTopics(fbTopicsEnabled, selectResults);
 
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(analyzer, query)) {
