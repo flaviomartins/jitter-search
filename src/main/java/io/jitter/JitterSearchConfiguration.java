@@ -3,7 +3,8 @@ package io.jitter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.jitter.core.search.SearchManagerFactory;
-import io.jitter.core.selection.taily.TailyManagerFactory;
+import io.jitter.core.taily.TailyManagerFactory;
+import io.jitter.core.shards.ShardsManagerFactory;
 import io.jitter.core.twitter.manager.TwitterManagerFactory;
 import io.jitter.core.selection.SelectionManagerFactory;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapperFactory;
@@ -39,7 +40,7 @@ public class JitterSearchConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private SelectionManagerFactory shardsManagerFactory = new SelectionManagerFactory();
+    private ShardsManagerFactory shardsManagerFactory = new ShardsManagerFactory();
 
     @Valid
     @NotNull
@@ -80,12 +81,12 @@ public class JitterSearchConfiguration extends Configuration {
     }
 
     @JsonProperty("shards")
-    public SelectionManagerFactory getShardsManagerFactory() {
+    public ShardsManagerFactory getShardsManagerFactory() {
         return shardsManagerFactory;
     }
 
     @JsonProperty("shards")
-    public void setShardsManagerFactory(SelectionManagerFactory shardsManagerFactory) {
+    public void setShardsManagerFactory(ShardsManagerFactory shardsManagerFactory) {
         this.shardsManagerFactory = shardsManagerFactory;
     }
 

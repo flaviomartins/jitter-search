@@ -1,0 +1,73 @@
+package io.jitter.core.shards;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.dropwizard.setup.Environment;
+import io.jitter.core.selection.SelectionManager;
+import org.hibernate.validator.constraints.NotEmpty;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.util.Map;
+import java.util.Set;
+
+public class ShardsManagerFactory {
+
+    @NotEmpty
+    private String index;
+
+    @NotEmpty
+    private String method;
+
+    @Valid
+    @NotNull
+    private boolean removeDuplicates;
+
+    private Map<String, Set<String>> topics;
+
+    @JsonProperty
+    public String getIndex() {
+        return index;
+    }
+
+    @JsonProperty
+    public void setIndex(String index) {
+        this.index = index;
+    }
+
+    @JsonProperty
+    public String getMethod() {
+        return method;
+    }
+
+    @JsonProperty
+    public void setMethod(String method) {
+        this.method = method;
+    }
+
+    @JsonProperty
+    public boolean isRemoveDuplicates() {
+        return removeDuplicates;
+    }
+
+    @JsonProperty
+    public void setRemoveDuplicates(boolean removeDuplicates) {
+        this.removeDuplicates = removeDuplicates;
+    }
+
+    @JsonProperty
+    public Map<String, Set<String>> getTopics() {
+        return topics;
+    }
+
+    @JsonProperty
+    public void setTopics(Map<String, Set<String>> topics) {
+        this.topics = topics;
+    }
+
+    public ShardsManager build(Environment environment, boolean live) {
+        final ShardsManager shardsManager = new ShardsManager(index, method, removeDuplicates, live, topics);
+        environment.lifecycle().manage(shardsManager);
+        return shardsManager;
+    }
+
+}

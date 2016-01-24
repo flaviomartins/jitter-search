@@ -1,4 +1,4 @@
-package io.jitter.core.selection.taily;
+package io.jitter.core.taily;
 
 import java.util.Comparator;
 import java.util.Map;

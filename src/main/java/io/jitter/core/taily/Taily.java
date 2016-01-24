@@ -1,4 +1,4 @@
-package io.jitter.core.selection.taily;
+package io.jitter.core.taily;
 
 import cc.twittertools.index.IndexStatuses;
 import io.jitter.core.features.IndriFeature;

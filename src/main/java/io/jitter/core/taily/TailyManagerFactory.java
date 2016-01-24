@@ -1,4 +1,4 @@
-package io.jitter.core.selection.taily;
+package io.jitter.core.taily;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;

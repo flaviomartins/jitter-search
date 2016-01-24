@@ -1,7 +1,7 @@
 package io.jitter.health;
 
 import com.codahale.metrics.health.HealthCheck;
-import io.jitter.core.selection.taily.TailyManager;
+import io.jitter.core.taily.TailyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

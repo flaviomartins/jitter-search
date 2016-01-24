@@ -9,11 +9,11 @@ import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.Document;
 import io.jitter.api.selection.SelectionDocumentsResponse;
 import io.jitter.api.selection.SelectionResponse;
-import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
+import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
@@ -38,9 +38,9 @@ public class SelectionResource {
 
     private final AtomicLong counter;
     private final SelectionManager selectionManager;
-    private final SelectionManager shardsManager;
+    private final ShardsManager shardsManager;
 
-    public SelectionResource(SelectionManager selectionManager, SelectionManager shardsManager) throws IOException {
+    public SelectionResource(SelectionManager selectionManager, ShardsManager shardsManager) throws IOException {
         Preconditions.checkNotNull(selectionManager);
         Preconditions.checkNotNull(shardsManager);
 

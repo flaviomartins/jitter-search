@@ -1,7 +1,7 @@
 package io.jitter.core.twittertools.api;
 
 import io.jitter.api.collectionstatistics.CollectionStats;
-import io.jitter.core.selection.taily.FeatureStore;
+import io.jitter.core.taily.FeatureStore;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;

@@ -1,4 +1,4 @@
-package io.jitter.core.selection.taily;
+package io.jitter.core.taily;
 
 import com.sleepycat.bind.tuple.DoubleBinding;
 import com.sleepycat.bind.tuple.StringBinding;

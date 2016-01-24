@@ -5,7 +5,8 @@ import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.jitter.core.search.SearchManager;
-import io.jitter.core.selection.taily.TailyManager;
+import io.jitter.core.taily.TailyManager;
+import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.stream.SampleStream;
 import io.jitter.core.stream.UserStream;
 import io.jitter.core.twitter.OAuth1;
@@ -101,7 +102,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
                 new TailyManagerHealthCheck(tailyManager);
         environment.healthChecks().register("taily", tailyManagerHealthCheck);
 
-        final SelectionManager shardsManager = configuration.getShardsManagerFactory().build(environment, configuration.isLive());
+        final ShardsManager shardsManager = configuration.getShardsManagerFactory().build(environment, configuration.isLive());
         shardsManager.setTailyManager(tailyManager);
 
         final TailyResource tailyResource = new TailyResource(tailyManager);

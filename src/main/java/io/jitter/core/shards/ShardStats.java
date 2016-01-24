@@ -1,4 +1,4 @@
-package io.jitter.core.selection;
+package io.jitter.core.shards;
 
 import java.util.Collections;
 import java.util.Map;

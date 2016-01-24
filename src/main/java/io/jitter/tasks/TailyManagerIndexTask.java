@@ -2,7 +2,7 @@ package io.jitter.tasks;
 
 import com.google.common.collect.ImmutableMultimap;
 import io.dropwizard.servlets.tasks.Task;
-import io.jitter.core.selection.taily.TailyManager;
+import io.jitter.core.taily.TailyManager;
 
 import java.io.PrintWriter;
 

@@ -1,7 +1,7 @@
 package io.jitter.core.selection.methods;
 
 import io.jitter.api.search.Document;
-import io.jitter.core.selection.ShardStats;
+import io.jitter.core.shards.ShardStats;
 
 import java.util.*;
 

@@ -1,4 +1,4 @@
-package io.jitter.core.selection.taily;
+package io.jitter.core.taily;
 
 import io.dropwizard.lifecycle.Managed;
 import org.apache.lucene.queryparser.classic.ParseException;

@@ -1,4 +1,4 @@
-package io.jitter.core.selection;
+package io.jitter.core.shards;
 
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
@@ -7,10 +7,11 @@ import com.google.common.collect.Sets;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.search.DocumentComparable;
+import io.jitter.core.selection.SelectionComparator;
+import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.taily.TailyManager;
-import io.jitter.core.shards.ShardStats;
 import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
 import org.apache.lucene.analysis.Analyzer;
@@ -28,9 +29,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class SelectionManager implements Managed {
+public class ShardsManager implements Managed {
 
-    private static final Logger logger = LoggerFactory.getLogger(SelectionManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(ShardsManager.class);
     
     public static final int MAX_RESULTS = 10000;
 
@@ -55,7 +56,7 @@ public class SelectionManager implements Managed {
     private TwitterManager twitterManager;
     private TailyManager tailyManager;
 
-    public SelectionManager(String indexPath, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
+    public ShardsManager(String indexPath, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
         this.indexPath = indexPath;
         this.method = method;
         this.removeDuplicates = removeDuplicates;
