@@ -11,6 +11,7 @@ import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionTopDocuments;
+import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
@@ -46,14 +47,16 @@ public class MultiFeedbackResource {
     private final AtomicLong counter;
     private final SearchManager searchManager;
     private final SelectionManager selectionManager;
+    private final ShardsManager shardsManager;
 
-    public MultiFeedbackResource(SearchManager searchManager, SelectionManager selectionManager) throws IOException {
+    public MultiFeedbackResource(SearchManager searchManager, SelectionManager selectionManager, ShardsManager shardsManager) throws IOException {
         Preconditions.checkNotNull(searchManager);
         Preconditions.checkNotNull(selectionManager);
 
         counter = new AtomicLong();
         this.searchManager = searchManager;
         this.selectionManager = selectionManager;
+        this.shardsManager = shardsManager;
     }
 
     @GET
@@ -107,7 +110,7 @@ public class MultiFeedbackResource {
 
         if (topics.size() > 0) {
             Iterable<String> fbTopicsEnabled = Iterables.limit(topics.keySet(), fbTopics.get());
-            selectResults = selectionManager.filterTopics(query, fbTopicsEnabled, selectResults);
+            selectResults = shardsManager.filterTopics(query, fbTopicsEnabled, selectResults);
 
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(analyzer, query)) {

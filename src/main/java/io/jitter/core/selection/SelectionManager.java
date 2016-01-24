@@ -3,13 +3,12 @@ package io.jitter.core.selection;
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.search.DocumentComparable;
 import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
-import io.jitter.core.taily.TailyManager;
+import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.shards.ShardStats;
 import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
@@ -52,8 +51,9 @@ public class SelectionManager implements Managed {
 
     private ShardStats collectionsShardStats;
     private ShardStats topicsShardStats;
+
+    private ShardsManager shardsManager;
     private TwitterManager twitterManager;
-    private TailyManager tailyManager;
 
     public SelectionManager(String indexPath, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
         this.indexPath = indexPath;
@@ -151,14 +151,6 @@ public class SelectionManager implements Managed {
         return indexPath;
     }
 
-    public TwitterManager getTwitterManager() {
-        return twitterManager;
-    }
-
-    public TailyManager getTailyManager() {
-        return tailyManager;
-    }
-
     public Map<String, ImmutableSortedSet<String>> getTopics() {
         return topics;
     }
@@ -171,18 +163,42 @@ public class SelectionManager implements Managed {
         return removeDuplicates;
     }
 
+    public ShardStats getCollectionsShardStats() {
+        return collectionsShardStats;
+    }
+
+    public ShardStats getTopicsShardStats() {
+        return topicsShardStats;
+    }
+
+    public ShardsManager getShardsManager() {
+        return shardsManager;
+    }
+
+    public TwitterManager getTwitterManager() {
+        return twitterManager;
+    }
+
+    public void setCollectionsShardStats(ShardStats collectionsShardStats) {
+        this.collectionsShardStats = collectionsShardStats;
+    }
+
+    public void setTopicsShardStats(ShardStats topicsShardStats) {
+        this.topicsShardStats = topicsShardStats;
+    }
+
+    public void setShardsManager(ShardsManager shardsManager) {
+        this.shardsManager = shardsManager;
+    }
+
     public void setTwitterManager(TwitterManager twitterManager) {
         this.twitterManager = twitterManager;
     }
 
-    public void setTailyManager(TailyManager tailyManager) {
-        this.tailyManager = tailyManager;
-    }
-
     public SortedMap<String, Double> getRanked(SelectionMethod selectionMethod, List<Document> results, boolean normalize) {
         Map<String, Double> rankedCollections = selectionMethod.rank(results);
-        if (normalize && collectionsShardStats != null) {
-            Map<String, Double> map = selectionMethod.normalize(rankedCollections, collectionsShardStats);
+        if (normalize && shardsManager.getCollectionsShardStats() != null) {
+            Map<String, Double> map = selectionMethod.normalize(rankedCollections, shardsManager.getCollectionsShardStats());
             return getSortedMap(map);
         } else {
             return getSortedMap(rankedCollections);
@@ -210,8 +226,8 @@ public class SelectionManager implements Managed {
             }
         }
 
-        if (normalize && topicsShardStats != null) {
-            Map<String, Double> map = selectionMethod.normalize(rankedTopics, topicsShardStats);
+        if (normalize && shardsManager.getTopicsShardStats() != null) {
+            Map<String, Double> map = selectionMethod.normalize(rankedTopics, shardsManager.getTopicsShardStats());
             return getSortedMap(map);
         } else {
             return getSortedMap(rankedTopics);
@@ -223,76 +239,6 @@ public class SelectionManager implements Managed {
         TreeMap<String, Double> sortedMap = new TreeMap<>(comparator);
         sortedMap.putAll(map);
         return sortedMap;
-    }
-
-    public SelectionTopDocuments filterTopic(String query, String selectedTopic, SelectionTopDocuments selectResults) {
-        List<Document> results = new ArrayList<>();
-        for (Document doc : selectResults.scoreDocs) {
-            if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
-                results.add(doc);
-            }
-        }
-
-        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
-        selectionTopDocuments.setC_r(results.size());
-        return selectionTopDocuments;
-    }
-
-    public SelectionTopDocuments filterCollections(String query, Iterable<String> selectedSources, SelectionTopDocuments selectResults) throws ParseException {
-        HashSet<String> collections = Sets.newHashSet(selectedSources);
-        List<Document> results = new ArrayList<>();
-        for (Document doc : selectResults.scoreDocs) {
-            if (collections.contains(doc.getScreen_name())) {
-                results.add(doc);
-            }
-        }
-
-        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
-
-        int totalDF = 0;
-        Set<Term> queryTerms = new TreeSet<>();
-        q.extractTerms(queryTerms);
-        for (Term term : queryTerms) {
-            String text = term.text();
-            if (text.isEmpty())
-                continue;
-            for (String selectedSource : selectedSources) {
-                totalDF += tailyManager.getDF(selectedSource, text);
-            }
-        }
-
-        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
-        selectionTopDocuments.setC_r(totalDF);
-        return selectionTopDocuments;
-    }
-
-    public SelectionTopDocuments filterTopics(String query, Iterable<String> selectedTopics, SelectionTopDocuments selectResults) throws ParseException {
-        List<Document> results = new ArrayList<>();
-        for (Document doc : selectResults.scoreDocs) {
-            for (String selectedTopic: selectedTopics) {
-                if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
-                    results.add(doc);
-                }
-            }
-        }
-
-        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
-
-        int totalDF = 0;
-        Set<Term> queryTerms = new TreeSet<>();
-        q.extractTerms(queryTerms);
-        for (Term term : queryTerms) {
-            String text = term.text();
-            if (text.isEmpty())
-                continue;
-            for (String selectedTopic : selectedTopics) {
-                totalDF += tailyManager.getDF(selectedTopic, text);
-            }
-        }
-
-        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
-        selectionTopDocuments.setC_r(totalDF);
-        return selectionTopDocuments;
     }
 
     public Map<String,Double> limit(SelectionMethod selectionMethod, Map<String, Double> ranking, int maxCol, double minRanks) {
@@ -333,12 +279,6 @@ public class SelectionManager implements Managed {
         return new SelectionTopDocuments(documents.size(), documents);
     }
 
-    public SelectionTopDocuments searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
-        SelectionTopDocuments sorted = isearch(query, n, filterRT);
-        
-        return filterTopic(query, topicName, sorted);
-    }
-    
     public SelectionTopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
 //        int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));

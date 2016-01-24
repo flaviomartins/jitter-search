@@ -86,11 +86,11 @@ public class SelectSearchResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> rankedSources = shardsManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
-        Map<String, Double> selectedSources = shardsManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
+        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
+        Map<String, Double> selectedSources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
 
-        Map<String, Double> rankedTopics = shardsManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
-        Map<String, Double> selectedTopics = shardsManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
+        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
+        Map<String, Double> selectedTopics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {

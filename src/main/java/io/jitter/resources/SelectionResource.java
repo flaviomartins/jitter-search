@@ -13,7 +13,6 @@ import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
-import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
@@ -38,15 +37,12 @@ public class SelectionResource {
 
     private final AtomicLong counter;
     private final SelectionManager selectionManager;
-    private final ShardsManager shardsManager;
 
-    public SelectionResource(SelectionManager selectionManager, ShardsManager shardsManager) throws IOException {
+    public SelectionResource(SelectionManager selectionManager) throws IOException {
         Preconditions.checkNotNull(selectionManager);
-        Preconditions.checkNotNull(shardsManager);
 
         counter = new AtomicLong();
         this.selectionManager = selectionManager;
-        this.shardsManager = shardsManager;
     }
 
     @GET
@@ -89,12 +85,12 @@ public class SelectionResource {
 
         Map<String, Double> rankedCollections;
         if (!topics.get()) {
-            rankedCollections = shardsManager.getRanked(selectionMethod, topSelDocs, normalize.get());
+            rankedCollections = selectionManager.getRanked(selectionMethod, topSelDocs, normalize.get());
         } else {
-            rankedCollections = shardsManager.getRankedTopics(selectionMethod, topSelDocs, normalize.get());
+            rankedCollections = selectionManager.getRankedTopics(selectionMethod, topSelDocs, normalize.get());
         }
         
-        Map<String, Double> selectedCollections = shardsManager.limit(selectionMethod, rankedCollections, maxCol.get(), minRanks);
+        Map<String, Double> selectedCollections = selectionManager.limit(selectionMethod, rankedCollections, maxCol.get(), minRanks);
 
         long endTime = System.currentTimeMillis();
 

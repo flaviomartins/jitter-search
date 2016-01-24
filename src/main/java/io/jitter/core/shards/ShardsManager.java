@@ -53,6 +53,7 @@ public class ShardsManager implements Managed {
 
     private ShardStats collectionsShardStats;
     private ShardStats topicsShardStats;
+
     private TwitterManager twitterManager;
     private TailyManager tailyManager;
 
@@ -152,14 +153,6 @@ public class ShardsManager implements Managed {
         return indexPath;
     }
 
-    public TwitterManager getTwitterManager() {
-        return twitterManager;
-    }
-
-    public TailyManager getTailyManager() {
-        return tailyManager;
-    }
-
     public Map<String, ImmutableSortedSet<String>> getTopics() {
         return topics;
     }
@@ -172,51 +165,36 @@ public class ShardsManager implements Managed {
         return removeDuplicates;
     }
 
+    public ShardStats getCollectionsShardStats() {
+        return collectionsShardStats;
+    }
+
+    public ShardStats getTopicsShardStats() {
+        return topicsShardStats;
+    }
+
+    public TwitterManager getTwitterManager() {
+        return twitterManager;
+    }
+
+    public TailyManager getTailyManager() {
+        return tailyManager;
+    }
+
+    public void setCollectionsShardStats(ShardStats collectionsShardStats) {
+        this.collectionsShardStats = collectionsShardStats;
+    }
+
+    public void setTopicsShardStats(ShardStats topicsShardStats) {
+        this.topicsShardStats = topicsShardStats;
+    }
+
     public void setTwitterManager(TwitterManager twitterManager) {
         this.twitterManager = twitterManager;
     }
 
     public void setTailyManager(TailyManager tailyManager) {
         this.tailyManager = tailyManager;
-    }
-
-    public SortedMap<String, Double> getRanked(SelectionMethod selectionMethod, List<Document> results, boolean normalize) {
-        Map<String, Double> rankedCollections = selectionMethod.rank(results);
-        if (normalize && collectionsShardStats != null) {
-            Map<String, Double> map = selectionMethod.normalize(rankedCollections, collectionsShardStats);
-            return getSortedMap(map);
-        } else {
-            return getSortedMap(rankedCollections);
-        }
-    }
-
-    public SortedMap<String, Double> getRankedTopics(SelectionMethod selectionMethod, List<Document> results, boolean normalize) {
-        Map<String, Double> rankedCollections = selectionMethod.rank(results);
-        Map<String, Double> rankedTopics = new HashMap<>();
-
-        for (String col : rankedCollections.keySet()) {
-            if (reverseTopicMap.containsKey(col.toLowerCase(Locale.ROOT))) {
-                String topic = reverseTopicMap.get(col.toLowerCase(Locale.ROOT)).toLowerCase(Locale.ROOT);
-                double cur = 0;
-
-                if (rankedTopics.containsKey(topic))
-                    cur = rankedTopics.get(topic);
-                else
-                    rankedTopics.put(topic, 0d);
-
-                double sum = cur + rankedCollections.get(col);
-                rankedTopics.put(topic, sum);
-            } else {
-                logger.warn("{} not mapped to a topic!", col);
-            }
-        }
-
-        if (normalize && topicsShardStats != null) {
-            Map<String, Double> map = selectionMethod.normalize(rankedTopics, topicsShardStats);
-            return getSortedMap(map);
-        } else {
-            return getSortedMap(rankedTopics);
-        }
     }
 
     private SortedMap<String, Double> getSortedMap(Map<String, Double> map) {

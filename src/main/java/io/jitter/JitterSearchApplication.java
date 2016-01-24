@@ -88,15 +88,6 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TopTermsResource topTermsResource = new TopTermsResource(searchManager);
         environment.jersey().register(topTermsResource);
 
-        final SelectionManager selectionManager = configuration.getSelectionManagerFactory().build(environment, configuration.isLive());
-        // indexing
-        selectionManager.setTwitterManager(twitterManager);
-        final SelectionManagerHealthCheck selectionManagerHealthCheck =
-                new SelectionManagerHealthCheck(selectionManager);
-        environment.healthChecks().register("selection", selectionManagerHealthCheck);
-        environment.admin().addTask(new SelectionManagerIndexTask(selectionManager));
-        environment.admin().addTask(new SelectionManagerStatsTask(selectionManager));
-
         final TailyManager tailyManager = configuration.getTailyManagerFactory().build(environment);
         final TailyManagerHealthCheck tailyManagerHealthCheck =
                 new TailyManagerHealthCheck(tailyManager);
@@ -105,11 +96,22 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final ShardsManager shardsManager = configuration.getShardsManagerFactory().build(environment, configuration.isLive());
         shardsManager.setTailyManager(tailyManager);
 
+        final SelectionManager selectionManager = configuration.getSelectionManagerFactory().build(environment, configuration.isLive());
+        // indexing
+        selectionManager.setTwitterManager(twitterManager);
+        // sharding
+        selectionManager.setShardsManager(shardsManager);
+        final SelectionManagerHealthCheck selectionManagerHealthCheck =
+                new SelectionManagerHealthCheck(selectionManager);
+        environment.healthChecks().register("selection", selectionManagerHealthCheck);
+        environment.admin().addTask(new SelectionManagerIndexTask(selectionManager));
+        environment.admin().addTask(new SelectionManagerStatsTask(selectionManager));
+
         final TailyResource tailyResource = new TailyResource(tailyManager);
         environment.jersey().register(tailyResource);
         environment.admin().addTask(new TailyManagerIndexTask(tailyManager));
 
-        final SelectionResource selectionResource = new SelectionResource(selectionManager, shardsManager);
+        final SelectionResource selectionResource = new SelectionResource(selectionManager);
         environment.jersey().register(selectionResource);
 
         final SelectSearchResource selectSearchResource = new SelectSearchResource(selectionManager, shardsManager);
@@ -118,7 +120,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final RM3FeedbackResource rm3FeedbackResource = new RM3FeedbackResource(searchManager);
         environment.jersey().register(rm3FeedbackResource);
 
-        final MultiFeedbackResource multiFeedbackResource = new MultiFeedbackResource(searchManager, selectionManager);
+        final MultiFeedbackResource multiFeedbackResource = new MultiFeedbackResource(searchManager, selectionManager, shardsManager);
         environment.jersey().register(multiFeedbackResource);
 
         final RMTSResource RMTSResource = new RMTSResource(searchManager, selectionManager);
@@ -135,7 +137,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TrecMultiFeedbackResource trecMultiFeedbackResource = new TrecMultiFeedbackResource(trecMicroblogAPIWrapper, selectionManager, shardsManager);
         environment.jersey().register(trecMultiFeedbackResource);
 
-        final TrecRMTSResource trecRMTSResource = new TrecRMTSResource(trecMicroblogAPIWrapper, selectionManager);
+        final TrecRMTSResource trecRMTSResource = new TrecRMTSResource(trecMicroblogAPIWrapper, selectionManager, shardsManager);
         environment.jersey().register(trecRMTSResource);
 
 

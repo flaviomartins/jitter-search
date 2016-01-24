@@ -16,6 +16,7 @@ import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
+import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -42,14 +43,17 @@ public class TrecRMTSResource {
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
     private final SelectionManager selectionManager;
+    private final ShardsManager shardsManager;
 
-    public TrecRMTSResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager) throws IOException {
+    public TrecRMTSResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager, ShardsManager shardsManager) throws IOException {
         Preconditions.checkNotNull(trecMicroblogAPIWrapper);
         Preconditions.checkNotNull(selectionManager);
+        Preconditions.checkNotNull(shardsManager);
 
         counter = new AtomicLong();
         this.trecMicroblogAPIWrapper = trecMicroblogAPIWrapper;
         this.selectionManager = selectionManager;
+        this.shardsManager = shardsManager;
     }
 
     @GET
@@ -113,12 +117,12 @@ public class TrecRMTSResource {
 
         if (fbUseSources.get()) {
             fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
-            selectResults = selectionManager.filterCollections(query, fbSourcesEnabled, selectResults);
+            selectResults = shardsManager.filterCollections(query, fbSourcesEnabled, selectResults);
         } else {
             fbTopicsEnabled = Iterables.limit(topics.keySet(), fbCols.get());
-            selectResults = selectionManager.filterTopics(query, fbTopicsEnabled, selectResults);
+            selectResults = shardsManager.filterTopics(query, fbTopicsEnabled, selectResults);
             if (reScore.get()) {
-                selectResults = selectionManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), selectResults.scoreDocs);
+                selectResults = shardsManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), selectResults.scoreDocs);
             }
         }
 
