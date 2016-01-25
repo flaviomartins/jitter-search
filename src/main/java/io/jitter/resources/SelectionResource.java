@@ -47,10 +47,11 @@ public class SelectionResource {
     @Timed
     public SelectionResponse search(@QueryParam("q") Optional<String> q,
                                     @QueryParam("fq") Optional<String> fq,
-                                    @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
-                                    @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
                                     @QueryParam("maxId") Optional<Long> maxId,
                                     @QueryParam("epoch") Optional<String> epoch,
+                                    @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
+                                    @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
+                                    @QueryParam("sFuture") @DefaultValue("true") BooleanParam sFuture,
                                     @QueryParam("method") @DefaultValue("crcsexp") String method,
                                     @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
                                     @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
@@ -62,22 +63,29 @@ public class SelectionResource {
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
 
+        long[] epochs = new long[2];
+        if (epoch.isPresent()) {
+            epochs = Epochs.parseEpochRange(epoch.get());
+        }
+
         long startTime = System.currentTimeMillis();
 
         SelectionTopDocuments selectResults = null;
         if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                selectResults = selectionManager.search(query, sLimit.get(), !retweets.get(), maxId.get());
-            } else if (epoch.isPresent()) {
-                long[] epochs = Epochs.parseEpochRange(epoch.get());
-                selectResults = selectionManager.search(query, sLimit.get(), !retweets.get(), epochs[0], epochs[1]);
+            if (!sFuture.get()) {
+                if (maxId.isPresent()) {
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+                } else if (epoch.isPresent()) {
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                } else {
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
+                }
             } else {
-                selectResults = selectionManager.search(query, sLimit.get(), !retweets.get());
+                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
             }
         }
 
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-        String methodName = selectionMethod.getClass().getSimpleName();
         
         Map<String, Double> selected;
         if (!topics.get()) {
@@ -93,7 +101,7 @@ public class SelectionResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(selected, methodName, 0, selectResults);
+        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(selected, method, 0, selectResults);
         return new SelectionResponse(responseHeader, documentsResponse);
     }
 }

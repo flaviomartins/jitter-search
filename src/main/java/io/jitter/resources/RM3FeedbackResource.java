@@ -14,6 +14,7 @@ import io.jitter.core.feedback.FeedbackRelevanceModel;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.AnalyzerUtils;
+import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
 import org.apache.thrift.TException;
@@ -58,6 +59,7 @@ public class RM3FeedbackResource {
                                  @QueryParam("epoch") Optional<String> epoch,
                                  @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
                                  @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
+                                 @QueryParam("sFuture") @DefaultValue("false") BooleanParam sFuture,
                                  @QueryParam("method") @DefaultValue("crcsexp") String method,
                                  @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                  @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
@@ -70,16 +72,26 @@ public class RM3FeedbackResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        TopDocuments selectResults = null;
-        TopDocuments results = null;
 
+        long[] epochs = new long[2];
+        if (epoch.isPresent()) {
+            epochs = Epochs.parseEpochRange(epoch.get());
+        }
+        
         long startTime = System.currentTimeMillis();
 
+        TopDocuments selectResults = null;
         if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                selectResults = searchManager.search(query, sLimit.get(), !retweets.get(), maxId.get());
+            if (!sFuture.get()) {
+                if (maxId.isPresent()) {
+                    selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+                } else if (epoch.isPresent()) {
+                    selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                } else {
+                    selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), Long.MAX_VALUE);
+                }
             } else {
-                selectResults = searchManager.search(query, sLimit.get(), !retweets.get(), Long.MAX_VALUE);
+                selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), Long.MAX_VALUE);
             }
         }
 
@@ -121,6 +133,7 @@ public class RM3FeedbackResource {
             query = builder.toString().trim();
         }
 
+        TopDocuments results = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 results = searchManager.search(query, limit.get(), !retweets.get(), maxId.get());

@@ -76,6 +76,7 @@ public class TrecMultiFeedbackResource {
                                           @QueryParam("epoch") Optional<String> epoch,
                                           @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
                                           @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
+                                          @QueryParam("sFuture") @DefaultValue("true") BooleanParam sFuture,
                                           @QueryParam("method") @DefaultValue("crcsexp") String method,
                                           @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                           @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
@@ -94,6 +95,11 @@ public class TrecMultiFeedbackResource {
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
 
+        long[] epochs = new long[2];
+        if (epoch.isPresent()) {
+            epochs = Epochs.parseEpochRange(epoch.get());
+        }
+
         long startTime = System.currentTimeMillis();
 
         SelectionTopDocuments selectResults = null;
@@ -105,11 +111,14 @@ public class TrecMultiFeedbackResource {
             selectedTopics = tailyManager.selectTopics(query, v.get());
         } else {
             if (q.isPresent()) {
-                if (maxId.isPresent()) {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-                } else if (epoch.isPresent()) {
-                    long[] epochs = Epochs.parseEpochRange(epoch.get());
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                if (!sFuture.get()) {
+                    if (maxId.isPresent()) {
+                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+                    } else if (epoch.isPresent()) {
+                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                    } else {
+                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
+                    }
                 } else {
                     selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
                 }
@@ -126,13 +135,16 @@ public class TrecMultiFeedbackResource {
 
         SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get(), maxId.get());
-            } else if (epoch.isPresent()) {
-                long[] epochs = Epochs.parseEpochRange(epoch.get());
-                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get(), epochs[0], epochs[1]);
+            if (!sFuture.get()) {
+                if (maxId.isPresent()) {
+                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !sRetweets.get(), maxId.get());
+                } else if (epoch.isPresent()) {
+                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                } else {
+                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !sRetweets.get());
+                }
             } else {
-                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get());
+                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !sRetweets.get());
             }
         }
         

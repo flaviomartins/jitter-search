@@ -53,15 +53,19 @@ public class SearchResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or("empty"), "UTF-8");
-        TopDocuments results = null;
+
+        long[] epochs = new long[2];
+        if (epoch.isPresent()) {
+            epochs = Epochs.parseEpochRange(epoch.get());
+        }
 
         long startTime = System.currentTimeMillis();
 
+        TopDocuments results = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 results = searchManager.search(query, limit.get(), !retweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
-                long[] epochs = Epochs.parseEpochRange(epoch.get());
                 results = searchManager.search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
             } else {
                 results = searchManager.search(query, limit.get(), !retweets.get());

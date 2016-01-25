@@ -60,6 +60,7 @@ public class RMTSResource {
                                           @QueryParam("epoch") Optional<String> epoch,
                                           @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
                                           @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
+                                          @QueryParam("sFuture") @DefaultValue("true") BooleanParam sFuture,
                                           @QueryParam("method") @DefaultValue("crcsexp") String method,
                                           @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                           @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
@@ -87,17 +88,20 @@ public class RMTSResource {
 
         SelectionTopDocuments selectResults = null;
         if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-            } else if (epoch.isPresent()) {
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+            if (!sFuture.get()) {
+                if (maxId.isPresent()) {
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+                } else if (epoch.isPresent()) {
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                } else {
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
+                }
             } else {
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
             }
         }
 
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-        String methodName = selectionMethod.getClass().getSimpleName();
         Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
         Map<String, Double> selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
 
@@ -130,7 +134,7 @@ public class RMTSResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selectedSources, selectedTopics, methodName, 0, selectResults, results);
+        RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selectedSources, selectedTopics, method, 0, selectResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

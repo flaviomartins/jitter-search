@@ -57,6 +57,7 @@ public class TrecRM3FeedbackResource {
                                  @QueryParam("epoch") Optional<String> epoch,
                                  @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
                                  @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
+                                 @QueryParam("sFuture") @DefaultValue("false") BooleanParam sFuture,
                                  @QueryParam("method") @DefaultValue("crcsexp") String method,
                                  @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                  @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
@@ -69,16 +70,19 @@ public class TrecRM3FeedbackResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        TopDocuments selectResults = null;
-        TopDocuments results = null;
 
         long startTime = System.currentTimeMillis();
 
+        TopDocuments selectResults = null;
         if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                selectResults = trecMicroblogAPIWrapper.search(query, maxId.get(), sLimit.get(), !retweets.get());
+            if (!sFuture.get()) {
+                if (maxId.isPresent()) {
+                    selectResults = trecMicroblogAPIWrapper.search(query, maxId.get(), sLimit.get(), !sRetweets.get());
+                } else {
+                    selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, sLimit.get(), !sRetweets.get());
+                }
             } else {
-                selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, sLimit.get(), !retweets.get());
+                selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, sLimit.get(), !sRetweets.get());
             }
         }
 
@@ -120,6 +124,7 @@ public class TrecRM3FeedbackResource {
             query = builder.toString().trim();
         }
 
+        TopDocuments results = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 results = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !retweets.get());
