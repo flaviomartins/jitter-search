@@ -41,29 +41,22 @@ public class TailyResource {
     @GET
     @Timed
     public SelectionResponse search(@QueryParam("q") Optional<String> q,
-                                    @QueryParam("v") @DefaultValue("50") IntParam v,
+                                    @QueryParam("v") @DefaultValue("10") IntParam v,
                                     @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        Map<String, Double> map = new LinkedHashMap<>();
 
         long startTime = System.currentTimeMillis();
 
+        Map<String, Double> ranking = null;
         if (q.isPresent()) {
-            Map<String, Double> ranking;
             if (topics.get()) {
-                ranking = tailyManager.getRankedTopics(query);
+                ranking = tailyManager.getRankedTopics(query, v.get());
             } else {
-                ranking = tailyManager.getRanked(query);
-            }
-
-            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
-                if (entry.getValue() >= v.get()) {
-                    map.put(entry.getKey(), entry.getValue());
-                }
+                ranking = tailyManager.getRanked(query, v.get());
             }
         }
 
@@ -71,7 +64,7 @@ public class TailyResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %s", (endTime - startTime), query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(map, "Taily", 0, 0, 0);
+        SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(ranking, "Taily", 0, 0, 0);
         return new SelectionResponse(responseHeader, documentsResponse);
     }
 }

@@ -39,23 +39,31 @@ public class SelectionSearchDocumentsResponse {
         this.sources = sources;
         this.topics = topics;
         this.method = method;
-        this.c_sel = selectionTopDocuments.getC_sel();
-        this.numFound = topDocuments.totalHits;
+        if (selectionTopDocuments != null) {
+            this.selectDocs = selectionTopDocuments.scoreDocs;
+            this.c_sel = selectionTopDocuments.getC_sel();
+        }
+        if (topDocuments != null) {
+            this.numFound = topDocuments.totalHits;
+            this.docs = topDocuments.scoreDocs;
+        }
         this.start = start;
-        this.selectDocs = selectionTopDocuments.scoreDocs;
-        this.docs = topDocuments.scoreDocs;
     }
 
     public SelectionSearchDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments topDocuments) {
         this.sources = sources;
         this.topics = topics;
         this.method = method;
-        this.c_sel = selectionTopDocuments.getC_sel();
-        this.c_r = topDocuments.getC_r();
-        this.numFound = topDocuments.totalHits;
+        if (selectionTopDocuments != null) {
+            this.selectDocs = selectionTopDocuments.scoreDocs;
+            this.c_sel = selectionTopDocuments.getC_sel();
+        }
+        if (topDocuments != null) {
+            this.numFound = topDocuments.totalHits;
+            this.docs = topDocuments.scoreDocs;
+            this.c_r = topDocuments.getC_r();
+        }
         this.start = start;
-        this.selectDocs = selectionTopDocuments.scoreDocs;
-        this.docs = topDocuments.scoreDocs;
     }
 
     @JsonProperty

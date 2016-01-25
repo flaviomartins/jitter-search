@@ -13,6 +13,7 @@ import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.shards.ShardsManager;
+import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
@@ -36,14 +37,17 @@ public class SelectSearchResource {
     private final AtomicLong counter;
     private final SelectionManager selectionManager;
     private final ShardsManager shardsManager;
+    private final TailyManager tailyManager;
 
-    public SelectSearchResource(SelectionManager selectionManager, ShardsManager shardsManager) throws IOException {
+    public SelectSearchResource(SelectionManager selectionManager, ShardsManager shardsManager, TailyManager tailyManager) throws IOException {
         Preconditions.checkNotNull(selectionManager);
         Preconditions.checkNotNull(shardsManager);
+        Preconditions.checkNotNull(tailyManager);
 
         counter = new AtomicLong();
         this.selectionManager = selectionManager;
         this.shardsManager = shardsManager;
+        this.tailyManager = tailyManager;
     }
 
     @GET
@@ -61,6 +65,7 @@ public class SelectSearchResource {
                                           @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                           @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
                                           @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
+                                          @QueryParam("v") @DefaultValue("10") IntParam v,
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -70,23 +75,30 @@ public class SelectSearchResource {
         long startTime = System.currentTimeMillis();
 
         SelectionTopDocuments selectResults = null;
-        if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-            } else if (epoch.isPresent()) {
-                long[] epochs = Epochs.parseEpochRange(epoch.get());
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
-            } else {
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
+
+        Map<String, Double> selectedSources = null;
+        Map<String, Double> selectedTopics = null;
+        Set<String> selected = null;
+        if ("taily".equalsIgnoreCase(method)) {
+            selectedSources = tailyManager.getRanked(query, v.get());
+            selectedTopics = tailyManager.getRankedTopics(query, v.get());
+        } else {
+            if (q.isPresent()) {
+                if (maxId.isPresent()) {
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+                } else if (epoch.isPresent()) {
+                    long[] epochs = Epochs.parseEpochRange(epoch.get());
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                } else {
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
+                }
             }
+            SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
+            selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+            selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
         }
+        selected = topics.get() ? selectedTopics.keySet() : selectedSources.keySet();
 
-        SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-        String methodName = selectionMethod.getClass().getSimpleName();
-        Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-        Map<String, Double> selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-
-        Set<String> selected = topics.get() ? selectedTopics.keySet() : selectedSources.keySet();
 
         SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {
@@ -105,7 +117,7 @@ public class SelectSearchResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), shardResults.totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selectedSources, selectedTopics, methodName, 0, selectResults, shardResults);
+        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selectedSources, selectedTopics, method, 0, selectResults, shardResults);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

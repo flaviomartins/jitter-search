@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,12 +36,22 @@ public class TailyManager implements Managed {
         this.topics = topics;
     }
 
-    public Map<String, Double> getRanked(String query) {
-        return ranker.rank(query);
+    private Map<String,Double> limit(Map<String, Double> ranking, int v) {
+        Map<String, Double> map = new LinkedHashMap<>();
+        for (Map.Entry<String, Double> entry : ranking.entrySet()) {
+            if (entry.getValue() >= v) {
+                map.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return map;
     }
 
-    public Map<String,Double> getRankedTopics(String query) {
-        return topicsRanker.rank(query);
+    public Map<String, Double> getRanked(String query, int v) {
+        return limit(ranker.rank(query), v);
+    }
+
+    public Map<String,Double> getRankedTopics(String query, int v) {
+        return limit(topicsRanker.rank(query), v);
     }
     
     public int getDF(String source, String stem) {
