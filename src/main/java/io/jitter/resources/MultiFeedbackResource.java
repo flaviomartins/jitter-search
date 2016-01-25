@@ -110,7 +110,7 @@ public class MultiFeedbackResource {
         Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selectedSources.keySet(), fbCols.get()));
         Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selectedTopics.keySet(), fbCols.get()));
 
-        Set<String> selected = fbUseSources.get() ? fbTopicsEnabled : fbSourcesEnabled;
+        Set<String> selected = !fbUseSources.get() ? fbTopicsEnabled : fbSourcesEnabled;
 
         SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {
@@ -124,9 +124,11 @@ public class MultiFeedbackResource {
             }
         }
 
-        if (selectedTopics.size() > 0) {
+        if (shardResults.totalHits > 0) {
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(analyzer, query)) {
+                if (term.isEmpty())
+                    continue;
                 if ("AND".equals(term) || "OR".equals(term))
                     continue;
                 queryFV.addTerm(term.toLowerCase(Locale.ROOT), 1.0);
@@ -143,7 +145,11 @@ public class MultiFeedbackResource {
             fbVector.normalizeToOne();
             fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
-            logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", Joiner.on(", ").join(fbTopicsEnabled), shardResults.scoreDocs.size(), fbVector.toString());
+            if (fbUseSources.get()) {
+                logger.info("Sources: {}\n fbDocs: {} Feature Vector:\n{}", fbSourcesEnabled != null ? Joiner.on(", ").join(fbSourcesEnabled) : "all", shardResults.scoreDocs.size(), fbVector.toString());
+            } else {
+                logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", fbTopicsEnabled != null ? Joiner.on(", ").join(fbTopicsEnabled) : "all", shardResults.scoreDocs.size(), fbVector.toString());
+            }
 
             StringBuilder builder = new StringBuilder();
             Iterator<String> terms = fbVector.iterator();
@@ -171,13 +177,13 @@ public class MultiFeedbackResource {
 
         long endTime = System.currentTimeMillis();
 
-        int totalFbDocs = shardResults.scoreDocs.size();
+        int totalFbDocs = shardResults.totalHits;
         int totalHits = results != null ? results.totalHits : 0;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selectedSources, selectedTopics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, selectResults, results);
+        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selectedSources, selectedTopics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, shardResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

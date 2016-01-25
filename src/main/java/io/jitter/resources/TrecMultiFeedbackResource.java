@@ -111,7 +111,7 @@ public class TrecMultiFeedbackResource {
         Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selectedSources.keySet(), fbCols.get()));
         Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selectedTopics.keySet(), fbCols.get()));
 
-        Set<String> selected = fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
+        Set<String> selected = !fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
 
         SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {
@@ -125,7 +125,7 @@ public class TrecMultiFeedbackResource {
             }
         }
         
-        if (shardResults.scoreDocs.size() > 0) {
+        if (shardResults.totalHits > 0) {
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(analyzer, query)) {
                 if (term.isEmpty())
