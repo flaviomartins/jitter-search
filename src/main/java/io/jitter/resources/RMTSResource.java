@@ -6,7 +6,7 @@ import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.SelectionSearchDocumentsResponse;
+import io.jitter.api.search.RMTSDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.filter.NaiveLanguageFilter;
 import io.jitter.core.rerank.RMTSReranker;
@@ -130,7 +130,7 @@ public class RMTSResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selectedSources, selectedTopics, methodName, 0, selectResults, results);
+        RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selectedSources, selectedTopics, methodName, 0, selectResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

@@ -2,7 +2,6 @@ package io.jitter.api.search;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionTopDocuments;
 
 import java.util.List;
@@ -16,26 +15,26 @@ public class SelectionSearchDocumentsResponse {
     private String method;
     private int c_sel;
     private int c_r;
-    private int numFound;
+    protected int numFound;
     private int start;
     private List<?> selectDocs;
-    private List<?> docs;
+    private List<?> shardDocs;
 
     public SelectionSearchDocumentsResponse() {
         // Jackson deserialization
     }
 
-    public SelectionSearchDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, List<?> selectDocs, List<?> docs) {
+    public SelectionSearchDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, List<?> selectDocs, List<?> shardDocs) {
         this.sources = sources;
         this.topics = topics;
         this.method = method;
         this.numFound = numFound;
         this.start = start;
         this.selectDocs = selectDocs;
-        this.docs = docs;
+        this.shardDocs = shardDocs;
     }
 
-    public SelectionSearchDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int start, SelectionTopDocuments selectionTopDocuments, TopDocuments topDocuments) {
+    public SelectionSearchDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments shardTopDocuments) {
         this.sources = sources;
         this.topics = topics;
         this.method = method;
@@ -43,25 +42,10 @@ public class SelectionSearchDocumentsResponse {
             this.selectDocs = selectionTopDocuments.scoreDocs;
             this.c_sel = selectionTopDocuments.getC_sel();
         }
-        if (topDocuments != null) {
-            this.numFound = topDocuments.totalHits;
-            this.docs = topDocuments.scoreDocs;
-        }
-        this.start = start;
-    }
-
-    public SelectionSearchDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments topDocuments) {
-        this.sources = sources;
-        this.topics = topics;
-        this.method = method;
-        if (selectionTopDocuments != null) {
-            this.selectDocs = selectionTopDocuments.scoreDocs;
-            this.c_sel = selectionTopDocuments.getC_sel();
-        }
-        if (topDocuments != null) {
-            this.numFound = topDocuments.totalHits;
-            this.docs = topDocuments.scoreDocs;
-            this.c_r = topDocuments.getC_r();
+        if (shardTopDocuments != null) {
+            this.numFound = shardTopDocuments.totalHits;
+            this.shardDocs = shardTopDocuments.scoreDocs;
+            this.c_r = shardTopDocuments.getC_r();
         }
         this.start = start;
     }
@@ -82,8 +66,8 @@ public class SelectionSearchDocumentsResponse {
     }
 
     @JsonProperty
-    public List<?> getDocs() {
-        return docs;
+    public List<?> getShardDocs() {
+        return shardDocs;
     }
 
     @JsonProperty
