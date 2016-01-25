@@ -7,10 +7,7 @@ import com.google.common.collect.Sets;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.search.DocumentComparable;
-import io.jitter.core.selection.SelectionComparator;
 import io.jitter.core.selection.SelectionTopDocuments;
-import io.jitter.core.selection.methods.RankS;
-import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
@@ -20,7 +17,6 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.BytesRefBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,27 +143,7 @@ public class ShardsManager implements Managed {
         this.tailyManager = tailyManager;
     }
 
-    private SortedMap<String, Double> getSortedMap(Map<String, Double> map) {
-        SelectionComparator comparator = new SelectionComparator(map);
-        TreeMap<String, Double> sortedMap = new TreeMap<>(comparator);
-        sortedMap.putAll(map);
-        return sortedMap;
-    }
-
-    public SelectionTopDocuments filterTopic(String query, String selectedTopic, SelectionTopDocuments selectResults) {
-        List<Document> results = new ArrayList<>();
-        for (Document doc : selectResults.scoreDocs) {
-            if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
-                results.add(doc);
-            }
-        }
-
-        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
-        selectionTopDocuments.setC_r(results.size());
-        return selectionTopDocuments;
-    }
-
-    public SelectionTopDocuments filterCollections(String query, Iterable<String> selectedSources, SelectionTopDocuments selectResults) throws ParseException {
+    private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) throws ParseException {
         HashSet<String> collections = Sets.newHashSet(selectedSources);
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults.scoreDocs) {
@@ -176,11 +152,9 @@ public class ShardsManager implements Managed {
             }
         }
 
-        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
-
         int totalDF = 0;
         Set<Term> queryTerms = new TreeSet<>();
-        q.extractTerms(queryTerms);
+        query.extractTerms(queryTerms);
         for (Term term : queryTerms) {
             String text = term.text();
             if (text.isEmpty())
@@ -195,7 +169,7 @@ public class ShardsManager implements Managed {
         return selectionTopDocuments;
     }
 
-    public SelectionTopDocuments filterTopics(String query, Iterable<String> selectedTopics, SelectionTopDocuments selectResults) throws ParseException {
+    private SelectionTopDocuments filterTopics(Query query, Set<String> selectedTopics, SelectionTopDocuments selectResults) throws ParseException {
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults.scoreDocs) {
             for (String selectedTopic: selectedTopics) {
@@ -205,17 +179,15 @@ public class ShardsManager implements Managed {
             }
         }
 
-        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
-
         int totalDF = 0;
         Set<Term> queryTerms = new TreeSet<>();
-        q.extractTerms(queryTerms);
+        query.extractTerms(queryTerms);
         for (Term term : queryTerms) {
             String text = term.text();
             if (text.isEmpty())
                 continue;
             for (String selectedTopic : selectedTopics) {
-                totalDF += tailyManager.getDF(selectedTopic, text);
+                totalDF += tailyManager.getDFTopics(selectedTopic, text);
             }
         }
 
@@ -224,26 +196,9 @@ public class ShardsManager implements Managed {
         return selectionTopDocuments;
     }
 
-    public Map<String,Double> limit(SelectionMethod selectionMethod, Map<String, Double> ranking, int maxCol, double minRanks) {
-        String methodName = selectionMethod.getClass().getSimpleName();
-        Map<String, Double> map = new LinkedHashMap<>();
-        // rankS has its own limit mechanism
-        if (RankS.class.getSimpleName().equals(methodName)) {
-            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
-                if (entry.getValue() < minRanks)
-                    break;
-                map.put(entry.getKey(), entry.getValue());
-            }
-        } else { // hard limit
-            int i = 0;
-            for (Map.Entry<String, Double> entry : ranking.entrySet()) {
-                i++;
-                if (i > maxCol)
-                    break;
-                map.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return map;
+    public SelectionTopDocuments limit(SelectionTopDocuments selectionTopDocuments, int limit) {
+        selectionTopDocuments.scoreDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
+        return selectionTopDocuments;
     }
 
     public SelectionTopDocuments reScoreSelected(Iterable<Map.Entry<String, Double>> selectedTopics, List<Document> selectResults) {
@@ -262,35 +217,8 @@ public class ShardsManager implements Managed {
         return new SelectionTopDocuments(documents.size(), documents);
     }
 
-    public SelectionTopDocuments searchTopic(String topicName, String query, int n, boolean filterRT) throws IOException, ParseException {
-        SelectionTopDocuments sorted = isearch(query, n, filterRT);
-        
-        return filterTopic(query, topicName, sorted);
-    }
-    
-    public SelectionTopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
-//        int numResults = Math.min(MAX_RESULTS, 3 * n);
+    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
         Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
-        
-//        TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
-//        getSearcher().search(q, filter, totalHitCountCollector);
-//        int totalHits = totalHitCountCollector.getTotalHits();
-
-        Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.TEXT.name);
-        TermsEnum termEnum = terms.iterator(null);
-        final BytesRefBuilder bytes = new BytesRefBuilder();
-
-        int totalDF = 0;
-        Set<Term> queryTerms = new TreeSet<>();
-        q.extractTerms(queryTerms);
-        for (Term term : queryTerms) {
-            String text = term.text();
-            if (text.isEmpty())
-                continue;
-            bytes.copyChars(text);
-            termEnum.seekExact(bytes.toBytesRef());
-            totalDF += termEnum.docFreq();
-        }
         
         TopDocs rs;
         if (filter != null )
@@ -301,37 +229,40 @@ public class ShardsManager implements Managed {
         List<Document> sorted = getSorted(rs, n, filterRT);
 
         SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(rs.totalHits, sorted);
-        selectionTopDocuments.setC_sel(totalDF);
-        selectionTopDocuments.setC_r(rs.totalHits);
-        return selectionTopDocuments;
+        
+        if (!topics) {
+            return limit(filter(q, collections, selectionTopDocuments), n);
+        } else {
+            return limit(filterTopics(q, collections, selectionTopDocuments), n);
+        }
     }
 
-    public SelectionTopDocuments isearch(String query, int n, boolean filterRT) throws IOException, ParseException {
-        return isearch(query, null, n, filterRT);
+    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, int n, boolean filterRT) throws IOException, ParseException {
+        return isearch(topics, collections, query, null, n, filterRT);
     }
 
-    public SelectionTopDocuments isearch(String query, int n) throws IOException, ParseException {
-        return isearch(query, null, n, false);
+    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, int n) throws IOException, ParseException {
+        return isearch(topics, collections, query, null, n, false);
     }
 
-    public SelectionTopDocuments search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
+    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
-        return isearch(query, filter, n, filterRT);
+        return isearch(topics, collections, query, filter, n, filterRT);
     }
 
-    public SelectionTopDocuments search(String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
+    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
-        return isearch(query, filter, n, filterRT);
+        return isearch(topics, collections, query, filter, n, filterRT);
     }
 
-    public SelectionTopDocuments search(String query, int n, boolean filterRT) throws IOException, ParseException {
-        return isearch(query, n, filterRT);
+    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, int n, boolean filterRT) throws IOException, ParseException {
+        return isearch(topics, collections, query, n, filterRT);
     }
 
-    public SelectionTopDocuments search(String query, int n) throws IOException, ParseException {
-        return isearch(query, n, false);
+    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, int n) throws IOException, ParseException {
+        return isearch(topics, collections, query, n, false);
     }
 
     private List<Document> getResults(TopDocs rs) throws IOException {

@@ -50,21 +50,21 @@ public class TrecRM3FeedbackResource {
     @GET
     @Timed
     public SearchResponse search(@QueryParam("q") Optional<String> q,
-                                       @QueryParam("fq") Optional<String> fq,
-                                       @QueryParam("limit") @DefaultValue("1000") IntParam limit,
-                                       @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
-                                       @QueryParam("maxId") Optional<Long> maxId,
-                                       @QueryParam("epoch") Optional<String> epoch,
-                                       @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
-                                       @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
-                                       @QueryParam("method") @DefaultValue("crcsexp") String method,
-                                       @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
-                                       @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
-                                       @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
-                                       @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
-                                       @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
-                                       @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
-                                       @Context UriInfo uriInfo)
+                                 @QueryParam("fq") Optional<String> fq,
+                                 @QueryParam("limit") @DefaultValue("1000") IntParam limit,
+                                 @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
+                                 @QueryParam("maxId") Optional<Long> maxId,
+                                 @QueryParam("epoch") Optional<String> epoch,
+                                 @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
+                                 @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
+                                 @QueryParam("method") @DefaultValue("crcsexp") String method,
+                                 @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
+                                 @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
+                                 @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
+                                 @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
+                                 @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
+                                 @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
+                                 @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 

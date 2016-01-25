@@ -3,7 +3,6 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
@@ -87,32 +86,19 @@ public class SelectSearchResource {
         Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
         Map<String, Double> selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
 
+        Set<String> selected = topics.get() ? selectedTopics.keySet() : selectedSources.keySet();
+
         SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                shardResults = shardsManager.search(query, Short.MAX_VALUE, !retweets.get(), maxId.get());
+                shardResults = shardsManager.search(topics.get(), selected, query, limit.get(), !retweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
                 long[] epochs = Epochs.parseEpochRange(epoch.get());
-                shardResults = shardsManager.search(query, Short.MAX_VALUE, !retweets.get(), epochs[0], epochs[1]);
+                shardResults = shardsManager.search(topics.get(), selected, query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
             } else {
-                shardResults = shardsManager.search(query, Short.MAX_VALUE, !retweets.get());
+                shardResults = shardsManager.search(topics.get(), selected, query, limit.get(), !retweets.get());
             }
         }
-
-        Iterable<String> enabledSources;
-        Iterable<String> enabledTopics;
-
-        if (selectResults.scoreDocs.size() > 0) {
-            if (!topics.get()) {
-                enabledSources = Iterables.limit(selectedSources.keySet(), maxCol.get());
-                shardResults = shardsManager.filterCollections(query, enabledSources, shardResults);
-            } else {
-                enabledTopics = Iterables.limit(selectedTopics.keySet(), maxCol.get());
-                shardResults = shardsManager.filterTopics(query, enabledTopics, shardResults);
-            }
-        }
-        
-        shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(limit.get(), shardResults.scoreDocs.size()));
 
         long endTime = System.currentTimeMillis();
 

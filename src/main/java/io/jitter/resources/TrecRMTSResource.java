@@ -3,7 +3,6 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
@@ -16,7 +15,6 @@ import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
-import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -31,7 +29,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -44,17 +41,14 @@ public class TrecRMTSResource {
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
     private final SelectionManager selectionManager;
-    private final ShardsManager shardsManager;
 
-    public TrecRMTSResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager, ShardsManager shardsManager) throws IOException {
+    public TrecRMTSResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager) throws IOException {
         Preconditions.checkNotNull(trecMicroblogAPIWrapper);
         Preconditions.checkNotNull(selectionManager);
-        Preconditions.checkNotNull(shardsManager);
 
         counter = new AtomicLong();
         this.trecMicroblogAPIWrapper = trecMicroblogAPIWrapper;
         this.selectionManager = selectionManager;
-        this.shardsManager = shardsManager;
     }
 
     @GET
@@ -107,20 +101,6 @@ public class TrecRMTSResource {
         String methodName = selectionMethod.getClass().getSimpleName();
         Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
         Map<String, Double> selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-
-        Iterable<String> fbSourcesEnabled;
-        Iterable<String> fbTopicsEnabled;
-
-        if (fbUseSources.get()) {
-            fbSourcesEnabled = Iterables.limit(selectedSources.keySet(), fbCols.get());
-            selectResults = shardsManager.filterCollections(query, fbSourcesEnabled, selectResults);
-        } else {
-            fbTopicsEnabled = Iterables.limit(selectedTopics.keySet(), fbCols.get());
-            selectResults = shardsManager.filterTopics(query, fbTopicsEnabled, selectResults);
-            if (reScore.get()) {
-                selectResults = shardsManager.reScoreSelected(Iterables.limit(selectedTopics.entrySet(), fbCols.get()), selectResults.scoreDocs);
-            }
-        }
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;

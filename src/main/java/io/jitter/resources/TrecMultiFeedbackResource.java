@@ -5,6 +5,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
@@ -35,10 +36,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/trecmf")
@@ -107,37 +105,26 @@ public class TrecMultiFeedbackResource {
 
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
-        Map<String, Double> sources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-        Map<String, Double> topics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+
+        Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selectedSources.keySet(), fbCols.get()));
+        Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selectedTopics.keySet(), fbCols.get()));
+
+        Set<String> selected = fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
 
         SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                shardResults = shardsManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+                shardResults = shardsManager.search(fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
                 long[] epochs = Epochs.parseEpochRange(epoch.get());
-                shardResults = shardsManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                shardResults = shardsManager.search(fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get(), epochs[0], epochs[1]);
             } else {
-                shardResults = shardsManager.search(query, sLimit.get(), !sRetweets.get());
+                shardResults = shardsManager.search(fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get());
             }
         }
         
-        Iterable<String> fbSourcesEnabled = null;
-        Iterable<String> fbTopicsEnabled = null;
-
-        if (selectResults.scoreDocs.size() > 0) {
-            if (fbUseSources.get()) {
-                fbSourcesEnabled = Iterables.limit(sources.keySet(), fbCols.get());
-                shardResults = shardsManager.filterCollections(query, fbSourcesEnabled, shardResults);
-            } else {
-                fbTopicsEnabled = Iterables.limit(topics.keySet(), fbCols.get());
-                shardResults = shardsManager.filterTopics(query, fbTopicsEnabled, shardResults);
-                if (reScore.get()) {
-                    shardResults = shardsManager.reScoreSelected(Iterables.limit(topics.entrySet(), fbCols.get()), shardResults.scoreDocs);
-                }
-            }
-        }
-
         if (shardResults.scoreDocs.size() > 0) {
             FeatureVector queryFV = new FeatureVector(null);
             for (String term : AnalyzerUtils.analyze(analyzer, query)) {
@@ -148,9 +135,6 @@ public class TrecMultiFeedbackResource {
                 queryFV.addTerm(term.toLowerCase(Locale.ROOT), 1.0);
             }
             queryFV.normalizeToOne();
-
-            // cap results
-            shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs.get(), shardResults.scoreDocs.size()));
 
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
@@ -197,7 +181,7 @@ public class TrecMultiFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(sources, topics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, shardResults, results);
+        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selectedSources, selectedTopics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, shardResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

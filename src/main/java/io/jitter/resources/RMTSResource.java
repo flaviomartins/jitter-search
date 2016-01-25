@@ -6,7 +6,6 @@ import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectionSearchDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.filter.NaiveLanguageFilter;
@@ -29,7 +28,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -66,11 +64,13 @@ public class RMTSResource {
                                           @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                           @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
                                           @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
+                                          @QueryParam("reScore") @DefaultValue("false") BooleanParam reScore,
                                           @QueryParam("topic") Optional<String> topic,
                                           @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
                                           @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                           @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
-                                          @QueryParam("fbTopics") @DefaultValue("3") IntParam fbTopics,
+                                          @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
+                                          @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
                                           @QueryParam("numRerank") @DefaultValue("1000") IntParam numRerank,
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException {
@@ -99,7 +99,7 @@ public class RMTSResource {
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
         Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-        Map<String, Double> selectTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;
@@ -130,7 +130,7 @@ public class RMTSResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selectedSources, selectTopics, methodName, 0, selectResults, results);
+        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selectedSources, selectedTopics, methodName, 0, selectResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }
