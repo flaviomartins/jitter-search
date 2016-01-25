@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
+import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
@@ -52,6 +53,7 @@ public class MultiFeedbackResource {
     public MultiFeedbackResource(SearchManager searchManager, SelectionManager selectionManager, ShardsManager shardsManager) throws IOException {
         Preconditions.checkNotNull(searchManager);
         Preconditions.checkNotNull(selectionManager);
+        Preconditions.checkNotNull(shardsManager);
 
         counter = new AtomicLong();
         this.searchManager = searchManager;
@@ -99,17 +101,17 @@ public class MultiFeedbackResource {
             }
         }
 
+        List<Document> topDocs = selectResults.scoreDocs.subList(0, Math.min(limit.get(), selectResults.scoreDocs.size()));
+
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
-        Map<String, Double> sources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
+        Map<String, Double> selectedSources = selectionManager.select(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
 
-        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
-        Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
+        Map<String, Double> selectedTopics = selectionManager.selectTopics(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
 
-        if (topics.size() > 0) {
-            Iterable<String> fbTopicsEnabled = Iterables.limit(topics.keySet(), fbTopics.get());
+        if (selectedTopics.size() > 0) {
+            Iterable<String> fbTopicsEnabled = Iterables.limit(selectedTopics.keySet(), fbTopics.get());
             selectResults = shardsManager.filterTopics(query, fbTopicsEnabled, selectResults);
 
             FeatureVector queryFV = new FeatureVector(null);
@@ -166,7 +168,7 @@ public class MultiFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(sources, topics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, selectResults, results);
+        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selectedSources, selectedTopics, methodName, totalFbDocs, fbTerms.get(), totalHits, 0, selectResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

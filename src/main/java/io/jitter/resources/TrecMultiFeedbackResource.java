@@ -109,16 +109,14 @@ public class TrecMultiFeedbackResource {
             }
         }
 
+        List<Document> topDocs = selectResults.scoreDocs.subList(0, Math.min(sLimit.get(), selectResults.scoreDocs.size()));
+
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
+        
+        Map<String, Double> sources = selectionManager.select(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
 
-        List<Document> topSelDocs = selectResults.scoreDocs.subList(0, Math.min(sLimit.get(), selectResults.scoreDocs.size()));
-
-        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, topSelDocs, normalize.get());
-        Map<String, Double> sources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
-
-        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, topSelDocs, normalize.get());
-        Map<String, Double> topics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
+        Map<String, Double> topics = selectionManager.selectTopics(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {

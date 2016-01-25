@@ -78,20 +78,18 @@ public class SelectionResource {
             }
         }
 
+        List<Document> topDocs = selectResults.scoreDocs.subList(0, Math.min(limit.get(), selectResults.scoreDocs.size()));
+
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
-
-        List<Document> topSelDocs = selectResults.scoreDocs.subList(0, Math.min(limit.get(), selectResults.scoreDocs.size()));
-
-        Map<String, Double> rankedCollections;
+        
+        Map<String, Double> selectedCollections;
         if (!topics.get()) {
-            rankedCollections = selectionManager.getRanked(selectionMethod, topSelDocs, normalize.get());
+            selectedCollections = selectionManager.select(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
         } else {
-            rankedCollections = selectionManager.getRankedTopics(selectionMethod, topSelDocs, normalize.get());
+            selectedCollections = selectionManager.selectTopics(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
         }
         
-        Map<String, Double> selectedCollections = selectionManager.limit(selectionMethod, rankedCollections, maxCol.get(), minRanks);
-
         long endTime = System.currentTimeMillis();
 
         int totalHits = selectResults.totalHits;

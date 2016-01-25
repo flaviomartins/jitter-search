@@ -7,6 +7,7 @@ import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
+import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectionSearchDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.selection.SelectionManager;
@@ -83,14 +84,14 @@ public class SelectSearchResource {
             }
         }
 
+        List<Document> topDocs = selectResults.scoreDocs.subList(0, Math.min(sLimit.get(), selectResults.scoreDocs.size()));
+
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> rankedSources = selectionManager.getRanked(selectionMethod, selectResults.scoreDocs, normalize.get());
-        Map<String, Double> selectedSources = selectionManager.limit(selectionMethod, rankedSources, maxCol.get(), minRanks);
+        Map<String, Double> selectedSources = selectionManager.select(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
 
-        Map<String, Double> rankedTopics = selectionManager.getRankedTopics(selectionMethod, selectResults.scoreDocs, normalize.get());
-        Map<String, Double> selectedTopics = selectionManager.limit(selectionMethod, rankedTopics, maxCol.get(), minRanks);
+        Map<String, Double> selectedTopics = selectionManager.selectTopics(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
 
         if (q.isPresent()) {
             if (maxId.isPresent()) {

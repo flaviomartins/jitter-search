@@ -19,7 +19,6 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,18 +146,21 @@ public class SelectionManager implements Managed {
         this.twitterManager = twitterManager;
     }
 
-    public SortedMap<String, Double> getRanked(SelectionMethod selectionMethod, List<Document> results, boolean normalize) {
-        Map<String, Double> rankedCollections = selectionMethod.rank(results);
+    public Map<String, Double> select(List<Document> topDocs, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
+        Map<String, Double> rankedCollections = selectionMethod.rank(topDocs);
+        SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getCollectionsShardStats() != null) {
             Map<String, Double> map = selectionMethod.normalize(rankedCollections, shardsManager.getCollectionsShardStats());
-            return getSortedMap(map);
+            ranking = getSortedMap(map);
         } else {
-            return getSortedMap(rankedCollections);
+            ranking = getSortedMap(rankedCollections);
         }
+        
+        return limit(selectionMethod, ranking, maxCol, minRanks);
     }
 
-    public SortedMap<String, Double> getRankedTopics(SelectionMethod selectionMethod, List<Document> results, boolean normalize) {
-        Map<String, Double> rankedCollections = selectionMethod.rank(results);
+    public Map<String, Double> selectTopics(List<Document> topDocs, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
+        Map<String, Double> rankedCollections = selectionMethod.rank(topDocs);
         Map<String, Double> rankedTopics = new HashMap<>();
 
         for (String col : rankedCollections.keySet()) {
@@ -178,12 +180,15 @@ public class SelectionManager implements Managed {
             }
         }
 
+        SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getTopicsShardStats() != null) {
             Map<String, Double> map = selectionMethod.normalize(rankedTopics, shardsManager.getTopicsShardStats());
-            return getSortedMap(map);
+            ranking = getSortedMap(map);
         } else {
-            return getSortedMap(rankedTopics);
+            ranking = getSortedMap(rankedTopics);
         }
+
+        return limit(selectionMethod, ranking, maxCol, minRanks);
     }
 
     private SortedMap<String, Double> getSortedMap(Map<String, Double> map) {
@@ -193,7 +198,7 @@ public class SelectionManager implements Managed {
         return sortedMap;
     }
 
-    public Map<String,Double> limit(SelectionMethod selectionMethod, Map<String, Double> ranking, int maxCol, double minRanks) {
+    private Map<String,Double> limit(SelectionMethod selectionMethod, SortedMap<String, Double> ranking, int maxCol, double minRanks) {
         String methodName = selectionMethod.getClass().getSimpleName();
         Map<String, Double> map = new LinkedHashMap<>();
         // rankS has its own limit mechanism
