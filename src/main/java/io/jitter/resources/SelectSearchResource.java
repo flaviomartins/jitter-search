@@ -7,7 +7,6 @@ import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectionSearchDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.selection.SelectionManager;
@@ -68,11 +67,10 @@ public class SelectSearchResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        SelectionTopDocuments selectResults = null;
-        SelectionTopDocuments shardResults = null;
 
         long startTime = System.currentTimeMillis();
 
+        SelectionTopDocuments selectResults = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
@@ -84,15 +82,12 @@ public class SelectSearchResource {
             }
         }
 
-        List<Document> topDocs = selectResults.scoreDocs.subList(0, Math.min(sLimit.get(), selectResults.scoreDocs.size()));
-
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
+        Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
 
-        Map<String, Double> selectedSources = selectionManager.select(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
-
-        Map<String, Double> selectedTopics = selectionManager.selectTopics(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
-
+        SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 shardResults = shardsManager.search(query, Short.MAX_VALUE, !retweets.get(), maxId.get());

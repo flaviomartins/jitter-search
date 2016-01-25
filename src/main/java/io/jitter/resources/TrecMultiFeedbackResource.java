@@ -7,7 +7,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
-import io.jitter.api.search.Document;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
@@ -91,13 +90,10 @@ public class TrecMultiFeedbackResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        SelectionTopDocuments selectResults = null;
-        SelectionTopDocuments shardResults = null;
-
-        TopDocuments results = null;
 
         long startTime = System.currentTimeMillis();
 
+        SelectionTopDocuments selectResults = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
@@ -109,15 +105,12 @@ public class TrecMultiFeedbackResource {
             }
         }
 
-        List<Document> topDocs = selectResults.scoreDocs.subList(0, Math.min(sLimit.get(), selectResults.scoreDocs.size()));
-
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
-        
-        Map<String, Double> sources = selectionManager.select(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> sources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> topics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
 
-        Map<String, Double> topics = selectionManager.selectTopics(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
-
+        SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 shardResults = shardsManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
@@ -187,6 +180,7 @@ public class TrecMultiFeedbackResource {
             query = builder.toString().trim();
         }
 
+        TopDocuments results = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 results = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !retweets.get());

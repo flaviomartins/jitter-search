@@ -85,11 +85,10 @@ public class MultiFeedbackResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        SelectionTopDocuments selectResults = null;
-        TopDocuments results = null;
 
         long startTime = System.currentTimeMillis();
 
+        SelectionTopDocuments selectResults = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
@@ -101,14 +100,12 @@ public class MultiFeedbackResource {
             }
         }
 
-        List<Document> topDocs = selectResults.scoreDocs.subList(0, Math.min(limit.get(), selectResults.scoreDocs.size()));
-
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
 
-        Map<String, Double> selectedSources = selectionManager.select(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
 
-        Map<String, Double> selectedTopics = selectionManager.selectTopics(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
 
         if (selectedTopics.size() > 0) {
             Iterable<String> fbTopicsEnabled = Iterables.limit(selectedTopics.keySet(), fbTopics.get());
@@ -149,6 +146,7 @@ public class MultiFeedbackResource {
             query = builder.toString().trim();
         }
 
+        TopDocuments results = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 results = searchManager.search(query, limit.get(), !retweets.get(), maxId.get());

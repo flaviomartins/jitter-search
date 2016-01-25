@@ -77,8 +77,6 @@ public class RMTSResource {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         String query = URLDecoder.decode(q.or(""), "UTF-8");
-        SelectionTopDocuments selectResults = null;
-        TopDocuments results = null;
 
         long[] epochs = new long[2];
         if (epoch.isPresent()) {
@@ -87,6 +85,7 @@ public class RMTSResource {
 
         long startTime = System.currentTimeMillis();
 
+        SelectionTopDocuments selectResults = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
@@ -97,19 +96,16 @@ public class RMTSResource {
             }
         }
 
-        List<Document> topDocs = selectResults.scoreDocs.subList(0, Math.min(sLimit.get(), selectResults.scoreDocs.size()));
-
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         String methodName = selectionMethod.getClass().getSimpleName();
-
-        Map<String, Double> selectedSources = selectionManager.select(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
-
-        Map<String, Double> selectTopics = selectionManager.selectTopics(topDocs, selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> selectTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;
         double queryEpoch = epoch.isPresent() ? epochs[1] : currentEpoch;
 
+        TopDocuments results = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
                 results = searchManager.search(query, numRerank.get(), !retweets.get(), maxId.get());

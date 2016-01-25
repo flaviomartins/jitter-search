@@ -146,7 +146,8 @@ public class SelectionManager implements Managed {
         this.twitterManager = twitterManager;
     }
 
-    public Map<String, Double> select(List<Document> topDocs, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
+    public Map<String, Double> select(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
+        List<Document> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
         Map<String, Double> rankedCollections = selectionMethod.rank(topDocs);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getCollectionsShardStats() != null) {
@@ -155,11 +156,12 @@ public class SelectionManager implements Managed {
         } else {
             ranking = getSortedMap(rankedCollections);
         }
-        
+
         return limit(selectionMethod, ranking, maxCol, minRanks);
     }
 
-    public Map<String, Double> selectTopics(List<Document> topDocs, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
+    public Map<String, Double> selectTopics(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
+        List<Document> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
         Map<String, Double> rankedCollections = selectionMethod.rank(topDocs);
         Map<String, Double> rankedTopics = new HashMap<>();
 
