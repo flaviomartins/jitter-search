@@ -1,7 +1,6 @@
 package io.jitter.core.taily;
 
 import io.dropwizard.lifecycle.Managed;
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +79,7 @@ public class TailyManager implements Managed {
         }
     }
 
-    public void index() throws IOException, ParseException {
+    public void index() throws IOException {
         if (ranker != null) {
             ranker.close();
             topicsRanker.close();

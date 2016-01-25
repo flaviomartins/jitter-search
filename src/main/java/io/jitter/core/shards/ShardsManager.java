@@ -143,7 +143,7 @@ public class ShardsManager implements Managed {
         this.tailyManager = tailyManager;
     }
 
-    private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) throws ParseException {
+    private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) {
         HashSet<String> collections = Sets.newHashSet(selectedSources);
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults.scoreDocs) {
@@ -169,7 +169,7 @@ public class ShardsManager implements Managed {
         return selectionTopDocuments;
     }
 
-    private SelectionTopDocuments filterTopics(Query query, Set<String> selectedTopics, SelectionTopDocuments selectResults) throws ParseException {
+    private SelectionTopDocuments filterTopics(Query query, Set<String> selectedTopics, SelectionTopDocuments selectResults) {
         List<Document> results = new ArrayList<>();
         for (Document doc : selectResults.scoreDocs) {
             for (String selectedTopic: selectedTopics) {

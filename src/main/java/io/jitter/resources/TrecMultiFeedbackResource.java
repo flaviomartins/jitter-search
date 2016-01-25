@@ -104,8 +104,8 @@ public class TrecMultiFeedbackResource {
 
         SelectionTopDocuments selectResults = null;
 
-        Map<String, Double> selectedSources = null;
-        Map<String, Double> selectedTopics = null;
+        Map<String, Double> selectedSources;
+        Map<String, Double> selectedTopics;
         if ("taily".equalsIgnoreCase(method)) {
             selectedSources = tailyManager.select(query, v.get());
             selectedTopics = tailyManager.selectTopics(query, v.get());
