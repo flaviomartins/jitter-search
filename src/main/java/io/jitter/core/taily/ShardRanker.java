@@ -119,7 +119,8 @@ public class ShardRanker {
         for (String stem : stems) {
             // get minimum doc feature value for this stem
             String minFeat = stem + FeatureStore.MIN_FEAT_SUFFIX;
-            double minVal = _stores[0].getFeature(minFeat);
+//            double minVal = _stores[0].getFeature(minFeat);
+            double minVal = -1;
 
             boolean calcMin = false;
             if (minVal == -1) {
@@ -328,9 +329,9 @@ public class ShardRanker {
             // if var is ~= 0, then don't build a distribution.
             // based on the mean of the shard (which is the score of the single doc), n_i is either 0 or 1
             if (queryVar[i] < 1e-10 && hasATerm[i]) {
-                if (queryMean[i] >= s_c) {
+//                if (queryMean[i] >= s_c) {
                     ranking.put(_shardIds[i - 1], 1.0);
-                }
+//                }
             } else {
                 // do normal Taily stuff pre-normalized Eq (12)
                 GammaDistribution shardGamma = new GammaDistribution(k[i], theta[i]);
