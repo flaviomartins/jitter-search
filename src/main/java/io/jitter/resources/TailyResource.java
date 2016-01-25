@@ -54,9 +54,9 @@ public class TailyResource {
         Map<String, Double> ranking = null;
         if (q.isPresent()) {
             if (topics.get()) {
-                ranking = tailyManager.getRankedTopics(query, v.get());
+                ranking = tailyManager.selectTopics(query, v.get());
             } else {
-                ranking = tailyManager.getRanked(query, v.get());
+                ranking = tailyManager.select(query, v.get());
             }
         }
 

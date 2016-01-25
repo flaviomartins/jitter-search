@@ -13,6 +13,7 @@ import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.shards.ShardsManager;
+import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
@@ -49,16 +50,19 @@ public class MultiFeedbackResource {
     private final SearchManager searchManager;
     private final SelectionManager selectionManager;
     private final ShardsManager shardsManager;
+    private final TailyManager tailyManager;
 
-    public MultiFeedbackResource(SearchManager searchManager, SelectionManager selectionManager, ShardsManager shardsManager) throws IOException {
+    public MultiFeedbackResource(SearchManager searchManager, SelectionManager selectionManager, ShardsManager shardsManager, TailyManager tailyManager) throws IOException {
         Preconditions.checkNotNull(searchManager);
         Preconditions.checkNotNull(selectionManager);
         Preconditions.checkNotNull(shardsManager);
+        Preconditions.checkNotNull(tailyManager);
 
         counter = new AtomicLong();
         this.searchManager = searchManager;
         this.selectionManager = selectionManager;
         this.shardsManager = shardsManager;
+        this.tailyManager = tailyManager;
     }
 
     @GET
@@ -75,6 +79,7 @@ public class MultiFeedbackResource {
                                           @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                           @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
                                           @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
+                                          @QueryParam("v") @DefaultValue("10") IntParam v,
                                           @QueryParam("reScore") @DefaultValue("false") BooleanParam reScore,
                                           @QueryParam("topic") Optional<String> topic,
                                           @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
@@ -91,26 +96,32 @@ public class MultiFeedbackResource {
         long startTime = System.currentTimeMillis();
 
         SelectionTopDocuments selectResults = null;
-        if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-            } else if (epoch.isPresent()) {
-                long[] epochs = Epochs.parseEpochRange(epoch.get());
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
-            } else {
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
-            }
-        }
 
-        SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-        String methodName = selectionMethod.getClass().getSimpleName();
-        Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-        Map<String, Double> selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        Map<String, Double> selectedSources = null;
+        Map<String, Double> selectedTopics = null;
+        if ("taily".equalsIgnoreCase(method)) {
+            selectedSources = tailyManager.select(query, v.get());
+            selectedTopics = tailyManager.selectTopics(query, v.get());
+        } else {
+            if (q.isPresent()) {
+                if (maxId.isPresent()) {
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+                } else if (epoch.isPresent()) {
+                    long[] epochs = Epochs.parseEpochRange(epoch.get());
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                } else {
+                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
+                }
+            }
+            SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
+            selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+            selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        }
 
         Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selectedSources.keySet(), fbCols.get()));
         Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selectedTopics.keySet(), fbCols.get()));
 
-        Set<String> selected = !fbUseSources.get() ? fbTopicsEnabled : fbSourcesEnabled;
+        Set<String> selected = !fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
 
         SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {

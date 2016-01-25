@@ -187,7 +187,7 @@ public class ShardsManager implements Managed {
             if (text.isEmpty())
                 continue;
             for (String selectedTopic : selectedTopics) {
-                totalDF += tailyManager.getDFTopics(selectedTopic, text);
+                totalDF += tailyManager.getTopicsDF(selectedTopic, text);
             }
         }
 

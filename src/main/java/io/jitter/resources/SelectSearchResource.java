@@ -78,10 +78,9 @@ public class SelectSearchResource {
 
         Map<String, Double> selectedSources = null;
         Map<String, Double> selectedTopics = null;
-        Set<String> selected = null;
         if ("taily".equalsIgnoreCase(method)) {
-            selectedSources = tailyManager.getRanked(query, v.get());
-            selectedTopics = tailyManager.getRankedTopics(query, v.get());
+            selectedSources = tailyManager.select(query, v.get());
+            selectedTopics = tailyManager.selectTopics(query, v.get());
         } else {
             if (q.isPresent()) {
                 if (maxId.isPresent()) {
@@ -97,7 +96,7 @@ public class SelectSearchResource {
             selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
             selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
         }
-        selected = topics.get() ? selectedTopics.keySet() : selectedSources.keySet();
+        Set<String> selected = topics.get() ? selectedTopics.keySet() : selectedSources.keySet();
 
 
         SelectionTopDocuments shardResults = null;

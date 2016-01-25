@@ -46,11 +46,11 @@ public class TailyManager implements Managed {
         return map;
     }
 
-    public Map<String, Double> getRanked(String query, int v) {
+    public Map<String, Double> select(String query, int v) {
         return limit(ranker.rank(query), v);
     }
 
-    public Map<String,Double> getRankedTopics(String query, int v) {
+    public Map<String,Double> selectTopics(String query, int v) {
         return limit(topicsRanker.rank(query), v);
     }
     
@@ -58,7 +58,7 @@ public class TailyManager implements Managed {
         return ranker.getDF(source, stem);
     }
 
-    public int getDFTopics(String topic, String stem) {
+    public int getTopicsDF(String topic, String stem) {
         return topicsRanker.getDF(topic, stem);
     }
 
