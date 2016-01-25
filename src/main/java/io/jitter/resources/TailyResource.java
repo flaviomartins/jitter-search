@@ -42,7 +42,7 @@ public class TailyResource {
     @Timed
     public SelectionResponse search(@QueryParam("q") Optional<String> q,
                                     @QueryParam("v") @DefaultValue("50") IntParam v,
-                                    @QueryParam("topics") @DefaultValue("false") BooleanParam topics,
+                                    @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();

@@ -57,7 +57,7 @@ public class SelectSearchResource {
                                           @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
                                           @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
                                           @QueryParam("method") @DefaultValue("crcsexp") String method,
-                                          @QueryParam("topics") @DefaultValue("false") BooleanParam topics,
+                                          @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
                                           @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                           @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
                                           @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,

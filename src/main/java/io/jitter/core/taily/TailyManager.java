@@ -44,7 +44,7 @@ public class TailyManager implements Managed {
     }
     
     public int getDF(String source, String stem) {
-        return topicsRanker.getDF(source, stem);
+        return ranker.getDF(source, stem);
     }
 
     public int getDFTopics(String topic, String stem) {

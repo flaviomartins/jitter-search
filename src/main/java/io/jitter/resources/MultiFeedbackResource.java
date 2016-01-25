@@ -115,12 +115,12 @@ public class MultiFeedbackResource {
         SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {
             if (maxId.isPresent()) {
-                shardResults = shardsManager.search(fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get(), maxId.get());
+                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get(), maxId.get());
             } else if (epoch.isPresent()) {
                 long[] epochs = Epochs.parseEpochRange(epoch.get());
-                shardResults = shardsManager.search(fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get(), epochs[0], epochs[1]);
+                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get(), epochs[0], epochs[1]);
             } else {
-                shardResults = shardsManager.search(fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get());
+                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !retweets.get());
             }
         }
 

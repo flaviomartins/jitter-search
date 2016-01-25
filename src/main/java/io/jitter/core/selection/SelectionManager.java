@@ -272,7 +272,6 @@ public class SelectionManager implements Managed {
 
         SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(rs.totalHits, sorted);
         selectionTopDocuments.setC_sel(totalDF);
-        selectionTopDocuments.setC_r(rs.totalHits);
         return selectionTopDocuments;
     }
 

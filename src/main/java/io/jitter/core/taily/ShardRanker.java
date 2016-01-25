@@ -87,7 +87,7 @@ public class ShardRanker {
     }
 
     public int getDF(String shardId, String stem) {
-        int i = Lists.newArrayList(_shardIds).indexOf(shardId) + 1;
+        int i = Lists.newArrayList(_shardIds).indexOf(shardId.toLowerCase(Locale.ROOT)) + 1;
         if (i > 0) {
             // get term's shard df
             String dfFeat = stem + FeatureStore.SIZE_FEAT_SUFFIX;
