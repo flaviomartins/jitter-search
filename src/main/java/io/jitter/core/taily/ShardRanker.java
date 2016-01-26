@@ -5,6 +5,10 @@ import com.google.common.collect.Lists;
 import org.apache.commons.math3.distribution.GammaDistribution;
 import io.jitter.core.utils.AnalyzerUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +19,8 @@ public class ShardRanker {
     private static final Logger logger = LoggerFactory.getLogger(ShardRanker.class);
 
     private static final Analyzer analyzer = IndexStatuses.ANALYZER;
+    private static final QueryParser QUERY_PARSER =
+            new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
 
     // array of FeatureStore pointers
     // stores[0] is the whole collection store; stores[1] onwards is each shard; length is numShards+1
@@ -80,7 +86,17 @@ public class ShardRanker {
 
     // tokenize, stem and do stopword removal
     private List<String> _getStems(String query) {
-        List<String> stems = AnalyzerUtils.analyze(analyzer, query);
+        List<String> stems = Lists.newArrayList();
+        try {
+            Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
+            Set<Term> queryTerms = new TreeSet<>();
+            q.extractTerms(queryTerms);
+            for (Term term : queryTerms) {
+                stems.add(term.text());
+            }
+        } catch (ParseException e) {
+            stems = AnalyzerUtils.analyze(analyzer, query);
+        }
         // remove empty stems
         stems.removeAll(Arrays.asList("", null));
         return stems;
@@ -103,11 +119,13 @@ public class ShardRanker {
         final double[] queryMean;
         final double[] queryVar;
         final boolean[] hasATerm;
+        final double[] dfTerm;
 
         public QueryFeats(int numShards) {
             queryMean = new double[numShards];
             queryVar = new double[numShards];
             hasATerm = new boolean[numShards];
+            dfTerm = new double[numShards];
         }
     }
 
@@ -119,8 +137,7 @@ public class ShardRanker {
         for (String stem : stems) {
             // get minimum doc feature value for this stem
             String minFeat = stem + FeatureStore.MIN_FEAT_SUFFIX;
-//            double minVal = _stores[0].getFeature(minFeat);
-            double minVal = -1;
+            double minVal = _stores[0].getFeature(minFeat);
 
             boolean calcMin = false;
             if (minVal == -1) {
@@ -156,6 +173,7 @@ public class ShardRanker {
                     continue;
 
                 queryFeats.hasATerm[i] = true;
+                queryFeats.dfTerm[i] += df;
 
                 // add current term's mean to shard; also shift by min feat value Eq (5)
                 String meanFeat = stem + FeatureStore.FEAT_SUFFIX;
@@ -264,6 +282,8 @@ public class ShardRanker {
         double[] queryVar = queryFeats.queryVar;
         // to mark shards that have at least one doc for one query term
         boolean[] hasATerm = queryFeats.hasATerm;
+        // used in the ranking for var ~= 0 cases
+        double[] dfTerm = queryFeats.dfTerm;
 
         // fast fall-through for 2 degenerate cases
         if (!hasATerm[0]) {
@@ -271,21 +291,19 @@ public class ShardRanker {
             // return empty ranking
             return ranking;
         } else if (queryVar[0] < 1e-10) {
-            // TODO: why am i getting negative variance?!
-            // FIXME: these var ~= 0 cases should really be handled more carefully; instead of
-            // n_i = 1, it could be there are two or more very similarly scoring docs; I should keep
-            // track of the df of these shards and use that instead of n_i = 1...
-
             // case 2: there is only 1 document in entire collection that matches any query term
             // return the shard with the document with n_i = 1
+            
+            // these var ~= 0 cases should be handled carefully; instead of n_i = 1,
+            // it could be there are two or more very similarly scoring docs; We keep track
+            // of the df of these shards and use that instead of n_i = 1.
             int norm = _n_c;
             for (int i = 1; i < _numShards + 1; i++) {
                 if (hasATerm[i]) {
-                    ranking.put(_shardIds[i - 1], 1.0 * norm);
-//                    break;
+                    ranking.put(_shardIds[i - 1], dfTerm[i] * norm);
                 }
             }
-            return ranking;
+            return sortAndNormalization(ranking);
         }
 
         // calculate k and theta from mean/vars Eq (7) (8)
@@ -314,9 +332,6 @@ public class ShardRanker {
         if (p_c >= 1.0)
             p_c = 1.0 - 1e-10; // ZOMG
 
-        if (p_c <= 1e-10)
-            p_c = 1e-10;
-
         GammaDistribution collectionGamma = new GammaDistribution(k[0], theta[0]);
         double s_c = collectionGamma.inverseCumulativeProbability(p_c);
 
@@ -329,9 +344,9 @@ public class ShardRanker {
             // if var is ~= 0, then don't build a distribution.
             // based on the mean of the shard (which is the score of the single doc), n_i is either 0 or 1
             if (queryVar[i] < 1e-10 && hasATerm[i]) {
-//                if (queryMean[i] >= s_c) {
+                if (queryMean[i] >= s_c) {
                     ranking.put(_shardIds[i - 1], 1.0);
-//                }
+                }
             } else {
                 // do normal Taily stuff pre-normalized Eq (12)
                 GammaDistribution shardGamma = new GammaDistribution(k[i], theta[i]);
@@ -340,6 +355,10 @@ public class ShardRanker {
             }
         }
 
+        return sortAndNormalization(ranking);
+    }
+
+    private TreeMap<String, Double> sortAndNormalization(Map<String, Double> ranking) {
         // sort shards by n
         ShardComparator comparator = new ShardComparator(ranking);
         TreeMap<String, Double> sortedMap = new TreeMap<>(comparator);
