@@ -1,18 +1,18 @@
-package io.jitter.api.collectionstatistics;
+package io.jitter.api.shards;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.jitter.api.ResponseHeader;
 
-public class TopTermsResponse {
+public class ShardManagerStatsResponse {
 
     private ResponseHeader responseHeader;
-    private TermsResponse response;
+    private ShardStatsResponse response;
 
-    public TopTermsResponse() {
+    public ShardManagerStatsResponse() {
         // Jackson deserialization
     }
 
-    public TopTermsResponse(ResponseHeader responseHeader, TermsResponse response) {
+    public ShardManagerStatsResponse(ResponseHeader responseHeader, ShardStatsResponse response) {
         this.responseHeader = responseHeader;
         this.response = response;
     }
@@ -23,7 +23,7 @@ public class TopTermsResponse {
     }
 
     @JsonProperty
-    public TermsResponse getResponse() {
+    public ShardStatsResponse getResponse() {
         return response;
     }
 }
