@@ -6,17 +6,21 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
+import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.DocumentComparable;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
+import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +31,11 @@ import java.util.*;
 public class ShardsManager implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(ShardsManager.class);
-
-    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
-    private static final QueryParser QUERY_PARSER =
-            new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
+    
     public static final IDFSimilarity SIMILARITY = new IDFSimilarity();
+
+    private final Analyzer analyzer;
+    private final QueryParser QUERY_PARSER;
 
     private DirectoryReader reader;
     private IndexSearcher searcher;
@@ -52,7 +56,7 @@ public class ShardsManager implements Managed {
     private TwitterManager twitterManager;
     private TailyManager tailyManager;
 
-    public ShardsManager(String collection, String indexPath, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
+    public ShardsManager(String collection, String indexPath, String stopwords, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
         this.collection = collection;
         this.indexPath = indexPath;
         this.method = method;
@@ -64,6 +68,15 @@ public class ShardsManager implements Managed {
             treeMap.put(entry.getKey(), new ImmutableSortedSet.Builder<>(String.CASE_INSENSITIVE_ORDER).addAll(entry.getValue()).build());
         }
         this.topics = treeMap;
+
+        Stopper stopper = new Stopper(stopwords);
+        if (stopper == null || stopper.asSet().size() == 0) {
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
+        } else {
+            CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true, false, true);
+        }
+        QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
     }
 
     @Override
@@ -369,7 +382,7 @@ public class ShardsManager implements Managed {
 
     public void index() throws IOException {
         logger.info("shards indexing");
-        twitterManager.index(collection, indexPath, removeDuplicates);
+        twitterManager.index(collection, indexPath, analyzer, removeDuplicates);
     }
 
     private IndexSearcher getSearcher() throws IOException {

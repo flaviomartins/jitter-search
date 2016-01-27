@@ -28,8 +28,6 @@ public class TwitterManager implements Managed {
 
     private final static Logger logger = LoggerFactory.getLogger(TwitterManager.class);
 
-    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
-
     private static final int MAX_USERS_LOOKUP = 100;
     private static final int MAX_STATUSES_REQUEST = 200;
 
@@ -141,7 +139,7 @@ public class TwitterManager implements Managed {
         }
     }
 
-    public void index(String collection, String indexPath, boolean removeDuplicates) throws IOException {
+    public void index(String collection, String indexPath, Analyzer analyzer, boolean removeDuplicates) throws IOException {
         long startTime = System.currentTimeMillis();
         File file = new File(collection);
         if (!file.exists()) {

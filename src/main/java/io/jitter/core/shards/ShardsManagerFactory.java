@@ -17,6 +17,9 @@ public class ShardsManagerFactory {
     private String index;
 
     @NotEmpty
+    private String stopwords;
+
+    @NotEmpty
     private String method;
 
     @Valid
@@ -43,6 +46,16 @@ public class ShardsManagerFactory {
     @JsonProperty
     public void setIndex(String index) {
         this.index = index;
+    }
+
+    @JsonProperty
+    public String getStopwords() {
+        return stopwords;
+    }
+
+    @JsonProperty
+    public void setStopwords(String stopwords) {
+        this.stopwords = stopwords;
     }
 
     @JsonProperty
@@ -76,7 +89,7 @@ public class ShardsManagerFactory {
     }
 
     public ShardsManager build(Environment environment, boolean live) {
-        final ShardsManager shardsManager = new ShardsManager(collection, index, method, removeDuplicates, live, topics);
+        final ShardsManager shardsManager = new ShardsManager(collection, index, stopwords, method, removeDuplicates, live, topics);
         environment.lifecycle().manage(shardsManager);
         return shardsManager;
     }
