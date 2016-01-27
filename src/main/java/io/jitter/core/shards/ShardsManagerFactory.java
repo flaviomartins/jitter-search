@@ -19,6 +19,9 @@ public class ShardsManagerFactory {
     @NotEmpty
     private String stopwords;
 
+    @NotNull
+    private int mu;
+
     @NotEmpty
     private String method;
 
@@ -59,6 +62,16 @@ public class ShardsManagerFactory {
     }
 
     @JsonProperty
+    public int getMu() {
+        return mu;
+    }
+
+    @JsonProperty
+    public void setMu(int mu) {
+        this.mu = mu;
+    }
+
+    @JsonProperty
     public String getMethod() {
         return method;
     }
@@ -89,7 +102,7 @@ public class ShardsManagerFactory {
     }
 
     public ShardsManager build(Environment environment, boolean live) {
-        final ShardsManager shardsManager = new ShardsManager(collection, index, stopwords, method, removeDuplicates, live, topics);
+        final ShardsManager shardsManager = new ShardsManager(collection, index, stopwords, mu, method, removeDuplicates, live, topics);
         environment.lifecycle().manage(shardsManager);
         return shardsManager;
     }

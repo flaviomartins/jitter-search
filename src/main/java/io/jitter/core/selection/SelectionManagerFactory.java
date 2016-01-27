@@ -19,6 +19,9 @@ public class SelectionManagerFactory {
     @NotEmpty
     private String stopwords;
 
+    @NotNull
+    private int mu;
+
     @NotEmpty
     private String method;
 
@@ -59,6 +62,16 @@ public class SelectionManagerFactory {
     }
 
     @JsonProperty
+    public int getMu() {
+        return mu;
+    }
+
+    @JsonProperty
+    public void setMu(int mu) {
+        this.mu = mu;
+    }
+
+    @JsonProperty
     public String getMethod() {
         return method;
     }
@@ -89,7 +102,7 @@ public class SelectionManagerFactory {
     }
 
     public SelectionManager build(Environment environment, boolean live) {
-        final SelectionManager selectionManager = new SelectionManager(collection, index, stopwords, method, removeDuplicates, live, topics);
+        final SelectionManager selectionManager = new SelectionManager(collection, index, stopwords, mu, method, removeDuplicates, live, topics);
         environment.lifecycle().manage(selectionManager);
         return selectionManager;
     }

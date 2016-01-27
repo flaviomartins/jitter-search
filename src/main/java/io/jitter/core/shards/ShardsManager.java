@@ -10,7 +10,6 @@ import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.DocumentComparable;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.taily.TailyManager;
-import io.jitter.core.similarities.IDFSimilarity;
 import io.jitter.core.twitter.manager.TwitterManager;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
@@ -19,6 +18,7 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
@@ -31,9 +31,8 @@ import java.util.*;
 public class ShardsManager implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(ShardsManager.class);
-    
-    public static final IDFSimilarity SIMILARITY = new IDFSimilarity();
 
+    private final LMDirichletSimilarity SIMILARITY;
     private final Analyzer analyzer;
     private final QueryParser QUERY_PARSER;
 
@@ -42,6 +41,7 @@ public class ShardsManager implements Managed {
 
     private final String collection;
     private final String indexPath;
+    private final int mu;
     private final String method;
     private final boolean removeDuplicates;
     private final boolean live;
@@ -56,9 +56,10 @@ public class ShardsManager implements Managed {
     private TwitterManager twitterManager;
     private TailyManager tailyManager;
 
-    public ShardsManager(String collection, String indexPath, String stopwords, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
+    public ShardsManager(String collection, String indexPath, String stopwords, int mu, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
         this.collection = collection;
         this.indexPath = indexPath;
+        this.mu = mu;
         this.method = method;
         this.removeDuplicates = removeDuplicates;
         this.live = live;
@@ -69,6 +70,7 @@ public class ShardsManager implements Managed {
         }
         this.topics = treeMap;
 
+        SIMILARITY = new LMDirichletSimilarity(mu);
         Stopper stopper = new Stopper(stopwords);
         if (stopper == null || stopper.asSet().size() == 0) {
             analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
