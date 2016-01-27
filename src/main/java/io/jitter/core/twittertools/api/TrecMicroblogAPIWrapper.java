@@ -97,7 +97,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
     }
 
     @SuppressWarnings("unchecked")
-    public TopDocuments search(String query, long maxId, int numResults, boolean filterRT) throws TException,
+    public synchronized TopDocuments search(String query, long maxId, int numResults, boolean filterRT) throws TException,
             IOException, ClassNotFoundException, ParseException {
 
         int numResultsToFetch = Math.min(MAX_NUM_RESULTS, 3 * numResults);
