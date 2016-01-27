@@ -1,9 +1,11 @@
 package io.jitter.core.selection.methods;
 
 import io.jitter.api.search.Document;
+import io.jitter.core.shards.ShardStats;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class RankS extends SelectionMethod {
@@ -82,5 +84,22 @@ public class RankS extends SelectionMethod {
 
     private double getStepFactor(int step) {
         return Math.pow(B, -step);
+    }
+
+    @Override
+    public Map<String, Double> normalize(Map<String, Double> rank, ShardStats csiStats, ShardStats shardStats) {
+        HashMap<String, Double> map = new HashMap<>();
+        for (Map.Entry<String, Double> shardScoreEntry : rank.entrySet()) {
+            String shardIdLower = shardScoreEntry.getKey().toLowerCase(Locale.ROOT);
+            if (shardStats.getSizes().containsKey(shardIdLower)) {
+                double c_i = shardStats.getSizes().get(shardIdLower);
+                double s_i = csiStats.getSizes().get(shardIdLower);
+                double norm = c_i / s_i;
+                double origScore = shardScoreEntry.getValue();
+                double newScore = norm * origScore;
+                map.put(shardScoreEntry.getKey(), newScore);
+            }
+        }
+        return map;
     }
 }

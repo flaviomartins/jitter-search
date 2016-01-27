@@ -166,7 +166,7 @@ public class SelectionManager implements Managed {
         Map<String, Double> rankedCollections = selectionMethod.rank(topDocs);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getCollectionsShardStats() != null) {
-            Map<String, Double> map = selectionMethod.normalize(rankedCollections, shardsManager.getCollectionsShardStats());
+            Map<String, Double> map = selectionMethod.normalize(rankedCollections, collectionsShardStats, shardsManager.getCollectionsShardStats());
             ranking = getSortedMap(map);
         } else {
             ranking = getSortedMap(rankedCollections);
@@ -199,7 +199,7 @@ public class SelectionManager implements Managed {
 
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getTopicsShardStats() != null) {
-            Map<String, Double> map = selectionMethod.normalize(rankedTopics, shardsManager.getTopicsShardStats());
+            Map<String, Double> map = selectionMethod.normalize(rankedTopics, topicsShardStats, shardsManager.getTopicsShardStats());
             ranking = getSortedMap(map);
         } else {
             ranking = getSortedMap(rankedTopics);

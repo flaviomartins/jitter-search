@@ -26,14 +26,14 @@ public abstract class SelectionMethod {
 
     public abstract Map<String, Double> rank(List<Document> results);
 
-    public Map<String, Double> normalize(Map<String, Double> rank, ShardStats shardStats) {
-        int maxSize = 1;
+    public Map<String, Double> normalize(Map<String, Double> rank, ShardStats csiStats, ShardStats shardStats) {
+        double c_max = 1;
         for (String shardId : rank.keySet()) {
             String shardIdLower = shardId.toLowerCase(Locale.ROOT);
             if (shardStats.getSizes().containsKey(shardIdLower)) {
                 int sz = shardStats.getSizes().get(shardIdLower);
-                if (sz > maxSize)
-                    maxSize = sz;
+                if (sz > c_max)
+                    c_max = sz;
             }
         }
 
@@ -41,8 +41,9 @@ public abstract class SelectionMethod {
         for (Map.Entry<String, Double> shardScoreEntry : rank.entrySet()) {
             String shardIdLower = shardScoreEntry.getKey().toLowerCase(Locale.ROOT);
             if (shardStats.getSizes().containsKey(shardIdLower)) {
-                int sz = shardStats.getSizes().get(shardIdLower);
-                double norm = (double) sz / maxSize;
+                double c_i = shardStats.getSizes().get(shardIdLower);
+                double s_i = csiStats.getSizes().get(shardIdLower);
+                double norm = (1.0 / c_max) * (c_i / s_i);
                 double origScore = shardScoreEntry.getValue();
                 double newScore = norm * origScore;
                 map.put(shardScoreEntry.getKey(), newScore);
