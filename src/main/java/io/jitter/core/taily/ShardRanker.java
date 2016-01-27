@@ -18,9 +18,8 @@ import java.util.*;
 public class ShardRanker {
     private static final Logger logger = LoggerFactory.getLogger(ShardRanker.class);
 
-    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
-    private static final QueryParser QUERY_PARSER =
-            new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
+    private final Analyzer analyzer;
+    private final QueryParser QUERY_PARSER;
 
     // array of FeatureStore pointers
     // stores[0] is the whole collection store; stores[1] onwards is each shard; length is numShards+1
@@ -37,13 +36,16 @@ public class ShardRanker {
     // Taily parameter used in Eq (11)
     private final int _n_c;
 
-    public ShardRanker(List<String> _shardIds, String indexPath, int _n_c, String dbPath, String shardsDbPath) {
-        this(_shardIds.toArray(new String[_shardIds.size()]), indexPath, _n_c, dbPath, shardsDbPath);
+    public ShardRanker(List<String> _shardIds, String indexPath, Analyzer analyzer, int _n_c, String dbPath, String shardsDbPath) {
+        this(_shardIds.toArray(new String[_shardIds.size()]), indexPath, analyzer, _n_c, dbPath, shardsDbPath);
     }
 
-    public ShardRanker(String[] _shardIds, String indexPath, int _n_c, String dbPath, String shardsDbPath) {
+    public ShardRanker(String[] _shardIds, String indexPath, Analyzer analyzer, int _n_c, String dbPath, String shardsDbPath) {
         this._shardIds = _shardIds;
         this.indexPath = indexPath;
+        this.analyzer = analyzer;
+        QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
+        
         this._n_c = _n_c;
         _numShards = _shardIds.length;
 

@@ -1,6 +1,11 @@
 package io.jitter.core.taily;
 
 import io.dropwizard.lifecycle.Managed;
+import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.utils.Stopper;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +17,8 @@ import java.util.Map;
 public class TailyManager implements Managed {
     private static final Logger logger = LoggerFactory.getLogger(TailyManager.class);
 
+    private final Analyzer analyzer;
+
     private final String dbPath;
     private final String index;
     private final int mu;
@@ -22,16 +29,24 @@ public class TailyManager implements Managed {
     private ShardRanker ranker;
     private ShardRanker topicsRanker;
 
-    public TailyManager(String dbPath, String index, int mu, int nc, List<String> users) {
+    public TailyManager(String dbPath, String index, String stopwords, int mu, int nc, List<String> users) {
         this.dbPath = dbPath;
         this.index = index;
         this.mu = mu;
         this.nc = nc;
         this.users = users;
+
+        Stopper stopper = new Stopper(stopwords);
+        if (stopper == null || stopper.asSet().size() == 0) {
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
+        } else {
+            CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true, false, true);
+        }
     }
 
-    public TailyManager(String dbPath, String index, int mu, int nc, List<String> users, Map<String, List<String>> topics) {
-        this(dbPath, index, mu, nc, users);
+    public TailyManager(String dbPath, String index, String stopwords, int mu, int nc, List<String> users, Map<String, List<String>> topics) {
+        this(dbPath, index, stopwords, mu, nc, users);
         this.topics = topics;
     }
 
@@ -64,8 +79,8 @@ public class TailyManager implements Managed {
     @Override
     public void start() throws Exception {
         try {
-            ranker = new ShardRanker(users, index, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.SOURCES_DBENV);
-            topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
+            ranker = new ShardRanker(users, index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.SOURCES_DBENV);
+            topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -90,8 +105,8 @@ public class TailyManager implements Managed {
         taily.buildFromSources(users);
         taily.buildFromTopics(topics);
 
-        ranker = new ShardRanker(users, index, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.SOURCES_DBENV);
-        topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
+        ranker = new ShardRanker(users, index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.SOURCES_DBENV);
+        topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
     }
 
 }

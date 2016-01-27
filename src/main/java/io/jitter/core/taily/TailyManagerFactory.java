@@ -16,6 +16,9 @@ public class TailyManagerFactory {
     @NotEmpty
     private String dbPath;
 
+    @NotEmpty
+    private String stopwords;
+
     @NotNull
     private int mu;
 
@@ -45,6 +48,16 @@ public class TailyManagerFactory {
     @JsonProperty("db")
     public void setDbPath(String dbPath) {
         this.dbPath = dbPath;
+    }
+
+    @JsonProperty("stopwords")
+    public String getStopwords() {
+        return stopwords;
+    }
+
+    @JsonProperty("stopwords")
+    public void setStopwords(String stopwords) {
+        this.stopwords = stopwords;
     }
 
     @JsonProperty
@@ -88,7 +101,7 @@ public class TailyManagerFactory {
     }
 
     public TailyManager build(Environment environment) {
-        final TailyManager tailyManager = new TailyManager(dbPath, index, mu, nc, users, topics);
+        final TailyManager tailyManager = new TailyManager(dbPath, index, stopwords, mu, nc, users, topics);
         environment.lifecycle().manage(tailyManager);
         return tailyManager;
     }
