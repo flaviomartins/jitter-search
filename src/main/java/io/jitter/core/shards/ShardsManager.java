@@ -41,6 +41,7 @@ public class ShardsManager implements Managed {
 
     private final String collection;
     private final String indexPath;
+    private final Stopper stopper;
     private final int mu;
     private final String method;
     private final boolean removeDuplicates;
@@ -71,7 +72,7 @@ public class ShardsManager implements Managed {
         this.topics = treeMap;
 
         SIMILARITY = new LMDirichletSimilarity(mu);
-        Stopper stopper = new Stopper(stopwords);
+        stopper = new Stopper(stopwords);
         if (stopper == null || stopper.asSet().size() == 0) {
             analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
         } else {
@@ -112,6 +113,14 @@ public class ShardsManager implements Managed {
 
     public String getIndexPath() {
         return indexPath;
+    }
+
+    public Stopper getStopper() {
+        return stopper;
+    }
+
+    public int getMu() {
+        return mu;
     }
 
     public Map<String, ImmutableSortedSet<String>> getTopics() {
