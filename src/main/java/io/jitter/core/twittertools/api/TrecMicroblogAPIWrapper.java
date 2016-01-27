@@ -57,11 +57,12 @@ public class TrecMicroblogAPIWrapper implements Managed {
             createDatabase();
     }
 
-    public TrecMicroblogAPIWrapper(String host, int port, String group, String token, String cacheDir, boolean useCache, String collectDb, String stopwords, @Nullable String stats) {
+    public TrecMicroblogAPIWrapper(String host, int port, String group, String token, String cacheDir, boolean useCache, String collectDb, String stopwords, @Nullable String stats, @Nullable String statsDb) {
         this(host, port, group, token, cacheDir, useCache, collectDb);
         stopper = new Stopper(stopwords);
-        if (stats != null)
-            collectionStats = new TrecCollectionStats(stats);
+        if (stats != null && statsDb != null) {
+            collectionStats = new TrecCollectionStats(stats, statsDb);
+        }
     }
 
     @Override

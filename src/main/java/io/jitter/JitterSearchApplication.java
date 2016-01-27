@@ -12,9 +12,7 @@ import io.jitter.core.stream.UserStream;
 import io.jitter.core.twitter.OAuth1;
 import io.jitter.core.twitter.manager.TwitterManager;
 import io.jitter.core.utils.NoExitSecurityManager;
-import io.jitter.health.SearchManagerHealthCheck;
-import io.jitter.health.TailyManagerHealthCheck;
-import io.jitter.health.TwitterManagerHealthCheck;
+import io.jitter.health.*;
 import io.jitter.resources.*;
 import io.jitter.tasks.*;
 import org.apache.commons.lang.StringUtils;
@@ -23,7 +21,6 @@ import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.stream.LiveStreamIndexer;
 import io.jitter.core.stream.StreamLogger;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
-import io.jitter.health.SelectionManagerHealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
@@ -94,8 +91,16 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.healthChecks().register("taily", tailyManagerHealthCheck);
 
         final ShardsManager shardsManager = configuration.getShardsManagerFactory().build(environment, configuration.isLive());
+        // indexing
+        shardsManager.setTwitterManager(twitterManager);
+        // sharding
         shardsManager.setTailyManager(tailyManager);
-
+        final ShardsManagerHealthCheck shardsManagerHealthCheck =
+                new ShardsManagerHealthCheck(shardsManager);
+        environment.healthChecks().register("shards", shardsManagerHealthCheck);
+        environment.admin().addTask(new ShardsManagerIndexTask(shardsManager));
+        environment.admin().addTask(new ShardsManagerStatsTask(shardsManager));
+        
         final SelectionManager selectionManager = configuration.getSelectionManagerFactory().build(environment, configuration.isLive());
         // indexing
         selectionManager.setTwitterManager(twitterManager);

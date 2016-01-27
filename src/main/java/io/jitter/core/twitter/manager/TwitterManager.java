@@ -141,9 +141,9 @@ public class TwitterManager implements Managed {
         }
     }
 
-    public void index(String indexPath, boolean removeDuplicates) throws IOException {
+    public void index(String collection, String indexPath, boolean removeDuplicates) throws IOException {
         long startTime = System.currentTimeMillis();
-        File file = new File(collectionPath);
+        File file = new File(collection);
         if (!file.exists()) {
             logger.error("Error: " + file + " does not exist!");
             return;
@@ -188,8 +188,8 @@ public class TwitterManager implements Managed {
 
                 doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
 
-                doc.add(new IntField(IndexStatuses.StatusField.FRIENDS_COUNT.name, status.getFollowersCount(), Field.Store.YES));
-                doc.add(new IntField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name, status.getFriendsCount(), Field.Store.YES));
+                doc.add(new IntField(IndexStatuses.StatusField.FRIENDS_COUNT.name, status.getFriendsCount(), Field.Store.YES));
+                doc.add(new IntField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name, status.getFollowersCount(), Field.Store.YES));
                 doc.add(new IntField(IndexStatuses.StatusField.STATUSES_COUNT.name, status.getStatusesCount(), Field.Store.YES));
 
                 long inReplyToStatusId = status.getInReplyToStatusId();
@@ -229,85 +229,4 @@ public class TwitterManager implements Managed {
         }
     }
 
-    public void indexLive(String indexPath, boolean removeDuplicates) throws IOException {
-        Directory dir = FSDirectory.open(new File(indexPath));
-
-        Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
-        fieldAnalyzers.put(IndexStatuses.StatusField.SCREEN_NAME.name, new SimpleAnalyzer());
-        PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(analyzer, fieldAnalyzers);
-
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, perFieldAnalyzerWrapper);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
-
-        final FieldType textOptions = new FieldType();
-        textOptions.setIndexed(true);
-        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-        textOptions.setStored(true);
-        textOptions.setTokenized(true);
-
-        final FieldType screenNameOptions = new FieldType();
-        screenNameOptions.setIndexed(true);
-        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-        screenNameOptions.setStored(true);
-        screenNameOptions.setTokenized(true);
-        
-        int cnt = 0;
-        try (IndexWriter writer = new IndexWriter(dir, config)) {
-            for (String screenName : getUsers()) {
-                UserTimeline userTimeline = getUserTimeline(screenName);
-                if (userTimeline == null)
-                    break;
-                LinkedHashMap<Long, Status> statuses = userTimeline.getStatuses();
-                if (userTimeline.getStatuses() == null)
-                    break;
-                for (Status status : statuses.values()) {
-                    cnt++;
-                    org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
-                    doc.add(new LongField(IndexStatuses.StatusField.ID.name, status.getId(), Field.Store.YES));
-                    doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getCreatedAt().getTime(), Field.Store.YES));
-                    doc.add(new Field(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), screenNameOptions));
-
-                    doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
-
-                    doc.add(new IntField(IndexStatuses.StatusField.FRIENDS_COUNT.name, status.getUser().getFollowersCount(), Field.Store.YES));
-                    doc.add(new IntField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name, status.getUser().getFriendsCount(), Field.Store.YES));
-                    doc.add(new IntField(IndexStatuses.StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount(), Field.Store.YES));
-
-                    long inReplyToStatusId = status.getInReplyToStatusId();
-                    if (inReplyToStatusId > 0) {
-                        doc.add(new LongField(IndexStatuses.StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId, Field.Store.YES));
-                        doc.add(new LongField(IndexStatuses.StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId(), Field.Store.YES));
-                    }
-
-                    String lang = status.getLang();
-                    if (!lang.equals("unknown")) {
-                        doc.add(new TextField(IndexStatuses.StatusField.LANG.name, status.getLang(), Field.Store.YES));
-                    }
-
-                    if (status.isRetweet()) {
-                        long retweetStatusId = status.getRetweetedStatus().getId();
-                        if (retweetStatusId > 0) {
-                            doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name, retweetStatusId, Field.Store.YES));
-                            doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_USER_ID.name, status.getRetweetedStatus().getUser().getId(), Field.Store.YES));
-                            doc.add(new IntField(IndexStatuses.StatusField.RETWEET_COUNT.name, status.getRetweetCount(), Field.Store.YES));
-                            if (status.getRetweetCount() < 0 || status.getRetweetedStatus().getId() < 0) {
-                                logger.warn("Error parsing retweet fields of " + status.getId());
-                            }
-                        }
-                    }
-
-                    writer.addDocument(doc);
-                    if (cnt % 1000 == 0) {
-                        logger.debug(cnt + " statuses indexed");
-                    }
-                }
-                logger.info(String.format(Locale.ENGLISH, "Total of %s statuses added", cnt));
-            }
-
-        } catch (Exception e) {
-            logger.error("{}", e.getMessage());
-        } finally {
-            dir.close();
-        }
-    }
 }

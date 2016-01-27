@@ -31,8 +31,6 @@ public class SelectionManager implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(SelectionManager.class);
     
-    public static final int MAX_RESULTS = 10000;
-
     private static final Analyzer analyzer = IndexStatuses.ANALYZER;
     private static final QueryParser QUERY_PARSER =
             new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
@@ -41,6 +39,7 @@ public class SelectionManager implements Managed {
     private DirectoryReader reader;
     private IndexSearcher searcher;
 
+    private final String collection;
     private final String indexPath;
     private final String method;
     private final boolean removeDuplicates;
@@ -56,7 +55,8 @@ public class SelectionManager implements Managed {
     private ShardsManager shardsManager;
     private TwitterManager twitterManager;
 
-    public SelectionManager(String indexPath, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
+    public SelectionManager(String collection, String indexPath, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
+        this.collection = collection;
         this.indexPath = indexPath;
         this.method = method;
         this.removeDuplicates = removeDuplicates;
@@ -406,8 +406,8 @@ public class SelectionManager implements Managed {
     }
 
     public void index() throws IOException {
-        logger.info("standard index");
-        twitterManager.index(indexPath, removeDuplicates);
+        logger.info("selection indexing");
+        twitterManager.index(collection, indexPath, removeDuplicates);
     }
 
     private IndexSearcher getSearcher() throws IOException {

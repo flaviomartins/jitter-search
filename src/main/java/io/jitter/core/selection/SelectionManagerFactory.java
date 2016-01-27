@@ -11,6 +11,8 @@ import java.util.Set;
 
 public class SelectionManagerFactory {
 
+    private String collection;
+
     @NotEmpty
     private String index;
 
@@ -22,6 +24,16 @@ public class SelectionManagerFactory {
     private boolean removeDuplicates;
 
     private Map<String, Set<String>> topics;
+
+    @JsonProperty
+    public String getCollection() {
+        return collection;
+    }
+
+    @JsonProperty
+    public void setCollection(String collection) {
+        this.collection = collection;
+    }
 
     @JsonProperty
     public String getIndex() {
@@ -64,7 +76,7 @@ public class SelectionManagerFactory {
     }
 
     public SelectionManager build(Environment environment, boolean live) {
-        final SelectionManager selectionManager = new SelectionManager(index, method, removeDuplicates, live, topics);
+        final SelectionManager selectionManager = new SelectionManager(collection, index, method, removeDuplicates, live, topics);
         environment.lifecycle().manage(selectionManager);
         return selectionManager;
     }

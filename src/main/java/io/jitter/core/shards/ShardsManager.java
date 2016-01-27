@@ -27,8 +27,6 @@ import java.util.*;
 public class ShardsManager implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(ShardsManager.class);
-    
-    public static final int MAX_RESULTS = 10000;
 
     private static final Analyzer analyzer = IndexStatuses.ANALYZER;
     private static final QueryParser QUERY_PARSER =
@@ -38,6 +36,7 @@ public class ShardsManager implements Managed {
     private DirectoryReader reader;
     private IndexSearcher searcher;
 
+    private final String collection;
     private final String indexPath;
     private final String method;
     private final boolean removeDuplicates;
@@ -53,7 +52,8 @@ public class ShardsManager implements Managed {
     private TwitterManager twitterManager;
     private TailyManager tailyManager;
 
-    public ShardsManager(String indexPath, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
+    public ShardsManager(String collection, String indexPath, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
+        this.collection = collection;
         this.indexPath = indexPath;
         this.method = method;
         this.removeDuplicates = removeDuplicates;
@@ -368,8 +368,8 @@ public class ShardsManager implements Managed {
     }
 
     public void index() throws IOException {
-        logger.info("standard index");
-        twitterManager.index(indexPath, removeDuplicates);
+        logger.info("shards indexing");
+        twitterManager.index(collection, indexPath, removeDuplicates);
     }
 
     private IndexSearcher getSearcher() throws IOException {

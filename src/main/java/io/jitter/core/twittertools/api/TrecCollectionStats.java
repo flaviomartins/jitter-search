@@ -17,7 +17,6 @@ public class TrecCollectionStats implements CollectionStats {
 
     public static final Pattern TAB_PATTERN = Pattern.compile("\\t", Pattern.DOTALL);
     public static final String CORPUS_DBENV = "corpus";
-    public static final String dbPath = "stats";
 
     private static final int TERM_COLUMN = 0;
     private static final int DF_COLUMN = 1;
@@ -32,10 +31,10 @@ public class TrecCollectionStats implements CollectionStats {
     private int cumulativeDocumentFrequency;
     private int cumulativeCollectionFrequency;
 
-    public TrecCollectionStats(String pathToStatsFile) {
-        File statsStorePath = new File(dbPath + "/" + CORPUS_DBENV);
+    public TrecCollectionStats(String pathToStatsFile, String statsDb) {
+        File statsStorePath = new File(statsDb + "/" + CORPUS_DBENV);
         if (!statsStorePath.isDirectory()) {
-            corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
+            corpusStore = new FeatureStore(statsDb + "/" + CORPUS_DBENV, false);
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(new File(pathToStatsFile)))));
                 String line = reader.readLine();
@@ -82,7 +81,7 @@ public class TrecCollectionStats implements CollectionStats {
             corpusStore.close();
         }
 
-        corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
+        corpusStore = new FeatureStore(statsDb + "/" + CORPUS_DBENV, true);
 
         String dfFeatKey = FeatureStore.SIZE_FEAT_SUFFIX;
         cumulativeDocumentFrequency = (int) corpusStore.getFeature(dfFeatKey);

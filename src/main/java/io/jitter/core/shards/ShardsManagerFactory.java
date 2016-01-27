@@ -11,6 +11,8 @@ import java.util.Set;
 
 public class ShardsManagerFactory {
 
+    private String collection;
+
     @NotEmpty
     private String index;
 
@@ -22,6 +24,16 @@ public class ShardsManagerFactory {
     private boolean removeDuplicates;
 
     private Map<String, Set<String>> topics;
+
+    @JsonProperty
+    public String getCollection() {
+        return collection;
+    }
+
+    @JsonProperty
+    public void setCollection(String collection) {
+        this.collection = collection;
+    }
 
     @JsonProperty
     public String getIndex() {
@@ -64,7 +76,7 @@ public class ShardsManagerFactory {
     }
 
     public ShardsManager build(Environment environment, boolean live) {
-        final ShardsManager shardsManager = new ShardsManager(index, method, removeDuplicates, live, topics);
+        final ShardsManager shardsManager = new ShardsManager(collection, index, method, removeDuplicates, live, topics);
         environment.lifecycle().manage(shardsManager);
         return shardsManager;
     }
