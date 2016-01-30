@@ -9,7 +9,7 @@
 
     <groupId>org.novasearch.jitter</groupId>
     <artifactId>jitter-search</artifactId>
-    <version>0.0.7-SNAPSHOT</version>
+    <version>0.1.0</version>
     <packaging>jar</packaging>
     <name>Jitter Search</name>
     <url>${jitter.url}</url>
