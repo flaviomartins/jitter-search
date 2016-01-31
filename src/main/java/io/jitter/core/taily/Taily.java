@@ -24,6 +24,7 @@ public class Taily {
     public static final String CORPUS_DBENV = "corpus";
     public static final String SOURCES_DBENV = "sources";
     public static final String TOPICS_DBENV = "topics";
+    public static final int LOG_TERM_INTERVAL = 1000;
 
     private final String dbPath;
     private final String indexPath;
@@ -172,7 +173,7 @@ public class Taily {
             }
 
             termCnt++;
-            if (termCnt % 1000 == 0) {
+            if (termCnt % LOG_TERM_INTERVAL == 0) {
                 logger.info("  Finished {} terms", termCnt);
             }
 
@@ -321,7 +322,7 @@ public class Taily {
             }
 
             termCnt++;
-            if (termCnt % 1000 == 0) {
+            if (termCnt % LOG_TERM_INTERVAL == 0) {
                 logger.info("  Finished " + termCnt + " terms");
             }
 
