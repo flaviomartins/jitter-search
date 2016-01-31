@@ -17,13 +17,13 @@ public class RMTSDocumentsResponse extends SelectionSearchDocumentsResponse {
         // Jackson deserialization
     }
 
-    public RMTSDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, List<?> selectDocs, List<?> docs) {
-        super(sources, topics, method, numFound, start, selectDocs, null);
+    public RMTSDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, List<?> selectDocs, List<?> shardDocs, List<?> docs) {
+        super(sources, topics, method, numFound, start, selectDocs, shardDocs);
         this.docs = docs;
     }
 
-    public RMTSDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int start, SelectionTopDocuments selectionTopDocuments, TopDocuments topDocuments) {
-        super(sources, topics, method, start, selectionTopDocuments, null);
+    public RMTSDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments shardTopDocuments, TopDocuments topDocuments) {
+        super(sources, topics, method, start, selectionTopDocuments, shardTopDocuments);
         this.numFound = topDocuments.totalHits;
         this.docs = topDocuments.scoreDocs;
     }

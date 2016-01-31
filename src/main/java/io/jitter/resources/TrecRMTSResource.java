@@ -167,7 +167,7 @@ public class TrecRMTSResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selectedSources, selectedTopics, method, 0, shardResults, results);
+        RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selectedSources, selectedTopics, method, 0, selectResults, shardResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }
