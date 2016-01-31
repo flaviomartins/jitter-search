@@ -24,7 +24,7 @@ public class Taily {
     public static final String CORPUS_DBENV = "corpus";
     public static final String SOURCES_DBENV = "sources";
     public static final String TOPICS_DBENV = "topics";
-    public static final int LOG_TERM_INTERVAL = 1000;
+    public static final int LOG_TERM_INTERVAL = 10000;
 
     private final String dbPath;
     private final String indexPath;
