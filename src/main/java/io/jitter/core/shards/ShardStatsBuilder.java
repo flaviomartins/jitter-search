@@ -69,7 +69,7 @@ public class ShardStatsBuilder {
         Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.SCREEN_NAME.name);
         TermsEnum termEnum = terms.iterator(null);
 
-        int termCnt = 0;
+        int colCnt = 0;
         BytesRef bytesRef;
         while ((bytesRef = termEnum.next()) != null) {
             String term = bytesRef.utf8ToString();
@@ -87,10 +87,9 @@ public class ShardStatsBuilder {
                 logger.warn("collection {}: {} = {}", collection, "#d", docFreq);
             }
 
-            termCnt++;
+            colCnt++;
         }
-
-        logger.info("term count: " + termCnt);
+        logger.info("total collections: " + colCnt);
 
         for (String topic : topics.keySet()) {
             int docFreq = 0;
@@ -103,6 +102,7 @@ public class ShardStatsBuilder {
             topicsSizes.put(topic, docFreq);
             logger.info("topic {}: {} = {}", topic, "#d", docFreq);
         }
+        logger.info("total topics: " + topics.size());
 
         collectionsShardStats = new ShardStats(collectionsSizes);
         topicsShardStats = new ShardStats(topicsSizes);
