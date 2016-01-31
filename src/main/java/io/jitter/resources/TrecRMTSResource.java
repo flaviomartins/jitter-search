@@ -15,6 +15,7 @@ import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
+import io.jitter.core.taily.TailyManager;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -41,14 +42,17 @@ public class TrecRMTSResource {
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
     private final SelectionManager selectionManager;
+    private final TailyManager tailyManager;
 
-    public TrecRMTSResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager) throws IOException {
+    public TrecRMTSResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager, TailyManager tailyManager) throws IOException {
         Preconditions.checkNotNull(trecMicroblogAPIWrapper);
         Preconditions.checkNotNull(selectionManager);
+        Preconditions.checkNotNull(tailyManager);
 
         counter = new AtomicLong();
         this.trecMicroblogAPIWrapper = trecMicroblogAPIWrapper;
         this.selectionManager = selectionManager;
+        this.tailyManager = tailyManager;
     }
 
     @GET
@@ -66,6 +70,7 @@ public class TrecRMTSResource {
                                           @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                           @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
                                           @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
+                                          @QueryParam("v") @DefaultValue("10") IntParam v,
                                           @QueryParam("reScore") @DefaultValue("false") BooleanParam reScore,
                                           @QueryParam("topic") Optional<String> topic,
                                           @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
@@ -88,23 +93,30 @@ public class TrecRMTSResource {
         long startTime = System.currentTimeMillis();
 
         SelectionTopDocuments selectResults = null;
-        if (q.isPresent()) {
-            if (!sFuture.get()) {
-                if (maxId.isPresent()) {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-                } else if (epoch.isPresent()) {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+
+        Map<String, Double> selectedSources;
+        Map<String, Double> selectedTopics;
+        if ("taily".equalsIgnoreCase(method)) {
+            selectedSources = tailyManager.select(query, v.get());
+            selectedTopics = tailyManager.selectTopics(query, v.get());
+        } else {
+            if (q.isPresent()) {
+                if (!sFuture.get()) {
+                    if (maxId.isPresent()) {
+                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+                    } else if (epoch.isPresent()) {
+                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                    } else {
+                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
+                    }
                 } else {
                     selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
                 }
-            } else {
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
             }
+            SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
+            selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+            selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
         }
-
-        SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-        Map<String, Double> selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-        Map<String, Double> selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;
