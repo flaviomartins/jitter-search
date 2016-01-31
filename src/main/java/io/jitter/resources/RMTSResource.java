@@ -16,6 +16,7 @@ import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
+import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/rmts")
@@ -41,16 +43,19 @@ public class RMTSResource {
     private final AtomicLong counter;
     private final SearchManager searchManager;
     private final SelectionManager selectionManager;
+    private final ShardsManager shardsManager;
     private final TailyManager tailyManager;
 
-    public RMTSResource(SearchManager searchManager, SelectionManager selectionManager, TailyManager tailyManager) throws IOException {
+    public RMTSResource(SearchManager searchManager, SelectionManager selectionManager, ShardsManager shardsManager, TailyManager tailyManager) throws IOException {
         Preconditions.checkNotNull(searchManager);
         Preconditions.checkNotNull(selectionManager);
+        Preconditions.checkNotNull(shardsManager);
         Preconditions.checkNotNull(tailyManager);
 
         counter = new AtomicLong();
         this.searchManager = searchManager;
         this.selectionManager = selectionManager;
+        this.shardsManager = shardsManager;
         this.tailyManager = tailyManager;
     }
 
@@ -116,6 +121,23 @@ public class RMTSResource {
             selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
             selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
         }
+        Set<String> selected = !fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
+
+
+        SelectionTopDocuments shardResults = null;
+        if (q.isPresent()) {
+            if (!sFuture.get()) {
+                if (maxId.isPresent()) {
+                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get(), maxId.get());
+                } else if (epoch.isPresent()) {
+                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
+                } else {
+                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get());
+                }
+            } else {
+                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get());
+            }
+        }
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;
@@ -146,7 +168,7 @@ public class RMTSResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selectedSources, selectedTopics, method, 0, selectResults, results);
+        RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selectedSources, selectedTopics, method, 0, shardResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

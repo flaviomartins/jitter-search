@@ -13,6 +13,11 @@ import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;
+import io.jitter.core.selection.SelectionTopDocuments;
+import io.jitter.core.selection.methods.SelectionMethod;
+import io.jitter.core.selection.methods.SelectionMethodFactory;
+import io.jitter.core.shards.ShardsManager;
+import io.jitter.core.taily.TailyManager;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.Epochs;
@@ -31,6 +36,8 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/trecselfb")
@@ -43,14 +50,20 @@ public class TrecSelectionRM3FeedbackResource {
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
     private final SelectionManager selectionManager;
+    private final ShardsManager shardsManager;
+    private final TailyManager tailyManager;
 
-    public TrecSelectionRM3FeedbackResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager) throws IOException {
+    public TrecSelectionRM3FeedbackResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager, ShardsManager shardsManager, TailyManager tailyManager) throws IOException {
         Preconditions.checkNotNull(trecMicroblogAPIWrapper);
         Preconditions.checkNotNull(selectionManager);
+        Preconditions.checkNotNull(shardsManager);
+        Preconditions.checkNotNull(tailyManager);
 
         counter = new AtomicLong();
         this.trecMicroblogAPIWrapper = trecMicroblogAPIWrapper;
         this.selectionManager = selectionManager;
+        this.shardsManager = shardsManager;
+        this.tailyManager = tailyManager;
     }
 
     @GET
@@ -68,9 +81,12 @@ public class TrecSelectionRM3FeedbackResource {
                                  @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
                                  @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
                                  @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
+                                 @QueryParam("v") @DefaultValue("10") IntParam v,
                                  @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
                                  @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                  @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
+                                 @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
+                                 @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
                                  @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -84,18 +100,46 @@ public class TrecSelectionRM3FeedbackResource {
 
         long startTime = System.currentTimeMillis();
 
-        TopDocuments selectResults = null;
-        if (q.isPresent()) {
-            if (!sFuture.get()) {
-                if (maxId.isPresent()) {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-                } else if (epoch.isPresent()) {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+        SelectionTopDocuments selectResults = null;
+
+        Map<String, Double> selectedSources;
+        Map<String, Double> selectedTopics;
+        if ("taily".equalsIgnoreCase(method)) {
+            selectedSources = tailyManager.select(query, v.get());
+            selectedTopics = tailyManager.selectTopics(query, v.get());
+        } else {
+            if (q.isPresent()) {
+                if (!sFuture.get()) {
+                    if (maxId.isPresent()) {
+                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+                    } else if (epoch.isPresent()) {
+                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                    } else {
+                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
+                    }
                 } else {
                     selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
                 }
+            }
+            SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
+            selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+            selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        }
+        Set<String> selected = !fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
+
+
+        SelectionTopDocuments shardResults = null;
+        if (q.isPresent()) {
+            if (!sFuture.get()) {
+                if (maxId.isPresent()) {
+                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get(), maxId.get());
+                } else if (epoch.isPresent()) {
+                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
+                } else {
+                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get());
+                }
             } else {
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
+                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get());
             }
         }
 
@@ -111,11 +155,11 @@ public class TrecSelectionRM3FeedbackResource {
             queryFV.normalizeToOne();
 
             // cap results
-            selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
+            shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs.get(), shardResults.scoreDocs.size()));
 
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
-            fb.setRes(selectResults.scoreDocs);
+            fb.setRes(shardResults.scoreDocs);
             fb.build(trecMicroblogAPIWrapper.getStopper());
 
             FeatureVector fbVector = fb.asFeatureVector();
@@ -123,7 +167,7 @@ public class TrecSelectionRM3FeedbackResource {
             fbVector.normalizeToOne();
             fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
-            logger.info("fbDocs: {} Feature Vector:\n{}", selectResults.scoreDocs.size(), fbVector.toString());
+            logger.info("fbDocs: {} Feature Vector:\n{}", shardResults.scoreDocs.size(), fbVector.toString());
 
             StringBuilder builder = new StringBuilder();
             Iterator<String> terms = fbVector.iterator();
@@ -148,7 +192,7 @@ public class TrecSelectionRM3FeedbackResource {
 
         long endTime = System.currentTimeMillis();
 
-        int totalFbDocs = selectResults != null ? selectResults.totalHits : 0;
+        int totalFbDocs = shardResults != null ? shardResults.totalHits : 0;
         int totalHits = results != null ? results.totalHits : 0;
 
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));

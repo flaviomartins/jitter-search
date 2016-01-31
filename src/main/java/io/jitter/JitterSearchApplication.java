@@ -85,6 +85,9 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TopTermsResource topTermsResource = new TopTermsResource(searchManager);
         environment.jersey().register(topTermsResource);
 
+        final RM3FeedbackResource rm3FeedbackResource = new RM3FeedbackResource(searchManager);
+        environment.jersey().register(rm3FeedbackResource);
+
         final TailyManager tailyManager = configuration.getTailyManagerFactory().build(environment);
         final TailyManagerHealthCheck tailyManagerHealthCheck =
                 new TailyManagerHealthCheck(tailyManager);
@@ -128,13 +131,10 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final SelectSearchResource selectSearchResource = new SelectSearchResource(selectionManager, shardsManager, tailyManager);
         environment.jersey().register(selectSearchResource);
 
-        final RM3FeedbackResource rm3FeedbackResource = new RM3FeedbackResource(searchManager);
-        environment.jersey().register(rm3FeedbackResource);
-
         final MultiFeedbackResource multiFeedbackResource = new MultiFeedbackResource(searchManager, selectionManager, shardsManager, tailyManager);
         environment.jersey().register(multiFeedbackResource);
 
-        final RMTSResource RMTSResource = new RMTSResource(searchManager, selectionManager, tailyManager);
+        final RMTSResource RMTSResource = new RMTSResource(searchManager, selectionManager, shardsManager, tailyManager);
         environment.jersey().register(RMTSResource);
 
 
@@ -148,13 +148,13 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TrecRM3FeedbackResource trecRM3FeedbackResource = new TrecRM3FeedbackResource(trecMicroblogAPIWrapper);
         environment.jersey().register(trecRM3FeedbackResource);
         
-        final TrecSelectionRM3FeedbackResource trecSelectionRM3FeedbackResource = new TrecSelectionRM3FeedbackResource(trecMicroblogAPIWrapper, selectionManager);
+        final TrecSelectionRM3FeedbackResource trecSelectionRM3FeedbackResource = new TrecSelectionRM3FeedbackResource(trecMicroblogAPIWrapper, selectionManager, shardsManager, tailyManager);
         environment.jersey().register(trecSelectionRM3FeedbackResource);
 
         final TrecMultiFeedbackResource trecMultiFeedbackResource = new TrecMultiFeedbackResource(trecMicroblogAPIWrapper, selectionManager, shardsManager, tailyManager);
         environment.jersey().register(trecMultiFeedbackResource);
 
-        final TrecRMTSResource trecRMTSResource = new TrecRMTSResource(trecMicroblogAPIWrapper, selectionManager, tailyManager);
+        final TrecRMTSResource trecRMTSResource = new TrecRMTSResource(trecMicroblogAPIWrapper, selectionManager, shardsManager, tailyManager);
         environment.jersey().register(trecRMTSResource);
 
 
