@@ -56,6 +56,8 @@ public class ShardRanker {
         if (new File(dbPath).isDirectory()) {
             FeatureStore collectionStore = new FeatureStore(dbPath, true);
             _stores[0] = collectionStore;
+        } else {
+            logger.error("directory not found: " + dbPath);
         }
 
         // read in the mapping files given and construct a reverse mapping,
@@ -68,8 +70,10 @@ public class ShardRanker {
 
             if (new File(cPath).isDirectory()) {
                 // open feature store for shard
-                FeatureStore store = new FeatureStore(cPath, false);
+                FeatureStore store = new FeatureStore(cPath, true);
                 _stores[i] = store;
+            } else {
+                logger.error("directory not found: " + cPath);
             }
         }
     }
