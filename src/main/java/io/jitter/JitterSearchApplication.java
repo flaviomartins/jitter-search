@@ -161,37 +161,36 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         if (configuration.isLive()) {
             OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getOAuth1Factory().build();
 
-            final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10, true);
-
             String userLogPath = "./data/archive/user";
             if (StringUtils.isNotBlank(configuration.getUserStreamLogPath()))
                 userLogPath = configuration.getUserStreamLogPath();
 
             final StreamLogger userStreamLogger = new StreamLogger(userLogPath);
-
             final TimelineSseResource timelineSseResource = new TimelineSseResource();
+            environment.jersey().register(timelineSseResource);
+
+            final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10, true);
             final UserStream userStream = new UserStream(oAuth1,
                     Lists.newArrayList(timelineSseResource, userStreamIndexer),
                     Lists.<RawStreamListener>newArrayList(userStreamLogger));
             environment.lifecycle().manage(userStream);
             environment.lifecycle().manage(userStreamIndexer);
-            environment.jersey().register(timelineSseResource);
-
-            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 1000, false);
-
+            
             String statusLogPath = "./data/archive/sample";
             if (StringUtils.isNotBlank(configuration.getStatusStreamLogPath()))
                 statusLogPath = configuration.getStatusStreamLogPath();
 
             final StreamLogger statusStreamLogger = new StreamLogger(statusLogPath);
-
             final SampleSseResource sampleSseResource = new SampleSseResource();
+            environment.jersey().register(sampleSseResource);
+
+
+            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 1000, false);
             final SampleStream statusStream = new SampleStream(oAuth1,
                     Lists.newArrayList(sampleSseResource, statusStreamIndexer),
                     Lists.<RawStreamListener>newArrayList(statusStreamLogger));
             environment.lifecycle().manage(statusStream);
             environment.lifecycle().manage(statusStreamIndexer);
-            environment.jersey().register(sampleSseResource);
         }
     }
 }

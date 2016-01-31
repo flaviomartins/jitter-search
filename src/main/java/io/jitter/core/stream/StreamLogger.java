@@ -9,7 +9,6 @@ import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
 import ch.qos.logback.core.spi.FilterReply;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
@@ -63,7 +62,7 @@ public class StreamLogger implements RawStreamListener, Managed {
         TimeBasedRollingPolicy statusesRollingPolicy = new TimeBasedRollingPolicy();
         statusesRollingPolicy.setContext(logCtx);
         statusesRollingPolicy.setParent(statusesAppender);
-        statusesRollingPolicy.setFileNamePattern(FilenameUtils.concat(directory, "statuses.log" + HOUR_ROLL));
+        statusesRollingPolicy.setFileNamePattern(directory + "/" + "statuses.log" + HOUR_ROLL);
         statusesRollingPolicy.start();
 
         statusesAppender.setRollingPolicy(statusesRollingPolicy);
@@ -79,7 +78,7 @@ public class StreamLogger implements RawStreamListener, Managed {
         TimeBasedRollingPolicy warningsRollingPolicy = new TimeBasedRollingPolicy();
         warningsRollingPolicy.setContext(logCtx);
         warningsRollingPolicy.setParent(warningsAppender);
-        warningsRollingPolicy.setFileNamePattern(FilenameUtils.concat(directory, "warnings.log" + HOUR_ROLL));
+        warningsRollingPolicy.setFileNamePattern(directory + "/" +  "warnings.log" + HOUR_ROLL);
         warningsRollingPolicy.start();
 
         warningsAppender.setRollingPolicy(warningsRollingPolicy);
