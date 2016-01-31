@@ -130,7 +130,12 @@ public class MultiFeedbackResource {
         Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selectedSources.keySet(), fbCols.get()));
         Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selectedTopics.keySet(), fbCols.get()));
 
-        Set<String> selected = !fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
+        Set<String> selected;
+        if (!topic.isPresent()) {
+            selected = !fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
+        } else {
+            selected = Sets.newHashSet(topic.get());
+        }
 
         SelectionTopDocuments shardResults = null;
         if (q.isPresent()) {
