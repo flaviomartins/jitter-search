@@ -82,15 +82,15 @@ public class ShardStatsBuilder {
 
             if (reverseTopicMap.keySet().contains(collection)) {
                 collectionsSizes.put(collection, docFreq);
-                logger.info("SCAN collection: " + collection + " " + docFreq);
+                logger.debug("collection {}: {} = {}", collection, "#d", docFreq);
             } else {
-                logger.warn("SCAN collection: " + collection + " " + docFreq);
+                logger.warn("collection {}: {} = {}", collection, "#d", docFreq);
             }
 
             termCnt++;
         }
 
-        logger.info("SCAN total collections: " + termCnt);
+        logger.info("term count: " + termCnt);
 
         for (String topic : topics.keySet()) {
             int docFreq = 0;
@@ -101,12 +101,12 @@ public class ShardStatsBuilder {
             }
 
             topicsSizes.put(topic, docFreq);
-            logger.info("SCAN topics: " + topic + " " + docFreq);
+            logger.info("topic {}: {} = {}", topic, "#d", docFreq);
         }
 
         collectionsShardStats = new ShardStats(collectionsSizes);
         topicsShardStats = new ShardStats(topicsSizes);
 
-        logger.info("SCAN total docs: " + collectionsShardStats.getTotalDocs() + " - " + topicsShardStats.getTotalDocs());
+        logger.info("total docs: " + collectionsShardStats.getTotalDocs() + " - " + topicsShardStats.getTotalDocs());
     }
 }
