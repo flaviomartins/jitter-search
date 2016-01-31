@@ -63,7 +63,7 @@ public class ShardRanker {
         // read in the mapping files given and construct a reverse mapping,
         // i.e. doc -> shard, and create FeatureStore dbs for each shard
         for (int i = 1; i < _numShards + 1; i++) {
-            String shardIdStr = _shardIds[i - 1];
+            String shardIdStr = _shardIds[i - 1].toLowerCase(Locale.ROOT);
 
             // create output directory for the feature store dbs
             String cPath = shardsDbPath + "/" + shardIdStr;
