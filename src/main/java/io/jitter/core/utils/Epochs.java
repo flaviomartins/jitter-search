@@ -7,7 +7,11 @@ public class Epochs {
         String[] split = epochRange.split("[: ]");
         try {
             if (split.length == 1) {
-                epochs[1] = Long.parseLong(split[0]);
+                if (epochRange.endsWith(":")) {
+                    epochs[0] = Long.parseLong(split[0]);
+                } else {
+                    epochs[1] = Long.parseLong(split[0]);
+                } 
             } else {
                 epochs[0] = Long.parseLong(split[0]);
                 epochs[1] = Long.parseLong(split[1]);
