@@ -94,11 +94,7 @@ public class SearchManager implements Managed {
         getSearcher().search(q, filter, totalHitCountCollector);
         int totalHits = totalHitCountCollector.getTotalHits();
 
-        TopDocs rs;
-        if (filter != null )
-            rs = getSearcher().search(q, filter, numResults);
-        else
-            rs = getSearcher().search(q, numResults);
+        TopDocs rs = getSearcher().search(q, filter, numResults);
 
         List<Document> sorted = getSorted(rs, n, filterRT);
 

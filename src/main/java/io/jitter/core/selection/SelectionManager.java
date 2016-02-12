@@ -34,7 +34,9 @@ import java.util.*;
 public class SelectionManager implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(SelectionManager.class);
-    
+
+    public static final int MAX_RESULTS = 10000;
+
     private final LMDirichletSimilarity SIMILARITY;
     private final Analyzer analyzer;
     private final QueryParser QUERY_PARSER;
@@ -263,38 +265,37 @@ public class SelectionManager implements Managed {
     }
 
     public SelectionTopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
-//        int numResults = Math.min(MAX_RESULTS, 3 * n);
+        int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
         
-//        TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
-//        getSearcher().search(q, filter, totalHitCountCollector);
-//        int totalHits = totalHitCountCollector.getTotalHits();
+        TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
+        getSearcher().search(q, filter, totalHitCountCollector);
+        int totalHits = totalHitCountCollector.getTotalHits();
 
-        Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.TEXT.name);
-        TermsEnum termEnum = terms.iterator(null);
-        final BytesRefBuilder bytes = new BytesRefBuilder();
+        int totalDF = -1;
+        if (!live) {
+            Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.TEXT.name);
+            TermsEnum termEnum = terms.iterator(null);
+            final BytesRefBuilder bytes = new BytesRefBuilder();
 
-        int totalDF = 0;
-        Set<Term> queryTerms = new TreeSet<>();
-        q.extractTerms(queryTerms);
-        for (Term term : queryTerms) {
-            String text = term.text();
-            if (text.isEmpty())
-                continue;
-            bytes.copyChars(text);
-            termEnum.seekExact(bytes.toBytesRef());
-            totalDF += termEnum.docFreq();
+            totalDF = 0;
+            Set<Term> queryTerms = new TreeSet<>();
+            q.extractTerms(queryTerms);
+            for (Term term : queryTerms) {
+                String text = term.text();
+                if (text.isEmpty())
+                    continue;
+                bytes.copyChars(text);
+                termEnum.seekExact(bytes.toBytesRef());
+                totalDF += termEnum.docFreq();
+            }
         }
         
-        TopDocs rs;
-        if (filter != null )
-            rs = getSearcher().search(q, filter, reader.numDocs());
-        else
-            rs = getSearcher().search(q, reader.numDocs());
+        TopDocs rs = getSearcher().search(q, filter, numResults);
 
         List<Document> sorted = getSorted(rs, n, filterRT);
 
-        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(rs.totalHits, sorted);
+        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(totalHits, sorted);
         selectionTopDocuments.setC_sel(totalDF);
         return selectionTopDocuments;
     }
