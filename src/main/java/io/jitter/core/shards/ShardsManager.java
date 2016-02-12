@@ -180,7 +180,7 @@ public class ShardsManager implements Managed {
 
         int c_r;
         if (live) {
-            c_r = results.size();
+            c_r = selectResults.totalHits;
         } else {
             int totalDF = 0;
             Set<Term> queryTerms = new TreeSet<>();
@@ -213,7 +213,7 @@ public class ShardsManager implements Managed {
 
         int c_r;
         if (live) {
-            c_r = results.size();
+            c_r = selectResults.totalHits;
         } else {
             int totalDF = 0;
             Set<Term> queryTerms = new TreeSet<>();
