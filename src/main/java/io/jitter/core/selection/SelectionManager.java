@@ -272,13 +272,15 @@ public class SelectionManager implements Managed {
         getSearcher().search(q, filter, totalHitCountCollector);
         int totalHits = totalHitCountCollector.getTotalHits();
 
-        int totalDF = -1;
-        if (!live) {
+        int c_sel;
+        if (live) {
+            c_sel = totalHits;
+        } else {
             Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.TEXT.name);
             TermsEnum termEnum = terms.iterator(null);
             final BytesRefBuilder bytes = new BytesRefBuilder();
 
-            totalDF = 0;
+            int totalDF = 0;
             Set<Term> queryTerms = new TreeSet<>();
             q.extractTerms(queryTerms);
             for (Term term : queryTerms) {
@@ -289,6 +291,7 @@ public class SelectionManager implements Managed {
                 termEnum.seekExact(bytes.toBytesRef());
                 totalDF += termEnum.docFreq();
             }
+            c_sel = totalDF;
         }
         
         TopDocs rs = getSearcher().search(q, filter, numResults);
@@ -296,7 +299,7 @@ public class SelectionManager implements Managed {
         List<Document> sorted = getSorted(rs, n, filterRT);
 
         SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(totalHits, sorted);
-        selectionTopDocuments.setC_sel(totalDF);
+        selectionTopDocuments.setC_sel(c_sel);
         return selectionTopDocuments;
     }
 

@@ -32,6 +32,8 @@ public class ShardsManager implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(ShardsManager.class);
 
+    public static final int MAX_RESULTS = 10000;
+
     private final LMDirichletSimilarity SIMILARITY;
     private final Analyzer analyzer;
     private final QueryParser QUERY_PARSER;
@@ -176,20 +178,26 @@ public class ShardsManager implements Managed {
             }
         }
 
-        int totalDF = 0;
-        Set<Term> queryTerms = new TreeSet<>();
-        query.extractTerms(queryTerms);
-        for (Term term : queryTerms) {
-            String text = term.text();
-            if (text.isEmpty())
-                continue;
-            for (String selectedSource : selectedSources) {
-                totalDF += tailyManager.getDF(selectedSource, text);
+        int c_r;
+        if (live) {
+            c_r = results.size();
+        } else {
+            int totalDF = 0;
+            Set<Term> queryTerms = new TreeSet<>();
+            query.extractTerms(queryTerms);
+            for (Term term : queryTerms) {
+                String text = term.text();
+                if (text.isEmpty())
+                    continue;
+                for (String selectedSource : selectedSources) {
+                    totalDF += tailyManager.getDF(selectedSource, text);
+                }
             }
+            c_r = totalDF;
         }
 
         SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
-        selectionTopDocuments.setC_r(totalDF);
+        selectionTopDocuments.setC_r(c_r);
         return selectionTopDocuments;
     }
 
@@ -203,20 +211,26 @@ public class ShardsManager implements Managed {
             }
         }
 
-        int totalDF = 0;
-        Set<Term> queryTerms = new TreeSet<>();
-        query.extractTerms(queryTerms);
-        for (Term term : queryTerms) {
-            String text = term.text();
-            if (text.isEmpty())
-                continue;
-            for (String selectedTopic : selectedTopics) {
-                totalDF += tailyManager.getTopicsDF(selectedTopic, text);
+        int c_r;
+        if (live) {
+            c_r = results.size();
+        } else {
+            int totalDF = 0;
+            Set<Term> queryTerms = new TreeSet<>();
+            query.extractTerms(queryTerms);
+            for (Term term : queryTerms) {
+                String text = term.text();
+                if (text.isEmpty())
+                    continue;
+                for (String selectedTopic : selectedTopics) {
+                    totalDF += tailyManager.getTopicsDF(selectedTopic, text);
+                }
             }
+            c_r = totalDF;
         }
 
         SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
-        selectionTopDocuments.setC_r(totalDF);
+        selectionTopDocuments.setC_r(c_r);
         return selectionTopDocuments;
     }
 
@@ -242,22 +256,28 @@ public class ShardsManager implements Managed {
     }
 
     public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
+        int numResults = Math.min(MAX_RESULTS, 3 * n);
         Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
-        
+
+        TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
+        getSearcher().search(q, filter, totalHitCountCollector);
+        int totalHits = totalHitCountCollector.getTotalHits();
+
         TopDocs rs;
-        if (filter != null )
-            rs = getSearcher().search(q, filter, reader.numDocs());
-        else
+        if (live) {
+            rs = getSearcher().search(q, filter, numResults);
+        } else {
             rs = getSearcher().search(q, reader.numDocs());
+        }
 
         List<Document> sorted = getSorted(rs, n, filterRT);
 
-        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(rs.totalHits, sorted);
+        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(totalHits, sorted);
         
-        if (!topics) {
-            return limit(filter(q, collections, selectionTopDocuments), n);
-        } else {
+        if (topics) {
             return limit(filterTopics(q, collections, selectionTopDocuments), n);
+        } else {
+            return limit(filter(q, collections, selectionTopDocuments), n);
         }
     }
 
