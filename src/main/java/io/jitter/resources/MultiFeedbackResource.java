@@ -163,6 +163,9 @@ public class MultiFeedbackResource {
             }
             queryFV.normalizeToOne();
 
+            // cap results
+            shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs.get(), shardResults.scoreDocs.size()));
+
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
             fb.setRes(shardResults.scoreDocs);
