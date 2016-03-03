@@ -170,12 +170,15 @@ public class ShardsManager implements Managed {
     }
 
     private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) {
-        HashSet<String> collections = Sets.newHashSet(selectedSources);
         List<Document> results = new ArrayList<>();
-        for (Document doc : selectResults.scoreDocs) {
-            if (collections.contains(doc.getScreen_name())) {
-                results.add(doc);
+        if (selectedSources != null) {
+            for (Document doc : selectResults.scoreDocs) {
+                if (selectedSources.contains(doc.getScreen_name())) {
+                    results.add(doc);
+                }
             }
+        } else {
+            results.addAll(selectResults.scoreDocs);
         }
 
         int c_r;
@@ -189,8 +192,15 @@ public class ShardsManager implements Managed {
                 String text = term.text();
                 if (text.isEmpty())
                     continue;
-                for (String selectedSource : selectedSources) {
-                    totalDF += tailyManager.getDF(selectedSource, text);
+
+                if (selectedSources != null) {
+                    for (String selectedSource : selectedSources) {
+                        totalDF += tailyManager.getDF(selectedSource, text);
+                    }
+                } else {
+                    for (String source : reverseTopicMap.keySet()) {
+                        totalDF += tailyManager.getDF(source, text);
+                    }
                 }
             }
             c_r = totalDF;
@@ -203,12 +213,16 @@ public class ShardsManager implements Managed {
 
     private SelectionTopDocuments filterTopics(Query query, Set<String> selectedTopics, SelectionTopDocuments selectResults) {
         List<Document> results = new ArrayList<>();
-        for (Document doc : selectResults.scoreDocs) {
-            for (String selectedTopic: selectedTopics) {
-                if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
-                    results.add(doc);
+        if (selectedTopics != null) {
+            for (Document doc : selectResults.scoreDocs) {
+                for (String selectedTopic: selectedTopics) {
+                    if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
+                        results.add(doc);
+                    }
                 }
             }
+        } else {
+            results.addAll(selectResults.scoreDocs);
         }
 
         int c_r;
@@ -222,8 +236,15 @@ public class ShardsManager implements Managed {
                 String text = term.text();
                 if (text.isEmpty())
                     continue;
-                for (String selectedTopic : selectedTopics) {
-                    totalDF += tailyManager.getTopicsDF(selectedTopic, text);
+
+                if (selectedTopics != null) {
+                    for (String selectedTopic : selectedTopics) {
+                        totalDF += tailyManager.getTopicsDF(selectedTopic, text);
+                    }
+                } else {
+                    for (String topic : topics.keySet()) {
+                        totalDF += tailyManager.getDF(topic, text);
+                    }
                 }
             }
             c_r = totalDF;
