@@ -85,8 +85,8 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TopTermsResource topTermsResource = new TopTermsResource(searchManager);
         environment.jersey().register(topTermsResource);
 
-        final RM3FeedbackResource rm3FeedbackResource = new RM3FeedbackResource(searchManager);
-        environment.jersey().register(rm3FeedbackResource);
+        final FeedbackResource feedbackResource = new FeedbackResource(searchManager);
+        environment.jersey().register(feedbackResource);
 
         final TailyManager tailyManager = configuration.getTailyManagerFactory().build(environment);
         final TailyManagerHealthCheck tailyManagerHealthCheck =
@@ -145,8 +145,8 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TrecSearchResource trecSearchResource = new TrecSearchResource(trecMicroblogAPIWrapper);
         environment.jersey().register(trecSearchResource);
 
-        final TrecRM3FeedbackResource trecRM3FeedbackResource = new TrecRM3FeedbackResource(trecMicroblogAPIWrapper);
-        environment.jersey().register(trecRM3FeedbackResource);
+        final TrecFeedbackResource trecFeedbackResource = new TrecFeedbackResource(trecMicroblogAPIWrapper);
+        environment.jersey().register(trecFeedbackResource);
         
         final TrecSelectionRM3FeedbackResource trecSelectionRM3FeedbackResource = new TrecSelectionRM3FeedbackResource(trecMicroblogAPIWrapper, selectionManager, shardsManager, tailyManager);
         environment.jersey().register(trecSelectionRM3FeedbackResource);

@@ -32,15 +32,15 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/trecfb")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
-public class TrecRM3FeedbackResource {
-    private static final Logger logger = LoggerFactory.getLogger(TrecRM3FeedbackResource.class);
+public class TrecFeedbackResource {
+    private static final Logger logger = LoggerFactory.getLogger(TrecFeedbackResource.class);
 
     private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
 
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
 
-    public TrecRM3FeedbackResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper) throws IOException {
+    public TrecFeedbackResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper) throws IOException {
         Preconditions.checkNotNull(trecMicroblogAPIWrapper);
 
         counter = new AtomicLong();

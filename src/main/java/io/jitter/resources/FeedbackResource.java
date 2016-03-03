@@ -34,15 +34,15 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/fb")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
-public class RM3FeedbackResource {
-    private static final Logger logger = LoggerFactory.getLogger(RM3FeedbackResource.class);
+public class FeedbackResource {
+    private static final Logger logger = LoggerFactory.getLogger(FeedbackResource.class);
 
     private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
 
     private final AtomicLong counter;
     private final SearchManager searchManager;
 
-    public RM3FeedbackResource(SearchManager searchManager) throws IOException {
+    public FeedbackResource(SearchManager searchManager) throws IOException {
         Preconditions.checkNotNull(searchManager);
 
         counter = new AtomicLong();
