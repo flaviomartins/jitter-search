@@ -372,7 +372,8 @@ public class SearchManager implements Managed {
                         }
                     }
 
-                    writer.addDocument(doc);
+                    Term delTerm = new Term(IndexStatuses.StatusField.ID.name, Long.toString(id));
+                    writer.updateDocument(delTerm, doc);
                     if (cnt % 10000 == 0) {
                         logger.info("{} statuses indexed", cnt);
                     }

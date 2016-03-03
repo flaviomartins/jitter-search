@@ -12,6 +12,7 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
@@ -211,7 +212,8 @@ public class TwitterManager implements Managed {
                     }
                 }
 
-                writer.addDocument(doc);
+                Term delTerm = new Term(IndexStatuses.StatusField.ID.name, Long.toString(status.getId()));
+                writer.updateDocument(delTerm, doc);
                 if (cnt % 1000 == 0) {
                     logger.debug(cnt + " statuses indexed");
                 }
