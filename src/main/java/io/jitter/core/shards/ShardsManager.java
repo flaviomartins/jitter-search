@@ -243,7 +243,7 @@ public class ShardsManager implements Managed {
                     }
                 } else {
                     for (String topic : topics.keySet()) {
-                        totalDF += tailyManager.getDF(topic, text);
+                        totalDF += tailyManager.getTopicsDF(topic, text);
                     }
                 }
             }
