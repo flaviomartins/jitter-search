@@ -103,6 +103,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
                 new ShardsManagerHealthCheck(shardsManager);
         environment.healthChecks().register("shards", shardsManagerHealthCheck);
         environment.admin().addTask(new ShardsManagerIndexTask(shardsManager));
+        environment.admin().addTask(new ShardsManagerForceMergeTask(shardsManager));
         environment.admin().addTask(new ShardsManagerStatsTask(shardsManager));
         
         final SelectionManager selectionManager = configuration.getSelectionManagerFactory().build(environment, configuration.isLive());
@@ -114,6 +115,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
                 new SelectionManagerHealthCheck(selectionManager);
         environment.healthChecks().register("selection", selectionManagerHealthCheck);
         environment.admin().addTask(new SelectionManagerIndexTask(selectionManager));
+        environment.admin().addTask(new SelectionManagerForceMergeTask(selectionManager));
         environment.admin().addTask(new SelectionManagerStatsTask(selectionManager));
 
         final TailyResource tailyResource = new TailyResource(tailyManager);

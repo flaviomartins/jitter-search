@@ -19,6 +19,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.LMDirichletSimilarity;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
@@ -435,6 +436,26 @@ public class ShardsManager implements Managed {
     public void index() throws IOException {
         logger.info("shards indexing");
         twitterManager.index(collection, indexPath, analyzer, removeDuplicates);
+    }
+
+    public void forceMerge() throws IOException {
+        logger.info("Merging started!");
+        long startTime = System.currentTimeMillis();
+        File indexPath = new File(this.indexPath);
+        Directory dir = FSDirectory.open(indexPath);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+
+        try (IndexWriter writer = new IndexWriter(dir, config)) {
+            writer.forceMerge(1);
+        } catch (Exception e) {
+            logger.error("{}", e.getMessage());
+        } finally {
+            dir.close();
+            long endTime = System.currentTimeMillis();
+            logger.info(String.format(Locale.ENGLISH, "Merging finished! Total time: %4dms", (endTime - startTime)));
+
+        }
     }
 
     private IndexSearcher getSearcher() throws IOException {
