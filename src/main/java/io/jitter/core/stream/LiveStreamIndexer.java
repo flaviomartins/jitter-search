@@ -7,6 +7,7 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -42,6 +43,8 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         Directory dir = FSDirectory.open(new File(indexPath));
         IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        config.setMergePolicy(new TieredMergePolicy());
+        config.setRAMBufferSizeMB(48);
 
         textOptions = new FieldType();
         textOptions.setIndexed(true);
