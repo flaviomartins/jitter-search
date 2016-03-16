@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.util.List;
+import java.util.Locale;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -396,6 +397,26 @@ public class SearchManager implements Managed {
             logger.error("{}", e.getMessage());
         } finally {
             dir.close();
+        }
+    }
+
+    public void forceMerge() throws IOException {
+        logger.info("Merging started!");
+        long startTime = System.currentTimeMillis();
+        File indexPath = new File(this.indexPath);
+        Directory dir = FSDirectory.open(indexPath);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        
+        try (IndexWriter writer = new IndexWriter(dir, config)) {
+            writer.forceMerge(1);
+        } catch (Exception e) {
+            logger.error("{}", e.getMessage());
+        } finally {
+            dir.close();
+            long endTime = System.currentTimeMillis();
+            logger.info(String.format(Locale.ENGLISH, "Merging finished! Total time: %4dms", (endTime - startTime)));
+
         }
     }
 

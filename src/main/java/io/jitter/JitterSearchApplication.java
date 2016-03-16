@@ -78,6 +78,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
                 new SearchManagerHealthCheck(searchManager);
         environment.healthChecks().register("search-manager", searchManagerHealthCheck);
         environment.admin().addTask(new SearchManagerIndexTask(searchManager));
+        environment.admin().addTask(new SearchManagerForceMergeTask(searchManager));
 
         final SearchResource searchResource = new SearchResource(searchManager);
         environment.jersey().register(searchResource);
