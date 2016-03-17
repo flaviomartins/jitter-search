@@ -47,6 +47,7 @@ public class RMTSResource {
     private final SelectionManager selectionManager;
     private final ShardsManager shardsManager;
     private final TailyManager tailyManager;
+    private final RMTSReranker rmtsReranker;
 
     public RMTSResource(SearchManager searchManager, SelectionManager selectionManager, ShardsManager shardsManager, TailyManager tailyManager) throws IOException {
         Preconditions.checkNotNull(searchManager);
@@ -59,6 +60,7 @@ public class RMTSResource {
         this.selectionManager = selectionManager;
         this.shardsManager = shardsManager;
         this.tailyManager = tailyManager;
+        this.rmtsReranker = new RMTSReranker("ltr-all.model");
     }
 
     @GET
@@ -161,8 +163,7 @@ public class RMTSResource {
         langFilter.setResults(results.scoreDocs);
         results.scoreDocs = langFilter.getFiltered();
 
-        RMTSReranker rmtsReranker = new RMTSReranker(query, queryEpoch, results.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get());
-        results.scoreDocs = rmtsReranker.getReranked();
+        results.scoreDocs = rmtsReranker.score(query, queryEpoch, results.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get());
 
         long endTime = System.currentTimeMillis();
 

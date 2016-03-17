@@ -25,29 +25,20 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RMTSReranker extends SearchReranker {
+public class RMTSReranker {
     private static final Logger logger = LoggerFactory.getLogger(RMTSReranker.class);
 
     private static final Analyzer analyzer = IndexStatuses.ANALYZER;
     private static final double DAY = 60.0 * 60.0 * 24.0;
 
-    private final String query;
-    private final double queryEpoch;
-    private final CollectionStats collectionStats;
-    private final int numResults;
-    private final int numRerank;
+    private final Ranker ranker;
 
-    public RMTSReranker(String query, double queryEpoch, List<Document> results, CollectionStats collectionStats, int numResults, int numRerank) {
-        this.query = query;
-        this.queryEpoch = queryEpoch;
-        this.results = results;
-        this.collectionStats = collectionStats;
-        this.numResults = numResults;
-        this.numRerank = numRerank;
-        this.score();
+    public RMTSReranker(String rankerModel) {
+        RankerFactory rFact = new RankerFactory();
+        ranker = rFact.loadRanker(rankerModel);
     }
 
-    protected void score() {
+    public List<Document> score(String query, double queryEpoch, List<Document> results, CollectionStats collectionStats, int numResults, int numRerank) {
         for (Document result : results) {
             result.getFeatures().add((float) result.getRsv());
         }
@@ -184,16 +175,15 @@ public class RMTSReranker extends SearchReranker {
         }
 
         try {
-            results = rankRankLib(query, results, "RMTS");
+            results = rankRankLib(query, results, "RMTS", numResults, numRerank);
         } catch (SecurityException e) {
             logger.warn("RankLib caught calling System.exit(int).");
         }
+        return results;
     }
 
     @SuppressWarnings("UnusedAssignment")
-    public List<Document> rankRankLib(String query, List<Document> results, String runTag) {
-        RankerFactory rFact = new RankerFactory();
-        Ranker ranker = rFact.loadRanker("ltr-all.model");
+    public List<Document> rankRankLib(String query, List<Document> results, String runTag, int numResults, int numRerank) {
         int[] features = ranker.getFeatures();
         List<DataPoint> rl = new ArrayList<>();
 
@@ -227,7 +217,7 @@ public class RMTSReranker extends SearchReranker {
             String rel = "0";
 
             float maxTF = l.get(k).getFeatureValue(21);
-            if (maxTF < 5) {
+            if (maxTF < 3) {
                 Document updatedResult = new Document(results.get(k));
                 updatedResult.setRsv(scores[k]);
                 finalResults.add(updatedResult);
