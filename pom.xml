@@ -385,11 +385,11 @@
                 <artifactId>twitter4j-stream</artifactId>
                 <version>${twitter4j.version}</version>
             </dependency>
-            <!--<dependency>-->
-                <!--<groupId>com.twitter</groupId>-->
-                <!--<artifactId>twitter-text</artifactId>-->
-                <!--<version>${twitter-text.version}</version>-->
-            <!--</dependency>-->
+            <dependency>
+                <groupId>com.twitter</groupId>
+                <artifactId>twitter-text</artifactId>
+                <version>${twitter-text.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     
