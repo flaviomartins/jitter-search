@@ -3,6 +3,7 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import io.dropwizard.jersey.caching.CacheControl;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/fb")
@@ -51,6 +53,7 @@ public class FeedbackResource {
 
     @GET
     @Timed
+    @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
     public SearchResponse search(@QueryParam("q") Optional<String> q,
                                  @QueryParam("fq") Optional<String> fq,
                                  @QueryParam("limit") @DefaultValue("1000") IntParam limit,

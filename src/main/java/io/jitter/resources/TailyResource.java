@@ -3,6 +3,7 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import io.dropwizard.jersey.caching.CacheControl;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
@@ -21,6 +22,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/taily")
@@ -40,6 +42,7 @@ public class TailyResource {
 
     @GET
     @Timed
+    @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
     public SelectionResponse search(@QueryParam("q") Optional<String> q,
                                     @QueryParam("v") @DefaultValue("10") IntParam v,
                                     @QueryParam("topics") @DefaultValue("true") BooleanParam topics,

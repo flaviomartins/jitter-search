@@ -6,6 +6,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import io.dropwizard.jersey.caching.CacheControl;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
@@ -37,6 +38,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/mf")
@@ -67,6 +69,7 @@ public class MultiFeedbackResource {
 
     @GET
     @Timed
+    @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
     public SelectionSearchResponse search(@QueryParam("q") Optional<String> q,
                                           @QueryParam("fq") Optional<String> fq,
                                           @QueryParam("limit") @DefaultValue("1000") IntParam limit,
