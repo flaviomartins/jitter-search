@@ -8,10 +8,10 @@ import ciir.umass.edu.learning.Ranker;
 import ciir.umass.edu.learning.RankerFactory;
 import ciir.umass.edu.utilities.MergeSorter;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.Doubles;
 import com.twitter.Extractor;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
+import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.features.BM25Feature;
 import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
@@ -19,26 +19,36 @@ import io.jitter.core.twittertools.api.TResultWrapper;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class RMTSReranker {
     private static final Logger logger = LoggerFactory.getLogger(RMTSReranker.class);
 
-    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
     private static final double DAY = 60.0 * 60.0 * 24.0;
 
     private final Ranker ranker;
 
+    private final Analyzer analyzer;
+    private final QueryParser QUERY_PARSER;
+
     public RMTSReranker(String rankerModel) {
         RankerFactory rFact = new RankerFactory();
         ranker = rFact.loadRanker(rankerModel);
+        
+        analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
+        QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
     }
 
-    public List<Document> score(String query, double queryEpoch, List<Document> results, CollectionStats collectionStats, int numResults, int numRerank) {
+    public List<Document> score(String query, double queryEpoch, List<Document> results, CollectionStats collectionStats, int numResults, int numRerank) throws ParseException {
         for (Document result : results) {
             result.getFeatures().add((float) result.getRsv());
         }
@@ -80,56 +90,53 @@ public class RMTSReranker {
 
         Extractor extractor = new Extractor();
 
-        List<String> queryTerms = AnalyzerUtils.analyze(analyzer, query);
+        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
+        Set<Term> queryTerms = new TreeSet<>();
+        q.extractTerms(queryTerms);
+        Set<String> qTerms = new HashSet<>();
+        for (Term term : queryTerms) {
+            String text = term.text();
+            if (text.isEmpty())
+                continue;
+            qTerms.add(text);
+        }
 
         for (TResultWrapper result : results) {
-            List<String> terms = AnalyzerUtils.analyze(analyzer, result.getText());
+            List<String> docTerms = AnalyzerUtils.analyze(analyzer, result.getText());
 
-            double[] tfValues = new double[queryTerms.size()];
-
-            for (int i = 0; i < queryTerms.size(); i++) {
-                String tq = queryTerms.get(i);
-                for (String td : terms) {
-                    if (tq.equals(td)) {
-                        tfValues[i]++;
-                    }
-                }
+            Map<String, Double> tfMap = new HashMap<>();
+            for (String t : docTerms) {
+                Double n = tfMap.get(t);
+                n = (n == null) ? 1 : ++n;
+                tfMap.put(t, n);
             }
 
-            double docLength = (double) terms.size();
+            double docLength = (double) docTerms.size();
             double averageDocumentLength = 28;
 
             double idf = 0;
             double bm25 = 0;
-            double cnt = 0;
-
-            for (int i = 0; i < tfValues.length; i++) {
-                double value = tfValues[i];
-                if (value > 0) {
-                    idf += collectionStats.getIDF(queryTerms.get(i));
-                    bm25 += bm25Feature.value(tfValues[i], docLength, averageDocumentLength, collectionStats.getDF(queryTerms.get(i)), collectionStats.getCollectionSize());
-                    cnt += 1;
+            double coord = 0;
+            double tfMax = 0;
+            
+            for (Map.Entry<String, Double> tf : tfMap.entrySet()) {
+                String term = tf.getKey();
+                if (qTerms.contains(term)) {
+                    double tfValue = tf.getValue();
+                    if (tfValue > 0) {
+                        idf += collectionStats.getIDF(term);
+                        bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, collectionStats.getDF(term), collectionStats.getCollectionSize());
+                        coord += 1;
+                        tfMax = Math.max(tfMax, tfValue);
+                    }
                 }
             }
 
             result.getFeatures().add((float) idf);
 
-            result.getFeatures().add((float) cnt);
+            result.getFeatures().add((float) coord);
 
             result.getFeatures().add((float) docLength);
-
-//            float oov_cnt = 0;
-//            for (String term : terms) {
-//                if (collectionStats.getDF(term) < 100) {
-//                    oov_cnt += 1;
-//                }
-//            }
-//
-//            float oov_pct = 0;
-//            if (terms.size() != 0) {
-//                oov_pct = oov_cnt / terms.size();
-//            }
-//            result.getFeatures().add(oov_pct);
 
             List<String> urls = extractor.extractURLs(result.getText());
             result.getFeatures().add((float) urls.size());
@@ -171,7 +178,8 @@ public class RMTSReranker {
 
             result.getFeatures().add((float) bm25);
 
-            result.getFeatures().add((float) Doubles.max(tfValues));
+            
+            result.getFeatures().add((float) tfMax);
         }
 
         try {
