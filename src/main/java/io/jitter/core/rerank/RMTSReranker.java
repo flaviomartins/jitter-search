@@ -220,7 +220,7 @@ public class RMTSReranker {
         int[] idx = MergeSorter.sort(scores, false);
         for (int j = 0; j < Math.min(idx.length, numResults); j++) {
             int k = idx[j];
-            String docno = l.get(k).getDescription().substring(2); // remove prefix "# "
+            String docno = l.get(k).getDescription();
 //            String rel = qrels.getRelString(qid, docno);
             String rel = "0";
 
