@@ -10,6 +10,8 @@ public class TResultDataPoint extends DenseDataPoint {
     public TResultDataPoint(String description, ArrayList<Float> features) {
         super("0 qid:1");
         setDescription(description);
-        setFeatureVector(ArrayUtils.toPrimitive(features.toArray(new Float[0])));
+        fVals = new float[features.size() + 1];
+        float[] dfVals = ArrayUtils.toPrimitive(features.toArray(new Float[0]));
+        System.arraycopy(dfVals, 0, fVals, 1, features.size());
     }
 }
