@@ -2,7 +2,6 @@ package io.jitter.core.filter;
 
 import com.google.common.base.CharMatcher;
 import io.jitter.api.search.Document;
-import io.jitter.core.utils.TweetUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,8 +9,7 @@ import java.util.List;
 
 public class NaiveLanguageFilter extends SearchFilter {
     private final String lang;
-
-    @SuppressWarnings("SameParameterValue")
+    
     public NaiveLanguageFilter(String lang) {
         this.lang = lang;
     }
@@ -48,8 +46,6 @@ public class NaiveLanguageFilter extends SearchFilter {
     }
 
     private boolean isProbablyEnglish(String text) {
-        text = TweetUtils.clean(text);
-        text = text.replaceAll("[\\p{Z}\\p{S}\\p{P}\\p{C}]+", " ");
         // Replace invisible characters
         text = CharMatcher.INVISIBLE.replaceFrom(text, " ");
         // Replace unicode whitespace

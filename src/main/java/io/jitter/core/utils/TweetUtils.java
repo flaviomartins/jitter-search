@@ -5,12 +5,27 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class TweetUtils {
-    private static final String NUMBER_PATTERN = "(\\d+[:., ]?)+";
-    private static final String MICROSYNTAX_PATTERN = "/(by|cc|for|tip|thx|ty|ht|oh)";
-    private static final String RT_PATTERN = "^/?RT:?\\s*:?|\\s/?RT:?\\s*:?|\\(RT:?.*\\)";
-    private static final String VIA_PATTERN = "^/?via:?\\s*|\\s/?via:?\\s*|\\(via:?.*\\)|\\[via:?.*\\]";
+    private static final String NUMBERS = "(\\d+[:., ]?)+";
+    private static final String MICROSYNTAX = "/(by|cc|for|tip|thx|ty|ht|oh)";
+    private static final String RT = "^/?RT:?\\s*:?|\\s/?RT:?\\s*:?|\\(RT:?.*\\)";
+    private static final String VIA = "^/?via:?\\s*|\\s/?via:?\\s*|\\(via:?.*\\)|\\[via:?.*\\]";
+
+    private static final Pattern NUMBERS_PATTERN;
+    private static final Pattern MICROSYNTAX_PATTERN;
+    private static final Pattern RT_PATTERN;
+    private static final Pattern VIA_PATTERN;
+
+    static {
+        synchronized (TweetUtils.class) {
+            NUMBERS_PATTERN = Pattern.compile(NUMBERS);
+            MICROSYNTAX_PATTERN = Pattern.compile(MICROSYNTAX);
+            RT_PATTERN = Pattern.compile(RT);
+            VIA_PATTERN = Pattern.compile(VIA);
+        }
+    }
 
     public static List<String> extractURLs(String text) {
         Extractor extractor = new Extractor();
@@ -28,19 +43,19 @@ public class TweetUtils {
     }
 
     public static String stripNumbers(String text) {
-        return text.replaceAll(NUMBER_PATTERN, " ");
+        return NUMBERS_PATTERN.matcher(text).replaceAll(" ");
     }
 
     public static String removeMicrosyntax(String text) {
-        return text.replaceAll(MICROSYNTAX_PATTERN, " ");
+        return MICROSYNTAX_PATTERN.matcher(text).replaceAll(" ");
     }
 
     public static String removeRT(String text) {
-        return text.replaceAll(RT_PATTERN, " ");
+        return RT_PATTERN.matcher(text).replaceAll(" ");
     }
 
     public static String removeVia(String text) {
-        return text.replaceAll(VIA_PATTERN, " ");
+        return VIA_PATTERN.matcher(text).replaceAll(" ");
     }
 
     public static String removeEntities(String text) {
@@ -68,7 +83,6 @@ public class TweetUtils {
 
     public static String clean(String text) {
         text = removeAll(text);
-        text = removePatterns(text);
         text = unescapeHtml(text);
         text = stripNumbers(text);
         return text;

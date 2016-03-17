@@ -32,7 +32,7 @@
         <lucene.version>4.10.4</lucene.version>
         <twitter4j.version>4.0.4</twitter4j.version>
         <hbc.version>2.2.0</hbc.version>
-        <twitter-text.version>1.13.0</twitter-text.version>
+        <twitter-text.version>1.13.4</twitter-text.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-math3.version>3.5</commons-math3.version>
         <commons-io.version>2.4</commons-io.version>
