@@ -2,15 +2,13 @@ package io.jitter.core.shards;
 
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
-import io.jitter.core.search.DocumentComparable;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.twitter.manager.TwitterManager;
+import io.jitter.core.utils.SearchUtils;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
@@ -88,7 +86,7 @@ public class ShardsManager implements Managed {
     @Override
     public void start() throws Exception {
         try {
-            searcher = getSearcher();
+            searcher = getIndexSearcher();
             shardStatsBuilder = new ShardStatsBuilder(reader, topics);
             reverseTopicMap = shardStatsBuilder.getReverseTopicMap();
             collectStats();
@@ -262,40 +260,59 @@ public class ShardsManager implements Managed {
     }
 
     public SelectionTopDocuments reScoreSelected(Iterable<Map.Entry<String, Double>> selectedTopics, List<Document> selectResults) {
-        List<Document> results = new ArrayList<>();
+        List<Document> docs = new ArrayList<>();
         for (Document doc : selectResults) {
             Document updatedDocument = new Document(doc);
             for (Map.Entry<String, Double> selectedTopic : selectedTopics) {
                 if (topics.get(selectedTopic.getKey()) != null && topics.get(selectedTopic.getKey()).contains(doc.getScreen_name())) {
                     double newRsv = selectedTopic.getValue() * doc.getRsv();
                     updatedDocument.setRsv(newRsv);
-                    results.add(updatedDocument);
+                    docs.add(updatedDocument);
                 }
             }
         }
-        List<Document> documents = sortResults(results, results.size(), false);
-        return new SelectionTopDocuments(documents.size(), documents);
+        return new SelectionTopDocuments(docs.size(), docs);
     }
 
     public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
-        int numResults = Math.min(MAX_RESULTS, 3 * n);
+        int len = Math.min(MAX_RESULTS, 3 * n);
+        int nDocsReturned;
+        int totalHits;
+        float maxScore;
+        int[] ids;
+        float[] scores;
+
+        IndexSearcher indexSearcher = getIndexSearcher();
         Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
 
-        TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
-        getSearcher().search(q, filter, totalHitCountCollector);
-        int totalHits = totalHitCountCollector.getTotalHits();
+        final TopDocsCollector topCollector = TopScoreDocCollector.create(len, true);
+        indexSearcher.search(q, filter, topCollector);
 
-        TopDocs rs;
+        totalHits = topCollector.getTotalHits();
+        TopDocs topDocs;
         if (live) {
-            rs = getSearcher().search(q, filter, numResults);
+            topDocs = topCollector.topDocs(0, len);
         } else {
-            rs = getSearcher().search(q, reader.numDocs());
+            topDocs = topCollector.topDocs(0, reader.numDocs());
         }
 
-        List<Document> sorted = getSorted(rs, n, filterRT);
+        maxScore = totalHits > 0 ? topDocs.getMaxScore() : 0.0f;
+        nDocsReturned = topDocs.scoreDocs.length;
+        ids = new int[nDocsReturned];
+        scores = new float[nDocsReturned];
+        for (int i = 0; i < nDocsReturned; i++) {
+            ScoreDoc scoreDoc = topDocs.scoreDocs[i];
+            ids[i] = scoreDoc.doc;
+            if (scores != null) scores[i] = scoreDoc.score;
+        }
 
-        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(totalHits, sorted);
-        
+        List<Document> docs = SearchUtils.getDocs(indexSearcher, topDocs, n, filterRT);
+        if (filterRT) {
+            logger.info("filter_rt count: {}", nDocsReturned - docs.size());
+        }
+
+        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(totalHits, docs);
+
         if (topics) {
             return limit(filterTopics(q, collections, selectionTopDocuments), n);
         } else {
@@ -331,108 +348,6 @@ public class ShardsManager implements Managed {
         return isearch(topics, collections, query, n, false);
     }
 
-    private List<Document> getResults(TopDocs rs) throws IOException {
-        List<Document> results = Lists.newArrayList();
-        for (ScoreDoc scoreDoc : rs.scoreDocs) {
-            org.apache.lucene.document.Document hit = getSearcher().doc(scoreDoc.doc);
-
-            Document p = new Document();
-            p.id = (Long) hit.getField(IndexStatuses.StatusField.ID.name).numericValue();
-            p.screen_name = hit.get(IndexStatuses.StatusField.SCREEN_NAME.name);
-            p.epoch = (Long) hit.getField(IndexStatuses.StatusField.EPOCH.name).numericValue();
-            p.text = hit.get(IndexStatuses.StatusField.TEXT.name);
-            p.rsv = scoreDoc.score;
-
-            if (hit.get(IndexStatuses.StatusField.FOLLOWERS_COUNT.name) != null) {
-                p.followers_count = (Integer) hit.getField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name).numericValue();
-            }
-
-            if (hit.get(IndexStatuses.StatusField.STATUSES_COUNT.name) != null) {
-                p.statuses_count = (Integer) hit.getField(IndexStatuses.StatusField.STATUSES_COUNT.name).numericValue();
-            }
-
-            if (hit.get(IndexStatuses.StatusField.LANG.name) != null) {
-                p.lang = hit.get(IndexStatuses.StatusField.LANG.name);
-            }
-
-            if (hit.get(IndexStatuses.StatusField.IN_REPLY_TO_STATUS_ID.name) != null) {
-                p.in_reply_to_status_id = (Long) hit.getField(IndexStatuses.StatusField.IN_REPLY_TO_STATUS_ID.name).numericValue();
-            }
-
-            if (hit.get(IndexStatuses.StatusField.IN_REPLY_TO_USER_ID.name) != null) {
-                p.in_reply_to_user_id = (Long) hit.getField(IndexStatuses.StatusField.IN_REPLY_TO_USER_ID.name).numericValue();
-            }
-
-            if (hit.get(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name) != null) {
-                p.retweeted_status_id = (Long) hit.getField(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name).numericValue();
-            }
-
-            if (hit.get(IndexStatuses.StatusField.RETWEETED_USER_ID.name) != null) {
-                p.retweeted_user_id = (Long) hit.getField(IndexStatuses.StatusField.RETWEETED_USER_ID.name).numericValue();
-            }
-
-            if (hit.get(IndexStatuses.StatusField.RETWEET_COUNT.name) != null) {
-                p.retweeted_count = (Integer) hit.getField(IndexStatuses.StatusField.RETWEET_COUNT.name).numericValue();
-            }
-
-            results.add(p);
-        }
-        return results;
-    }
-
-    private List<Document> getSorted(TopDocs rs, int n, boolean filterRT) throws IOException {
-        List<Document> results = getResults(rs);
-        return sortResults(results, n, filterRT);
-    }
-
-    private List<Document> sortResults(List<Document> results, int n, boolean filterRT) {
-        int count = 0;
-        int retweetCount = 0;
-        SortedSet<DocumentComparable> sortedResults = new TreeSet<>();
-        for (Document p : results) {
-            if (count >= n)
-                break;
-
-            // Throw away retweets.
-            if (filterRT && p.getRetweeted_status_id() != 0) {
-                retweetCount++;
-                continue;
-            }
-
-            sortedResults.add(new DocumentComparable(p));
-            count += 1;
-        }
-        if (filterRT) {
-            logger.info("filter_rt count: {}", retweetCount);
-        }
-
-        List<Document> docs = Lists.newArrayList();
-
-        int i = 1;
-        int duplicateCount = 0;
-        double rsvPrev = 0;
-        for (DocumentComparable sortedResult : sortedResults) {
-            if (i > n + 1)
-                break;
-            Document result = sortedResult.getDocument();
-            double rsvCurr = result.rsv;
-            if (Math.abs(rsvCurr - rsvPrev) > 0.0000001) {
-                duplicateCount = 0;
-            } else {
-                duplicateCount++;
-                rsvCurr = rsvCurr - 0.000001 / results.size() * duplicateCount;
-            }
-            // FIXME: what is this?
-            result.rsv = rsvCurr;
-
-            docs.add(new Document(result));
-            i++;
-            rsvPrev = result.rsv;
-        }
-
-        return docs;
-    }
-
     public void index() throws IOException {
         logger.info("shards indexing");
         twitterManager.index(collection, indexPath, analyzer, removeDuplicates);
@@ -458,7 +373,7 @@ public class ShardsManager implements Managed {
         }
     }
 
-    private IndexSearcher getSearcher() throws IOException {
+    private IndexSearcher getIndexSearcher() throws IOException {
         try {
             if (reader == null) {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
