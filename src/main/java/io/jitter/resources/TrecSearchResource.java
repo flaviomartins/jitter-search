@@ -10,7 +10,6 @@ import io.jitter.api.search.DocumentsResponse;
 import io.jitter.api.search.SearchResponse;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
-import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
