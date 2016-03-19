@@ -138,7 +138,8 @@ public class RMTSReranker {
 
             result.getFeatures().add((float) docLength);
 
-            List<String> urls = extractor.extractURLs(result.getText());
+            List<String> urls = Lists.newArrayList();
+//            extractor.extractURLs(result.getText());
             result.getFeatures().add((float) urls.size());
 
             if (urls.size() > 0) {

@@ -180,9 +180,10 @@ public final class EntityPreservingFilter extends TokenFilter {
      * Check if the given string is a valid entity (mention, hashtag or URL)
      */
     public int isEntity(String term) {
-        if (Regex.VALID_URL.matcher(term).matches())
-            return VALID_URL;
-        else if (Regex.VALID_MENTION_OR_LIST.matcher(term).matches())
+//        if (Regex.VALID_URL.matcher(term).matches())
+//            return VALID_URL;
+//        else
+        if (Regex.VALID_MENTION_OR_LIST.matcher(term).matches())
             return VALID_MENTION;
         else if (Regex.VALID_HASHTAG.matcher(term).matches())
             return VALID_HASHTAG;
