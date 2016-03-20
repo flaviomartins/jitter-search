@@ -22,8 +22,6 @@ public class SearchUtils {
     public static List<Document> getDocs(IndexSearcher indexSearcher, TopDocs topDocs, int n, boolean filterRT) throws IOException {
         IndexReader indexReader = indexSearcher.getIndexReader();
 
-        LinkedHashMap<String, Integer> termsMap = getTermsMap(indexReader);
-
         int count = 0;
         List<Document> docs = Lists.newArrayList();
         for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
@@ -44,7 +42,7 @@ public class SearchUtils {
 
             Document doc = new Document(hit);
             doc.rsv = scoreDoc.score;
-            DocVector docVector = buildDocVector(indexReader, termsMap, scoreDoc.doc);
+            DocVector docVector = buildDocVector(indexReader, scoreDoc.doc);
             doc.setDocVector(docVector);
 
             docs.add(doc);
@@ -69,16 +67,16 @@ public class SearchUtils {
         return termsMap;
     }
 
-    private static DocVector buildDocVector(IndexReader indexReader, LinkedHashMap termsMap, int doc) throws IOException {
-        Terms vector = indexReader.getTermVector(doc, IndexStatuses.StatusField.TEXT.name);
-        TermsEnum termsEnum = null;
-        termsEnum = vector.iterator(termsEnum);
-        BytesRef text;
-        DocVector docVector = new DocVector(termsMap);
-        while ((text = termsEnum.next()) != null) {
-            String term = text.utf8ToString();
+    private static DocVector buildDocVector(IndexReader indexReader, int doc) throws IOException {
+        Terms termVector = indexReader.getTermVector(doc, IndexStatuses.StatusField.TEXT.name);
+        TermsEnum termsEnum = termVector.iterator(null);
+
+        BytesRef bytesRef;
+        DocVector docVector = new DocVector();
+        while ((bytesRef = termsEnum.next()) != null) {
+            String term = bytesRef.utf8ToString();
             int freq = (int) termsEnum.totalTermFreq();
-            docVector.setEntry(term, freq);
+            docVector.put(term, freq);
         }
         return docVector;
     }

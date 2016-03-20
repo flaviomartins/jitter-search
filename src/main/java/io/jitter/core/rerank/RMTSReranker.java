@@ -16,7 +16,6 @@ import io.jitter.core.document.DocVector;
 import io.jitter.core.features.BM25Feature;
 import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
-import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
@@ -102,18 +101,7 @@ public class RMTSReranker {
         }
 
         for (Document result : results) {
-//            List<String> docTerms = AnalyzerUtils.analyze(analyzer, result.getText());
-
             DocVector docVector = result.getDocVector();
-            ArrayList<String> docTerms = Lists.newArrayList(docVector.terms.keySet());
-            double[] vector = docVector.vector.toArray();
-
-            Map<String, Double> tfMap = new HashMap<>();
-            for (int i = 0; i < vector.length; i++) {
-                if (vector[i] > 0) {
-                    tfMap.put(docTerms.get(i), vector[i]);
-                }
-            }
 
             double docLength = 28; // (double) docTerms.size();
             double averageDocumentLength = 28;
@@ -123,7 +111,7 @@ public class RMTSReranker {
             double coord = 0;
             double tfMax = 0;
 
-            for (Map.Entry<String, Double> tf : tfMap.entrySet()) {
+            for (Map.Entry<String, Integer> tf : docVector.vector.entrySet()) {
                 String term = tf.getKey();
                 if (qTerms.contains(term)) {
                     double tfValue = tf.getValue();
