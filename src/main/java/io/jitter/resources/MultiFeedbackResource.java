@@ -11,6 +11,7 @@ import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.filter.NaiveLanguageFilter;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.shards.ShardsManager;
@@ -207,6 +208,10 @@ public class MultiFeedbackResource {
                 results = searchManager.search(query, limit.get(), !retweets.get());
             }
         }
+
+        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
+        langFilter.setResults(results.scoreDocs);
+        results.scoreDocs = langFilter.getFiltered();
 
         long endTime = System.currentTimeMillis();
 
