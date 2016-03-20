@@ -3,7 +3,6 @@ package io.jitter.core.rerank;
 import com.google.common.primitives.Doubles;
 import io.jitter.api.search.Document;
 import io.jitter.core.probabilitydistributions.KDE;
-import io.jitter.core.twittertools.api.TResultWrapper;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.commons.math3.util.FastMath;
 
@@ -41,7 +40,7 @@ public class KDEReranker extends SearchReranker {
                 int j = 0;
                 double maxRsv = Double.NEGATIVE_INFINITY;
                 while (resultIt.hasNext()) {
-                    TResultWrapper result = resultIt.next();
+                    Document result = resultIt.next();
                     double rsv = result.getRsv();
                     // deal with munged lucene QL's
                     if (rsv < 0.0)
@@ -79,7 +78,7 @@ public class KDEReranker extends SearchReranker {
 
         List<Document> updatedResults = new ArrayList<>(results.size());
         while (resultIt.hasNext()) {
-            TResultWrapper origResult = resultIt.next();
+            Document origResult = resultIt.next();
             double scaledEpoch = epochIt.next();
             double density = -100.0;
 

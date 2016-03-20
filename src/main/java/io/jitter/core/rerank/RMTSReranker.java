@@ -12,10 +12,10 @@ import com.twitter.Extractor;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.document.DocVector;
 import io.jitter.core.features.BM25Feature;
 import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
-import io.jitter.core.twittertools.api.TResultWrapper;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -101,24 +101,28 @@ public class RMTSReranker {
             qTerms.add(text);
         }
 
-        for (TResultWrapper result : results) {
-            List<String> docTerms = AnalyzerUtils.analyze(analyzer, result.getText());
+        for (Document result : results) {
+//            List<String> docTerms = AnalyzerUtils.analyze(analyzer, result.getText());
+
+            DocVector docVector = result.getDocVector();
+            ArrayList<String> docTerms = Lists.newArrayList(docVector.terms.keySet());
+            double[] vector = docVector.vector.toArray();
 
             Map<String, Double> tfMap = new HashMap<>();
-            for (String t : docTerms) {
-                Double n = tfMap.get(t);
-                n = (n == null) ? 1 : ++n;
-                tfMap.put(t, n);
+            for (int i = 0; i < vector.length; i++) {
+                if (vector[i] > 0) {
+                    tfMap.put(docTerms.get(i), vector[i]);
+                }
             }
 
-            double docLength = (double) docTerms.size();
+            double docLength = 28; // (double) docTerms.size();
             double averageDocumentLength = 28;
 
             double idf = 0;
             double bm25 = 0;
             double coord = 0;
             double tfMax = 0;
-            
+
             for (Map.Entry<String, Double> tf : tfMap.entrySet()) {
                 String term = tf.getKey();
                 if (qTerms.contains(term)) {
@@ -179,7 +183,7 @@ public class RMTSReranker {
 
             result.getFeatures().add((float) bm25);
 
-            
+
             result.getFeatures().add((float) tfMax);
         }
 
@@ -199,7 +203,7 @@ public class RMTSReranker {
         String qid = query.replaceFirst("^MB0*", "");
 
         int i = 1;
-        for (TResultWrapper hit : results) {
+        for (Document hit : results) {
 //            String rel = String.valueOf(qrels.getRel(qid, String.valueOf(hit.getId())));
 //            DataPoint dp = hit.getDataPoint(rel, qid);
             DataPoint dp = hit.getDataPoint();

@@ -3,12 +3,16 @@ package io.jitter.api.search;
 import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.thrift.gen.TResult;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.jitter.core.document.DocVector;
 import io.jitter.core.twittertools.api.TResultWrapper;
 
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"setId", "setRsv", "setScreen_name", "setEpoch", "setText",
         "setFollowers_count", "setStatuses_count", "setLang", "setIn_reply_to_status_id", "setIn_reply_to_user_id",
-        "setRetweeted_status_id", "setRetweeted_user_id", "setRetweeted_count", "features", "properties", "dataPoint"})
+        "setRetweeted_status_id", "setRetweeted_user_id", "setRetweeted_count", "features", "properties", "dataPoint",
+        "docVector"})
 public class Document extends TResultWrapper {
+
+    private DocVector docVector;
 
     public Document() {
         super();
@@ -16,6 +20,7 @@ public class Document extends TResultWrapper {
 
     public Document(Document other) {
         super(other);
+        docVector = other.docVector;
     }
 
     public Document(TResult other) {
@@ -58,5 +63,13 @@ public class Document extends TResultWrapper {
         if (hit.get(IndexStatuses.StatusField.RETWEET_COUNT.name) != null) {
             this.retweeted_count = (Integer) hit.getField(IndexStatuses.StatusField.RETWEET_COUNT.name).numericValue();
         }
+    }
+
+    public void setDocVector(DocVector docVector) {
+        this.docVector = docVector;
+    }
+
+    public DocVector getDocVector() {
+        return docVector;
     }
 }

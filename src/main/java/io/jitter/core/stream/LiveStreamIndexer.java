@@ -51,6 +51,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         textOptions.setStored(true);
         textOptions.setTokenized(true);
+        textOptions.setStoreTermVectors(true);
 
         writer = new IndexWriter(dir, config);
     }

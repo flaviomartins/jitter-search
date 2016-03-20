@@ -244,6 +244,7 @@ public class SearchManager implements Managed {
         textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         textOptions.setStored(true);
         textOptions.setTokenized(true);
+        textOptions.setStoreTermVectors(true);
 
         Connection connection;
         int cnt = 0;
