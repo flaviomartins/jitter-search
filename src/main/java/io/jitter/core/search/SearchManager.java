@@ -112,7 +112,7 @@ public class SearchManager implements Managed {
             if (scores != null) scores[i] = scoreDoc.score;
         }
 
-        List<Document> docs = SearchUtils.getDocs(indexSearcher, topDocs, n, filterRT);
+        List<Document> docs = SearchUtils.getDocs(indexSearcher, topDocs, n, filterRT, true);
         if (filterRT) {
             logger.info("filter_rt count: {}", nDocsReturned - docs.size());
         }

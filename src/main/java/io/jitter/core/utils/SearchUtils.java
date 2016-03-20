@@ -19,7 +19,7 @@ import java.util.List;
 
 public class SearchUtils {
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, TopDocs topDocs, int n, boolean filterRT) throws IOException {
+    public static List<Document> getDocs(IndexSearcher indexSearcher, TopDocs topDocs, int n, boolean filterRT, boolean buildDocVector) throws IOException {
         IndexReader indexReader = indexSearcher.getIndexReader();
 
         int count = 0;
@@ -42,14 +42,21 @@ public class SearchUtils {
 
             Document doc = new Document(hit);
             doc.rsv = scoreDoc.score;
-            DocVector docVector = buildDocVector(indexReader, scoreDoc.doc);
-            doc.setDocVector(docVector);
+
+            if (buildDocVector) {
+                DocVector docVector = buildDocVector(indexReader, scoreDoc.doc);
+                doc.setDocVector(docVector);
+            }
 
             docs.add(doc);
             count += 1;
         }
 
         return docs;
+    }
+
+    public static List<Document> getDocs(IndexSearcher indexSearcher, TopDocs topDocs, int n, boolean filterRT) throws IOException {
+        return getDocs(indexSearcher, topDocs, n, filterRT, false);
     }
 
     private static LinkedHashMap<String, Integer> getTermsMap(IndexReader indexReader) throws IOException {
