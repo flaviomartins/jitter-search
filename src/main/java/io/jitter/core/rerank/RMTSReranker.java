@@ -103,8 +103,11 @@ public class RMTSReranker {
         for (Document result : results) {
             DocVector docVector = result.getDocVector();
 
-            double docLength = 28; // (double) docTerms.size();
             double averageDocumentLength = 28;
+            double docLength = 0;
+            for (Integer i : docVector.vector.values()) {
+                docLength += i;
+            }
 
             double idf = 0;
             double bm25 = 0;
@@ -130,29 +133,46 @@ public class RMTSReranker {
 
             result.getFeatures().add((float) docLength);
 
-            List<String> urls = Lists.newArrayList();
-//            extractor.extractURLs(result.getText());
-            result.getFeatures().add((float) urls.size());
 
-            if (urls.size() > 0) {
+            float numURLs = 0;
+            float numHashtags = 0;
+            float numMentions = 0;
+
+            List<Extractor.Entity> entityList = extractor.extractEntitiesWithIndices(result.getText());
+            for (Extractor.Entity entity : entityList) {
+                switch (entity.getType()) {
+                    case URL:
+                        numURLs++;
+                        break;
+                    case HASHTAG:
+                        numHashtags++;
+                        break;
+                    case MENTION:
+                        numMentions++;
+                        break;
+                    default:
+                }
+            }
+
+            result.getFeatures().add(numURLs);
+
+            if (numURLs > 0) {
                 result.getFeatures().add(1.0f);
             } else {
                 result.getFeatures().add(0.0f);
             }
 
-            List<String> hashtags = extractor.extractHashtags(result.getText());
-            result.getFeatures().add((float) hashtags.size());
+            result.getFeatures().add(numHashtags);
 
-            if (hashtags.size() > 0) {
+            if (numHashtags > 0) {
                 result.getFeatures().add(1.0f);
             } else {
                 result.getFeatures().add(0.0f);
             }
 
-            List<String> mentions = extractor.extractMentionedScreennames(result.getText());
-            result.getFeatures().add((float) mentions.size());
+            result.getFeatures().add(numMentions);
 
-            if (mentions.size() > 0) {
+            if (numMentions > 0) {
                 result.getFeatures().add(1.0f);
             } else {
                 result.getFeatures().add(0.0f);
@@ -170,7 +190,6 @@ public class RMTSReranker {
             result.getFeatures().add((float) Math.log(1 + result.getFollowers_count()));
 
             result.getFeatures().add((float) bm25);
-
 
             result.getFeatures().add((float) tfMax);
         }
