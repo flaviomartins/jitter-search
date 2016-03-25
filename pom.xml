@@ -38,7 +38,7 @@
         <commons-io.version>2.4</commons-io.version>
         <jsr305.version>3.0.1</jsr305.version>
         <twittertools.version>1.4.3</twittertools.version>
-        <ranklib.version>2.3</ranklib.version>
+        <ranklib.version>2.5-SNAPSHOT</ranklib.version>
         <sqlite-jdbc.version>3.8.11.2</sqlite-jdbc.version>
         <je.version>6.4.25</je.version>
         <!--

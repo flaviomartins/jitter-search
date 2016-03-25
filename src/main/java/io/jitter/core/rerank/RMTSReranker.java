@@ -41,7 +41,7 @@ public class RMTSReranker {
 
     public RMTSReranker(String rankerModel) {
         RankerFactory rFact = new RankerFactory();
-        ranker = rFact.loadRanker(rankerModel);
+        ranker = rFact.loadRankerFromFile(rankerModel);
         
         analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
         QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
