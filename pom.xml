@@ -116,7 +116,7 @@
             <dependency>
                 <groupId>it.unimi.dsi</groupId>
                 <artifactId>fastutil</artifactId>
-                <version>${fastutil.version}}</version>
+                <version>${fastutil.version}</version>
             </dependency>
 
             <!-- Apache Commons -->
