@@ -43,6 +43,8 @@
         <ranklib.version>2.5-SNAPSHOT</ranklib.version>
         <sqlite-jdbc.version>3.8.11.2</sqlite-jdbc.version>
         <je.version>6.4.25</je.version>
+        <ssj.version>3.1.1</ssj.version>
+        <jsat.version>0.0.4</jsat.version>
         <!--
            It is recommended to set the compiler version globally,
            as the compiler plugin and the forbidden API checker both
@@ -212,9 +214,14 @@
 
         <!-- Maths -->
         <dependency>
-            <groupId>nz.ac.waikato.cms.weka</groupId>
-            <artifactId>weka-stable</artifactId>
-            <version>3.6.13</version>
+            <groupId>ca.umontreal.iro.simul</groupId>
+            <artifactId>ssj</artifactId>
+            <version>${ssj.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.edwardraff</groupId>
+            <artifactId>JSAT</artifactId>
+            <version>${jsat.version}</version>
         </dependency>
 
         <!-- Apache Commons -->

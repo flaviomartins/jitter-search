@@ -6,7 +6,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.util.Arrays;
 
-public class CommonsKDE implements KDE {
+public class CommonsKDE extends KDE implements ContinuousDistribution {
     private final double[] data;
     private final double[] weights;
     private double bw;
@@ -20,11 +20,7 @@ public class CommonsKDE implements KDE {
         kernel = new NormalDistribution(0.0, 1.0);
 
         if (bw <= 0.0) {
-            this.bw = bwSilverman();
-        }
-
-        if (weights == null) {
-            weights = new double[data.length];
+            this.bw = bwSilverman(data);
         }
 
         DescriptiveStatistics ds = new DescriptiveStatistics(weights);
@@ -48,26 +44,6 @@ public class CommonsKDE implements KDE {
         this.method = method;
     }
 
-    private double selectSigma() {
-        double normalize = 1.349;
-        DescriptiveStatistics ds = new DescriptiveStatistics(data);
-        double IQR = (ds.getPercentile(75) - ds.getPercentile(25)) / normalize;
-        return Math.min(ds.getStandardDeviation(), IQR);
-    }
-
-    private double bwSilverman() {
-        double A = selectSigma();
-        double n = data.length;
-        return 0.9 * A * Math.pow(n, -0.2);
-    }
-
-    private double bwScott() {
-        double A = selectSigma();
-        double n = data.length;
-        return 1.059 * A * Math.pow(n, -0.2);
-    }
-
-    @Override
     public double density(double x) {
         if (METHOD.REFLECTION.equals(method)) {
             return densityReflection(x);
