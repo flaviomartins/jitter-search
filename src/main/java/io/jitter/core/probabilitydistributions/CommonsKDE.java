@@ -20,7 +20,7 @@ public class CommonsKDE extends KDE implements ContinuousDistribution {
         kernel = new NormalDistribution(0.0, 1.0);
 
         if (bw <= 0.0) {
-            this.bw = bwSilverman(data);
+            this.bw = silvermanBandwidthEstimate(data);
         }
 
         DescriptiveStatistics ds = new DescriptiveStatistics(weights);

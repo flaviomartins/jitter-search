@@ -24,7 +24,7 @@ public class JsatKDE extends KDE implements ContinuousDistribution {
         kernelDensityEstimator = new KernelDensityEstimator(dataPoints, kf, bw, weights);
 
         if (bw <= 0.0) {
-            this.bw = bwSilverman(data);
+            this.bw = silvermanBandwidthEstimate(data);
             kernelDensityEstimator.setBandwith(this.bw);
         }
 

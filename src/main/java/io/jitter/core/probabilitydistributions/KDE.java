@@ -10,24 +10,14 @@ public abstract class KDE {
 
     public abstract double getBandwidth();
 
-    double selectSigma(double[] X) {
+    private double selectSigma(double[] X) {
         double normalize = 1.349;
         DescriptiveStatistics ds = new DescriptiveStatistics(X);
         double IQR = (ds.getPercentile(75) - ds.getPercentile(25)) / normalize;
         return Math.min(ds.getStandardDeviation(), IQR);
     }
 
-    double bwSilverman(double[] X) {
-        double A = selectSigma(X);
-
-        if (X.length == 1)
-            return 1;
-        else if (A == 0)
-            return 0.9 * Math.pow(X.length, -1.0/5.0);
-        return 0.9 * A * Math.pow(X.length, -1.0/5.0);
-    }
-
-    double bwScott(double[] X) {
+    public double silvermanBandwidthEstimate(double[] X) {
         double A = selectSigma(X);
 
         if (X.length == 1)
