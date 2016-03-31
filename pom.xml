@@ -21,7 +21,7 @@
         <jitter.url>http://www.jitter.io</jitter.url>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <dropwizard.version>1.0.0-rc1</dropwizard.version>
+        <dropwizard.version>1.0.0-rc2</dropwizard.version>
         <guava.version>19.0</guava.version>
         <jsr305.version>3.0.1</jsr305.version>
         <fastutil.version>7.0.11</fastutil.version>
