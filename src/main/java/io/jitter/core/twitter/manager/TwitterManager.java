@@ -156,7 +156,7 @@ public class TwitterManager implements Managed {
         fieldAnalyzers.put(IndexStatuses.StatusField.SCREEN_NAME.name, new SimpleAnalyzer());
         PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(analyzer, fieldAnalyzers);
 
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_3, perFieldAnalyzerWrapper);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, perFieldAnalyzerWrapper);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();
