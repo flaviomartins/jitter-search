@@ -168,7 +168,7 @@ public class TwitterManager implements Managed {
         
         final FieldType screenNameOptions = new FieldType();
         screenNameOptions.setIndexed(true);
-        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        screenNameOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS);
         screenNameOptions.setStored(true);
         screenNameOptions.setTokenized(true);
 
