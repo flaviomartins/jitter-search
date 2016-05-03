@@ -16,6 +16,7 @@ import io.jitter.core.document.DocVector;
 import io.jitter.core.features.BM25Feature;
 import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
+import io.jitter.core.utils.ListUtils;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
@@ -47,7 +48,7 @@ public class RMTSReranker {
         QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
     }
 
-    public List<Document> score(String query, double queryEpoch, List<Document> results, CollectionStats collectionStats, int numResults, int numRerank) throws ParseException {
+    public List<Document> score(String query, double queryEpoch, List<Document> results, List<Document> shardResults, CollectionStats collectionStats, int numResults, int numRerank) throws ParseException {
         for (Document result : results) {
             result.getFeatures().add((float) result.getRsv());
         }
@@ -79,11 +80,20 @@ public class RMTSReranker {
         for (Document result : results) {
             result.getFeatures().add(0f);
             result.getFeatures().add(0f);
-            result.getFeatures().add(0f);
+//            result.getFeatures().add(0f);
         }
+//        KDEReranker kdeReranker2 = new KDEReranker(results, shardResults, queryEpoch, method, KDEReranker.WEIGHT.SCORE, 1.0);
+//        results = kdeReranker2.getReranked();
+
 //        KDERerank(viewsOracle, query, method, bViews);
 //        KDERerank(editsOracle, query, method, bEdits);
-//        KDERerank(newsOracle, query, method, bNews);
+
+        // KDE News
+        List<Double> newsOracle = Lists.newArrayList();
+        for (Document shardResult : shardResults) {
+            newsOracle.add((double)shardResult.getEpoch());
+        }
+        results = KDERerank(newsOracle, results, queryEpoch, method, 1.0);
 
         BM25Feature bm25Feature = new BM25Feature(1.2D, 1.0D);
 
@@ -200,6 +210,22 @@ public class RMTSReranker {
             logger.warn("RankLib caught calling System.exit(int).");
         }
         return results;
+    }
+
+    private List<Document> KDERerank(List<Double> oracleRawEpochs, List<Document> results, double queryEpoch, KDE.METHOD method, double weight) {
+        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(results);
+        // groom our hit times wrt to query time
+        List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
+
+        // if we're using our oracle, we need the right training data
+        List<Double> oracleScaledEpochs = TimeUtils.adjustEpochsToLandmark(oracleRawEpochs, queryEpoch, DAY);
+        double[] densityTrainingData = ListUtils.listToArray(oracleScaledEpochs);
+        double[] densityWeights = new double[densityTrainingData.length];
+        Arrays.fill(densityWeights, 1.0 / (double) densityWeights.length);
+
+        KernelDensityReranker kernelDensityReranker = new KernelDensityReranker(results, scaledEpochs,
+                densityTrainingData, densityWeights, method, weight);
+        return kernelDensityReranker.getReranked();
     }
 
     @SuppressWarnings("UnusedAssignment")

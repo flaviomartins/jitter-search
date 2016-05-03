@@ -163,7 +163,7 @@ public class RMTSResource {
         langFilter.setResults(results.scoreDocs);
         results.scoreDocs = langFilter.getFiltered();
 
-        results.scoreDocs = rmtsReranker.score(query, queryEpoch, results.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get());
+        results.scoreDocs = rmtsReranker.score(query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get());
 
         long endTime = System.currentTimeMillis();
 
