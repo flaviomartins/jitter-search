@@ -16,6 +16,7 @@ import io.jitter.core.document.DocVector;
 import io.jitter.core.features.BM25Feature;
 import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
+import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.ListUtils;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -119,36 +120,44 @@ public class RMTSReranker {
             double tfMax = 0;
 
             DocVector docVector = result.getDocVector();
-            if (docVector != null) {
-                for (Integer i : docVector.vector.values()) {
-                    docLength += i;
-                }
-                for (Map.Entry<String, Integer> tf : docVector.vector.entrySet()) {
-                    String term = tf.getKey();
-                    if (qTerms.contains(term)) {
-                        double tfValue = tf.getValue();
-                        if (tfValue > 0) {
-                            idf += collectionStats.getIDF(term);
-                            bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, collectionStats.getDF(term), collectionStats.getCollectionSize());
-                            coord += 1;
-                            tfMax = Math.max(tfMax, tfValue);
-                        }
+            // if the term vectors are unavailable generate it here
+            if (docVector == null) {
+                DocVector aDocVector = new DocVector();
+                List<String> docTerms = AnalyzerUtils.analyze(analyzer, result.getText());
+
+                for (String t : docTerms) {
+                    if (!t.isEmpty()) {
+                        Integer n = aDocVector.vector.get(t);
+                        n = (n == null) ? 1 : ++n;
+                        aDocVector.vector.put(t, n);
                     }
                 }
 
-                result.getFeatures().add((float) idf);
-
-                result.getFeatures().add((float) coord);
-
-                result.getFeatures().add((float) docLength);
-            } else {
-                result.getFeatures().add((float) result.getRsv());
-
-                result.getFeatures().add(0f);
-
-                result.getFeatures().add(0f);
+                docVector = aDocVector;
             }
 
+
+            for (Integer i : docVector.vector.values()) {
+                docLength += i;
+            }
+            for (Map.Entry<String, Integer> tf : docVector.vector.entrySet()) {
+                String term = tf.getKey();
+                if (qTerms.contains(term)) {
+                    double tfValue = tf.getValue();
+                    if (tfValue > 0) {
+                        idf += collectionStats.getIDF(term);
+                        bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, collectionStats.getDF(term), collectionStats.getCollectionSize());
+                        coord += 1;
+                        tfMax = Math.max(tfMax, tfValue);
+                    }
+                }
+            }
+
+            result.getFeatures().add((float) idf);
+
+            result.getFeatures().add((float) coord);
+
+            result.getFeatures().add((float) docLength);
 
             float numURLs = 0;
             float numHashtags = 0;
@@ -205,11 +214,7 @@ public class RMTSReranker {
 
             result.getFeatures().add((float) Math.log(1 + result.getFollowers_count()));
 
-            if (docVector != null) {
-                result.getFeatures().add((float) bm25);
-            } else {
-                result.getFeatures().add((float) result.getRsv());
-            }
+            result.getFeatures().add((float) bm25);
 
             result.getFeatures().add((float) tfMax);
         }
