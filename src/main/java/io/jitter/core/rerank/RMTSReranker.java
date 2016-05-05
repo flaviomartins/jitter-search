@@ -111,37 +111,43 @@ public class RMTSReranker {
         }
 
         for (Document result : results) {
-            DocVector docVector = result.getDocVector();
-
             double averageDocumentLength = 28;
             double docLength = 0;
-            for (Integer i : docVector.vector.values()) {
-                docLength += i;
-            }
-
             double idf = 0;
             double bm25 = 0;
             double coord = 0;
             double tfMax = 0;
 
-            for (Map.Entry<String, Integer> tf : docVector.vector.entrySet()) {
-                String term = tf.getKey();
-                if (qTerms.contains(term)) {
-                    double tfValue = tf.getValue();
-                    if (tfValue > 0) {
-                        idf += collectionStats.getIDF(term);
-                        bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, collectionStats.getDF(term), collectionStats.getCollectionSize());
-                        coord += 1;
-                        tfMax = Math.max(tfMax, tfValue);
+            DocVector docVector = result.getDocVector();
+            if (docVector != null) {
+                for (Integer i : docVector.vector.values()) {
+                    docLength += i;
+                }
+                for (Map.Entry<String, Integer> tf : docVector.vector.entrySet()) {
+                    String term = tf.getKey();
+                    if (qTerms.contains(term)) {
+                        double tfValue = tf.getValue();
+                        if (tfValue > 0) {
+                            idf += collectionStats.getIDF(term);
+                            bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, collectionStats.getDF(term), collectionStats.getCollectionSize());
+                            coord += 1;
+                            tfMax = Math.max(tfMax, tfValue);
+                        }
                     }
                 }
+
+                result.getFeatures().add((float) idf);
+
+                result.getFeatures().add((float) coord);
+
+                result.getFeatures().add((float) docLength);
+            } else {
+                result.getFeatures().add((float) result.getRsv());
+
+                result.getFeatures().add(0f);
+
+                result.getFeatures().add(0f);
             }
-
-            result.getFeatures().add((float) idf);
-
-            result.getFeatures().add((float) coord);
-
-            result.getFeatures().add((float) docLength);
 
 
             float numURLs = 0;
@@ -199,7 +205,11 @@ public class RMTSReranker {
 
             result.getFeatures().add((float) Math.log(1 + result.getFollowers_count()));
 
-            result.getFeatures().add((float) bm25);
+            if (docVector != null) {
+                result.getFeatures().add((float) bm25);
+            } else {
+                result.getFeatures().add((float) result.getRsv());
+            }
 
             result.getFeatures().add((float) tfMax);
         }

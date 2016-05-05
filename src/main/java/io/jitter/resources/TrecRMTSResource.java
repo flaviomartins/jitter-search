@@ -155,9 +155,9 @@ public class TrecRMTSResource {
             }
         }
 
-        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
-        langFilter.setResults(results.scoreDocs);
-        results.scoreDocs = langFilter.getFiltered();
+//        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
+//        langFilter.setResults(results.scoreDocs);
+//        results.scoreDocs = langFilter.getFiltered();
         
         results.scoreDocs = rmtsReranker.score(query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit.get(), numRerank.get());
 
