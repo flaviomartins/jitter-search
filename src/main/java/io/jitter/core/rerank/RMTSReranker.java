@@ -8,6 +8,7 @@ import ciir.umass.edu.learning.Ranker;
 import ciir.umass.edu.learning.RankerFactory;
 import ciir.umass.edu.utilities.MergeSorter;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.twitter.Extractor;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
@@ -50,6 +51,20 @@ public class RMTSReranker {
     }
 
     public List<Document> score(String query, double queryEpoch, List<Document> results, List<Document> shardResults, CollectionStats collectionStats, int numResults, int numRerank) throws ParseException {
+        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
+        Set<Term> queryTerms = new TreeSet<>();
+        q.extractTerms(queryTerms);
+        Set<String> qTerms = new HashSet<>();
+        for (Term term : queryTerms) {
+            String text = term.text();
+            if (text.isEmpty())
+                continue;
+            qTerms.add(text);
+        }
+
+        BM25Feature bm25Feature = new BM25Feature(1.2D, 1.0D);
+        Extractor extractor = new Extractor();
+
         for (Document result : results) {
             result.getFeatures().add((float) result.getRsv());
         }
@@ -60,7 +75,6 @@ public class RMTSReranker {
         List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
 
         double lambda = 0.01;
-
         RecencyReranker reranker = new RecencyReranker(results, new LocalExponentialDistribution(lambda), scaledEpochs);
         results = reranker.getReranked();
 
@@ -91,25 +105,31 @@ public class RMTSReranker {
 
         // KDE News
         List<Double> newsOracle = Lists.newArrayList();
+        List<Double> newsWeights = Lists.newArrayList();
         for (Document shardResult : shardResults) {
+            DocVector docVector = shardResult.getDocVector();
+            // if the term vectors are unavailable generate it here
+            if (docVector == null) {
+                DocVector aDocVector = new DocVector();
+                List<String> docTerms = AnalyzerUtils.analyze(analyzer, shardResult.getText());
+
+                for (String t : docTerms) {
+                    if (!t.isEmpty()) {
+                        Integer n = aDocVector.vector.get(t);
+                        n = (n == null) ? 1 : ++n;
+                        aDocVector.vector.put(t, n);
+                    }
+                }
+
+                docVector = aDocVector;
+            }
+            Set<String> nTerms = docVector.vector.keySet();
+            double jaccardSimilarity = (double) Sets.intersection(qTerms, nTerms).size() / Sets.union(qTerms, nTerms).size();
+
             newsOracle.add((double)shardResult.getEpoch());
+            newsWeights.add(jaccardSimilarity);
         }
-        results = KDERerank(newsOracle, results, queryEpoch, method, 1.0);
-
-        BM25Feature bm25Feature = new BM25Feature(1.2D, 1.0D);
-
-        Extractor extractor = new Extractor();
-
-        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
-        Set<Term> queryTerms = new TreeSet<>();
-        q.extractTerms(queryTerms);
-        Set<String> qTerms = new HashSet<>();
-        for (Term term : queryTerms) {
-            String text = term.text();
-            if (text.isEmpty())
-                continue;
-            qTerms.add(text);
-        }
+        results = KDERerank(newsOracle, newsWeights, results, queryEpoch, method, 1.0);
 
         for (Document result : results) {
             double averageDocumentLength = 28;
@@ -227,7 +247,7 @@ public class RMTSReranker {
         return results;
     }
 
-    private List<Document> KDERerank(List<Double> oracleRawEpochs, List<Document> results, double queryEpoch, KDE.METHOD method, double weight) {
+    private List<Document> KDERerank(List<Double> oracleRawEpochs, List<Double> oracleWeights, List<Document> results, double queryEpoch, KDE.METHOD method, double weight) {
         List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(results);
         // groom our hit times wrt to query time
         List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
@@ -235,8 +255,8 @@ public class RMTSReranker {
         // if we're using our oracle, we need the right training data
         List<Double> oracleScaledEpochs = TimeUtils.adjustEpochsToLandmark(oracleRawEpochs, queryEpoch, DAY);
         double[] densityTrainingData = ListUtils.listToArray(oracleScaledEpochs);
-        double[] densityWeights = new double[densityTrainingData.length];
-        Arrays.fill(densityWeights, 1.0 / (double) densityWeights.length);
+        double[] densityWeights = ListUtils.listToArray(oracleWeights);
+//        Arrays.fill(densityWeights, 1.0 / (double) densityWeights.length);
 
         KernelDensityReranker kernelDensityReranker = new KernelDensityReranker(results, scaledEpochs,
                 densityTrainingData, densityWeights, method, weight);
