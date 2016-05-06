@@ -21,12 +21,12 @@ import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.ListUtils;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
+import org.lemurproject.kstem.KrovetzStemmer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +46,7 @@ public class RMTSReranker {
         RankerFactory rFact = new RankerFactory();
         ranker = rFact.loadRankerFromFile(rankerModel);
         
-        analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
+        analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, true);
         QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
     }
 
@@ -103,6 +103,15 @@ public class RMTSReranker {
 //        KDERerank(viewsOracle, query, method, bViews);
 //        KDERerank(editsOracle, query, method, bEdits);
 
+
+//        KrovetzStemmer kstem = new KrovetzStemmer();
+//
+//        Set<String> kstemQTerms = new HashSet<>();
+//        for (String term : qTerms) {
+//            String stem = kstem.stem(term);
+//            kstemQTerms.add(stem);
+//        }
+
         // KDE News
         List<Double> newsOracle = Lists.newArrayList();
         List<Double> newsWeights = Lists.newArrayList();
@@ -124,7 +133,20 @@ public class RMTSReranker {
                 docVector = aDocVector;
             }
             Set<String> nTerms = docVector.vector.keySet();
-            double jaccardSimilarity = (double) Sets.intersection(qTerms, nTerms).size() / Sets.union(qTerms, nTerms).size();
+
+            double n = (double) Sets.intersection(qTerms, nTerms).size();
+            double jaccardSimilarity = n / (qTerms.size() + nTerms.size() - n);
+
+//            // Using Krovetz stemmer
+//            Set<String> kstemNTerms = new HashSet<>();
+//            for (String term : nTerms) {
+//                String stem = kstem.stem(term);
+//                kstemNTerms.add(stem);
+//            }
+//
+//            // faster version
+//            double n = (double) Sets.intersection(kstemQTerms, kstemNTerms).size();
+//            double jaccardSimilarity = n / (kstemQTerms.size() + kstemNTerms.size() - n);
 
             newsOracle.add((double)shardResult.getEpoch());
             newsWeights.add(jaccardSimilarity);
@@ -297,12 +319,12 @@ public class RMTSReranker {
 //            String rel = qrels.getRelString(qid, docno);
             String rel = "0";
 
-            float maxTF = l.get(k).getFeatureValue(21);
-            if (maxTF < 3) {
+//            float maxTF = l.get(k).getFeatureValue(21);
+//            if (maxTF < 3) {
                 Document updatedResult = new Document(results.get(k));
                 updatedResult.setRsv(scores[k]);
                 finalResults.add(updatedResult);
-            }
+//            }
 
 //            System.out.println(String.format("%s Q0 %s %d %." + (int) (6 + Math.ceil(Math.log10(numResults))) + "f %s # rel = %s, rt = %s, text = %s", qid, docno, (j + 1),
 //                    scores[k], runTag, rel, results.get(j).getRetweeted_status_id(), results.get(j).getText().replaceAll("\\r?\\n", " --linebreak-- ")));

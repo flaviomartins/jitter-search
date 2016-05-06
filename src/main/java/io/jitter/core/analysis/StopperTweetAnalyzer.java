@@ -42,6 +42,10 @@ public final class StopperTweetAnalyzer extends StopwordAnalyzerBase {
         this.possessiveFiltering = false;
     }
 
+    public StopperTweetAnalyzer(Version matchVersion, boolean stemming, boolean preserveCaps, boolean possessiveFiltering) {
+        this(matchVersion, STOP_WORDS_SET, stemming, preserveCaps, possessiveFiltering);
+    }
+
     public StopperTweetAnalyzer(Version matchVersion, CharArraySet stopWords, boolean stemming) {
         this(matchVersion, stopWords, stemming, false);
     }
