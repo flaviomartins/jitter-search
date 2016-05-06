@@ -40,7 +40,8 @@
         <commons-io.version>2.4</commons-io.version>
 
         <twittertools.version>1.4.3</twittertools.version>
-        <ranklib.version>2.5-SNAPSHOT</ranklib.version>
+        <ranklib.version>2.6</ranklib.version>
+        <kstem.version>3.4</kstem.version>
         <sqlite-jdbc.version>3.8.11.2</sqlite-jdbc.version>
         <je.version>6.4.25</je.version>
         <ssj.version>3.1.1</ssj.version>
@@ -76,6 +77,17 @@
     </issueManagement>
 
     <repositories>
+        <repository>
+            <id>repo</id>
+            <releases>
+                <enabled>true</enabled>
+                <checksumPolicy>ignore</checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <url>file://${project.basedir}/repo</url>
+        </repository>
         <repository>
             <id>sonatype-nexus-snapshots</id>
             <name>Sonatype Nexus Snapshots</name>
@@ -299,6 +311,11 @@
             <groupId>edu.umass.ciir</groupId>
             <artifactId>RankLib</artifactId>
             <version>${ranklib.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.lemurproject</groupId>
+            <artifactId>kstem</artifactId>
+            <version>${kstem.version}</version>
         </dependency>
         <dependency>
             <groupId>org.xerial</groupId>
