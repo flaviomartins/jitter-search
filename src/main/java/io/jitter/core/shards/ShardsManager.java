@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ShardsManager implements Managed {
 
@@ -171,11 +172,7 @@ public class ShardsManager implements Managed {
     private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) {
         List<Document> results = new ArrayList<>();
         if (selectedSources != null) {
-            for (Document doc : selectResults.scoreDocs) {
-                if (selectedSources.contains(doc.getScreen_name())) {
-                    results.add(doc);
-                }
-            }
+            results.addAll(selectResults.scoreDocs.stream().filter(doc -> selectedSources.contains(doc.getScreen_name())).collect(Collectors.toList()));
         } else {
             results.addAll(selectResults.scoreDocs);
         }
@@ -214,11 +211,7 @@ public class ShardsManager implements Managed {
         List<Document> results = new ArrayList<>();
         if (selectedTopics != null) {
             for (Document doc : selectResults.scoreDocs) {
-                for (String selectedTopic: selectedTopics) {
-                    if (topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())) {
-                        results.add(doc);
-                    }
-                }
+                results.addAll(selectedTopics.stream().filter(selectedTopic -> topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())).map(selectedTopic -> doc).collect(Collectors.toList()));
             }
         } else {
             results.addAll(selectResults.scoreDocs);

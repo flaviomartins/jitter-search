@@ -32,7 +32,6 @@ public class TwitterManager implements Managed {
     private static final int MAX_USERS_LOOKUP = 100;
     private static final int MAX_STATUSES_REQUEST = 200;
 
-    @SuppressWarnings("FieldCanBeLocal")
     private final String databasePath;
     private final String collectionPath;
     private final ImmutableSortedSet<String> screenNames;

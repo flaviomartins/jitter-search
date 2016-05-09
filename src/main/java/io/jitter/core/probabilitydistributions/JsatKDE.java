@@ -6,8 +6,6 @@ import jsat.distributions.empirical.kernelfunc.KernelFunction;
 import jsat.linear.DenseVector;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
-import static jsat.distributions.empirical.KernelDensityEstimator.BandwithGuassEstimate;
-
 public class JsatKDE implements KDE {
     private final double[] data;
     private final double[] weights;

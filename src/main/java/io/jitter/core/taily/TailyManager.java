@@ -52,11 +52,9 @@ public class TailyManager implements Managed {
 
     private Map<String,Double> limit(Map<String, Double> ranking, int v) {
         Map<String, Double> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Double> entry : ranking.entrySet()) {
-            if (entry.getValue() >= v) {
-                map.put(entry.getKey(), entry.getValue());
-            }
-        }
+        ranking.entrySet().stream().filter(entry -> entry.getValue() >= v).forEachOrdered(entry -> {
+            map.put(entry.getKey(), entry.getValue());
+        });
         return map;
     }
 

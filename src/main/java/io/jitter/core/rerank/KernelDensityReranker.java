@@ -49,7 +49,7 @@ public class KernelDensityReranker extends SearchReranker {
         Iterator<Document> resultIt = results.iterator();
         Iterator<Double> epochIt = scaledEpochs.iterator();
 
-        List<Document> updatedResults = new ArrayList<Document>(results.size());
+        List<Document> updatedResults = new ArrayList<>(results.size());
         while (resultIt.hasNext()) {
             Document origResult = resultIt.next();
             double scaledEpoch = epochIt.next();

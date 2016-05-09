@@ -3,7 +3,6 @@ package io.jitter.core.feedback;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
 import io.jitter.core.document.FeatureVector;
-import io.jitter.core.twittertools.api.TrecCollectionStats;
 import io.jitter.core.utils.Stopper;
 import io.jitter.core.utils.KeyValuePair;
 import jsat.text.stemming.PorterStemmer;
@@ -15,7 +14,7 @@ public class FeedbackRelevanceModel extends FeedbackModel {
     private boolean stripNumbers = false;
     private double[] docWeights = null;
 
-    private PorterStemmer stemmer = new PorterStemmer();
+    private final PorterStemmer stemmer = new PorterStemmer();
 
     @Override
     public void build(Stopper stopper) {

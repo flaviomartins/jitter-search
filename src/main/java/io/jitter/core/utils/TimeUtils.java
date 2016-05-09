@@ -4,22 +4,19 @@ import io.jitter.api.search.Document;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TimeUtils {
 
     public static List<Double> extractEpochsFromResults(List<Document> results) {
         List<Double> epochs = new ArrayList<>(results.size());
-        for (Document result : results) {
-            epochs.add((double) result.getEpoch());
-        }
+        epochs.addAll(results.stream().map(result -> (double) result.getEpoch()).collect(Collectors.toList()));
         return epochs;
     }
 
     public static List<Double> adjustEpochsToLandmark(List<Double> epochs, double landmark, double scaleDenominator) {
         List<Double> scaled = new ArrayList<>(epochs.size());
-        for (Double rawEpoch : epochs) {
-            scaled.add(TimeUtils.adjustEpochToLandmark(rawEpoch, landmark, scaleDenominator));
-        }
+        scaled.addAll(epochs.stream().map(rawEpoch -> TimeUtils.adjustEpochToLandmark(rawEpoch, landmark, scaleDenominator)).collect(Collectors.toList()));
         return scaled;
     }
 

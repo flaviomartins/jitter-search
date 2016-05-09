@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 
 public class DocVector {
 
-    public LinkedHashMap<String, Integer> vector;
+    public final LinkedHashMap<String, Integer> vector;
 
     public DocVector() {
         this.vector = new LinkedHashMap<>();

@@ -9,7 +9,7 @@ package io.jitter.core.utils;
 public class ExitException extends SecurityException {
 
     /** Status code */
-    private int status;
+    private final int status;
 
     /**
      * Constructs an exit exception.

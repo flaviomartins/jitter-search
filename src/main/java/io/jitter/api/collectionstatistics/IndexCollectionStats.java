@@ -3,7 +3,6 @@ package io.jitter.api.collectionstatistics;
 import cc.twittertools.index.IndexStatuses;
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.*;
-import org.apache.lucene.util.BytesRef;
 
 import java.io.*;
 

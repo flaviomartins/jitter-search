@@ -40,23 +40,20 @@ public class CustomTwitter4jStatusClient extends Twitter4jStatusClient {
         if (client.isDone() || executorService.isTerminated()) {
             throw new IllegalStateException("Client is already stopped");
         }
-        Runnable runner = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    while (!client.isDone()) {
-                        String msg = messageQueue.take();
-                        try {
-                            onMessage(msg);
-                            parseMessage(msg);
-                        } catch (Exception e) {
-                            logger.warn("Exception thrown during parsing msg " + msg, e);
-                            onException(e);
-                        }
+        Runnable runner = () -> {
+            try {
+                while (!client.isDone()) {
+                    String msg = messageQueue.take();
+                    try {
+                        onMessage(msg);
+                        parseMessage(msg);
+                    } catch (Exception e) {
+                        logger.warn("Exception thrown during parsing msg " + msg, e);
+                        onException(e);
                     }
-                } catch (Exception e) {
-                    onException(e);
                 }
+            } catch (Exception e) {
+                onException(e);
             }
         };
 

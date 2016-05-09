@@ -8,7 +8,6 @@ import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.RMTSDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
-import io.jitter.core.filter.NaiveLanguageFilter;
 import io.jitter.core.rerank.RMTSReranker;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionManager;

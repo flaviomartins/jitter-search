@@ -8,7 +8,7 @@ import java.util.List;
 public class TopDocuments {
 
     /** The total number of hits for the query. */
-    public int totalHits;
+    public final int totalHits;
 
     /** The top hits for the query. */
     public List<Document> scoreDocs;

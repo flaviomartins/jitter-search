@@ -42,9 +42,7 @@ public class UserTimeline {
     }
 
     public void addAll(List<Status> statuses) {
-        for (Status status : statuses) {
-            add(status);
-        }
+        statuses.forEach(this::add);
     }
 
     public int size() {

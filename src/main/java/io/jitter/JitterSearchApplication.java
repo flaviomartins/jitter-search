@@ -175,7 +175,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 100, true);
             final UserStream userStream = new UserStream(oAuth1,
                     Lists.newArrayList(timelineSseResource, userStreamIndexer),
-                    Lists.<RawStreamListener>newArrayList(userStreamLogger));
+                    Lists.newArrayList(userStreamLogger));
             environment.lifecycle().manage(userStream);
             environment.lifecycle().manage(userStreamIndexer);
             
@@ -191,7 +191,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 10000, false);
             final SampleStream statusStream = new SampleStream(oAuth1,
                     Lists.newArrayList(sampleSseResource, statusStreamIndexer),
-                    Lists.<RawStreamListener>newArrayList(statusStreamLogger));
+                    Lists.newArrayList(statusStreamLogger));
             environment.lifecycle().manage(statusStream);
             environment.lifecycle().manage(statusStreamIndexer);
         }

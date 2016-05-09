@@ -26,7 +26,6 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
-import org.lemurproject.kstem.KrovetzStemmer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -8,7 +8,7 @@ public class CommonsKDE implements KDE  {
     private final double[] data;
     private final double[] weights;
     private double bw;
-    private final NormalDistribution kf = new NormalDistribution(0.0, 1.0);;
+    private final NormalDistribution kf = new NormalDistribution(0.0, 1.0);
     private METHOD method;
 
     public CommonsKDE(double[] data, double[] weights, double bw) {

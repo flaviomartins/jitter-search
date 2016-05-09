@@ -246,9 +246,7 @@ public class Taily {
         // clean up
         corpusStore.close();
 
-        for (FeatureStore store : stores.values()) {
-            store.close();
-        }
+        stores.values().forEach(FeatureStore::close);
 
         indexReader.close();
 
@@ -395,13 +393,9 @@ public class Taily {
         // clean up
         corpusStore.close();
 
-        for (FeatureStore store : sourceStores.values()) {
-            store.close();
-        }
+        sourceStores.values().forEach(FeatureStore::close);
 
-        for (FeatureStore store : stores.values()) {
-            store.close();
-        }
+        stores.values().forEach(FeatureStore::close);
 
         indexReader.close();
 
