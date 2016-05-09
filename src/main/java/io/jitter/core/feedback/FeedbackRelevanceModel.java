@@ -45,8 +45,12 @@ public class FeedbackRelevanceModel extends FeedbackModel {
                 fbDocVectors.add(docVector);
             }
 
-            features = new LinkedList<>();
+            int totalTerms = 0;
+            if (collectionStats != null) {
+                totalTerms = collectionStats.getTotalTerms();
+            }
 
+            features = new LinkedList<>();
             for (String term : vocab) {
                 double fbWeight = 0.0;
 
@@ -65,9 +69,9 @@ public class FeedbackRelevanceModel extends FeedbackModel {
                     fbWeight += docProb;
                 }
 
-                if (collectionStats != null) {
+                if (totalTerms != 0) {
                     String stem = stemmer.stem(term);
-                    double rm3IDF = collectionStats.getTotalTerms() / (double) collectionStats.getDF(stem);
+                    double rm3IDF = totalTerms / (double) collectionStats.getDF(stem);
                     fbWeight *= Math.log(rm3IDF);
                 }
 
