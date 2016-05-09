@@ -33,6 +33,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
             new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
 
     private static final int MAX_NUM_RESULTS = 10000;
+    private static final int DEFAULT_NUM_RESULTS = 3000;
 
     private final String host;
     private final int port;
@@ -100,7 +101,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
     public TopDocuments search(String query, long maxId, int numResults, boolean filterRT) throws TException,
             IOException, ClassNotFoundException, ParseException {
 
-        int numResultsToFetch = Math.min(MAX_NUM_RESULTS, 3 * numResults);
+        int numResultsToFetch = Math.min(MAX_NUM_RESULTS, Math.max(DEFAULT_NUM_RESULTS, numResults));
         
         query = query.replaceAll(",", "");
 
