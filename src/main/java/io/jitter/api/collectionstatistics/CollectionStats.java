@@ -1,5 +1,7 @@
 package io.jitter.api.collectionstatistics;
 
+import java.io.IOException;
+
 public interface CollectionStats {
     int getDF(String term);
 
@@ -12,4 +14,6 @@ public interface CollectionStats {
     long getCumulativeDocumentFrequency();
 
     long getCumulativeCollectionFrequency();
+
+    int getTotalTerms() throws IOException;
 }

@@ -1,8 +1,9 @@
 package io.jitter.api.collectionstatistics;
 
+import cc.twittertools.index.IndexStatuses;
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Term;
+import org.apache.lucene.index.*;
+import org.apache.lucene.util.BytesRef;
 
 import java.io.*;
 
@@ -55,6 +56,17 @@ public class IndexCollectionStats implements CollectionStats {
         } catch (IOException e) {
             return -1;
         }
+    }
+
+    public int getTotalTerms() throws IOException {
+        Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
+        TermsEnum termEnum = terms.iterator(null);
+
+        int termCnt = 0;
+        while (termEnum.next() != null) {
+            termCnt++;
+        }
+        return termCnt;
     }
 
 }

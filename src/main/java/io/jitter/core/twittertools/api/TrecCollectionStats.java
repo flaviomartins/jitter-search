@@ -4,10 +4,7 @@ import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.core.taily.FeatureStore;
 import org.apache.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
@@ -23,7 +20,7 @@ public class TrecCollectionStats implements CollectionStats {
     private static final int CF_COLUMN = 2;
 
     public static final int DEFAULT_COLLECTION_SIZE = 243271538;
-    public static final int DEFAULT_TERMS_SIZE = 5861050;
+    public static final int DEFAULT_TERM_SIZE = 5861050;
 
     private FeatureStore corpusStore;
 
@@ -135,6 +132,10 @@ public class TrecCollectionStats implements CollectionStats {
 
     public void setCumulativeCollectionFrequency(int cumulativeCollectionFrequency) {
         this.cumulativeCollectionFrequency = cumulativeCollectionFrequency;
+    }
+
+    public int getTotalTerms() {
+        return DEFAULT_TERM_SIZE;
     }
 
 }

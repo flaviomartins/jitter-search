@@ -67,7 +67,7 @@ public class FeedbackRelevanceModel extends FeedbackModel {
 
                 if (collectionStats != null) {
                     String stem = stemmer.stem(term);
-                    double rm3IDF = TrecCollectionStats.DEFAULT_TERMS_SIZE / (double) collectionStats.getDF(stem);
+                    double rm3IDF = collectionStats.getTotalTerms() / (double) collectionStats.getDF(stem);
                     fbWeight *= Math.log(rm3IDF);
                 }
 
