@@ -10,6 +10,7 @@ import io.jitter.api.search.*;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
+import io.jitter.core.filter.NaiveLanguageFilter;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.jitter.core.utils.AnalyzerUtils;
@@ -77,14 +78,18 @@ public class TrecFeedbackResource {
         if (q.isPresent()) {
             if (!sFuture.get()) {
                 if (maxId.isPresent()) {
-                    selectResults = trecMicroblogAPIWrapper.search(query, maxId.get(), sLimit.get(), !sRetweets.get());
+                    selectResults = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !sRetweets.get());
                 } else {
-                    selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, sLimit.get(), !sRetweets.get());
+                    selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
                 }
             } else {
-                selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, sLimit.get(), !sRetweets.get());
+                selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
             }
         }
+
+        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
+        langFilter.setResults(selectResults.scoreDocs);
+        selectResults.scoreDocs = langFilter.getFiltered();
 
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = new FeatureVector(null);
@@ -103,7 +108,7 @@ public class TrecFeedbackResource {
             FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
             fb.setOriginalQueryFV(queryFV);
             fb.setRes(selectResults.scoreDocs);
-            fb.build(trecMicroblogAPIWrapper.getStopper());
+            fb.build(trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
 
             FeatureVector fbVector = fb.asFeatureVector();
             fbVector.pruneToSize(fbTerms.get());
