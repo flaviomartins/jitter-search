@@ -22,7 +22,8 @@ public class TrecCollectionStats implements CollectionStats {
     private static final int DF_COLUMN = 1;
     private static final int CF_COLUMN = 2;
 
-    private static final int DEFAULT_COLLECTION_SIZE = 243271538;
+    public static final int DEFAULT_COLLECTION_SIZE = 243271538;
+    public static final int DEFAULT_TERMS_SIZE = 5861050;
 
     private FeatureStore corpusStore;
 
