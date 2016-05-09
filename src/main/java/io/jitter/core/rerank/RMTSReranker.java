@@ -285,7 +285,7 @@ public class RMTSReranker {
     }
 
     @SuppressWarnings("UnusedAssignment")
-    public List<Document> rankRankLib(String query, List<Document> results, int numResults, int numRerank) {
+    private List<Document> rankRankLib(String query, List<Document> results, int numResults, int numRerank) {
         int[] features = ranker.getFeatures();
         List<DataPoint> rl = new ArrayList<>();
 

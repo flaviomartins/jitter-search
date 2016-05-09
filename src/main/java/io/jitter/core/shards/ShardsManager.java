@@ -289,6 +289,7 @@ public class ShardsManager implements Managed {
             topDocs = topCollector.topDocs(0, reader.numDocs());
         }
 
+        //noinspection UnusedAssignment
         maxScore = totalHits > 0 ? topDocs.getMaxScore() : 0.0f;
         nDocsReturned = topDocs.scoreDocs.length;
         ids = new int[nDocsReturned];

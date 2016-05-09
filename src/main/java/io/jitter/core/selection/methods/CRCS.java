@@ -5,12 +5,12 @@ import io.jitter.api.search.Document;
 import java.util.HashMap;
 import java.util.List;
 
-public abstract class CRCS extends SelectionMethod {
+abstract class CRCS extends SelectionMethod {
 
     CRCS() {
     }
 
-    protected HashMap<String, Double> getScores(List<Document> results) {
+    HashMap<String, Double> getScores(List<Document> results) {
         HashMap<String, Double> scores = new HashMap<>();
         int j = 1;
         for (Document result : results) {

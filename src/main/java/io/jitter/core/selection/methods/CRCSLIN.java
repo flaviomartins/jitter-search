@@ -2,7 +2,6 @@ package io.jitter.core.selection.methods;
 
 import io.jitter.api.search.Document;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
