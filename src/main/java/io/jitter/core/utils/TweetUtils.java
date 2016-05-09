@@ -18,28 +18,21 @@ public class TweetUtils {
     private static final Pattern RT_PATTERN;
     private static final Pattern VIA_PATTERN;
 
+    private static final Extractor EXTRACTOR;
+
     static {
         synchronized (TweetUtils.class) {
             NUMBERS_PATTERN = Pattern.compile(NUMBERS);
             MICROSYNTAX_PATTERN = Pattern.compile(MICROSYNTAX);
             RT_PATTERN = Pattern.compile(RT);
             VIA_PATTERN = Pattern.compile(VIA);
+            EXTRACTOR = new Extractor();
         }
     }
 
     public static List<String> extractURLs(String text) {
         Extractor extractor = new Extractor();
         return extractor.extractURLs(text);
-    }
-
-    public static List<Extractor.Entity> extractURLsWithIndices(String text) {
-        Extractor extractor = new Extractor();
-        return extractor.extractURLsWithIndices(text);
-    }
-
-    public static List<Extractor.Entity> extractEntitiesWithIndices(String text) {
-        Extractor extractor = new Extractor();
-        return extractor.extractEntitiesWithIndices(text);
     }
 
     public static String stripNumbers(String text) {
@@ -59,12 +52,17 @@ public class TweetUtils {
     }
 
     public static String removeEntities(String text) {
-        List<Extractor.Entity> entities = extractEntitiesWithIndices(text);
+        List<Extractor.Entity> entities = EXTRACTOR.extractEntitiesWithIndices(text);
         return replaceEntities(text, entities);
     }
 
     public static String removeURLs(String text) {
-        List<Extractor.Entity> entities = extractURLsWithIndices(text);
+        List<Extractor.Entity> entities = EXTRACTOR.extractURLsWithIndices(text);
+        return replaceEntities(text, entities);
+    }
+
+    public static String removeMentionsOrLists(String text) {
+        List<Extractor.Entity> entities = EXTRACTOR.extractMentionsOrListsWithIndices(text);
         return replaceEntities(text, entities);
     }
 
@@ -82,7 +80,10 @@ public class TweetUtils {
     }
 
     public static String clean(String text) {
-        text = removeAll(text);
+//        text = removeAll(text);
+        text = removeMentionsOrLists(text);
+        text = removeURLs(text);
+        text = removePatterns(text);
         text = unescapeHtml(text);
         text = stripNumbers(text);
         return text;
