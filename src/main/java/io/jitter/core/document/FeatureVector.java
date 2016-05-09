@@ -128,10 +128,10 @@ public class FeatureVector {
         Map<String, Double> newMap = new HashMap<>(k);
         int i = 0;
         while (it.hasNext()) {
+            if (++i > k)
+                break;
             KeyValuePair kvp = it.next();
             newMap.put(kvp.getKey(), kvp.getScore());
-            if (i++ > k)
-                break;
         }
 
         features = newMap;
@@ -141,9 +141,14 @@ public class FeatureVector {
     public void normalizeToOne() {
         Map<String, Double> f = new HashMap<>(features.size());
 
+        double sum = 0;
+        for (double value : features.values()) {
+            sum += value;
+        }
+
         for (String feature : features.keySet()) {
             double obs = features.get(feature);
-            f.put(feature, obs / length);
+            f.put(feature, obs / sum);
         }
 
         features = f;
