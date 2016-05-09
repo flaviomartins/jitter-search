@@ -280,6 +280,7 @@ public class SelectionManager implements Managed {
         totalHits = topCollector.getTotalHits();
         TopDocs topDocs = topCollector.topDocs(0, len);
 
+        //noinspection UnusedAssignment
         maxScore = totalHits > 0 ? topDocs.getMaxScore() : 0.0f;
         nDocsReturned = topDocs.scoreDocs.length;
         ids = new int[nDocsReturned];

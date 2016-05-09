@@ -2,7 +2,6 @@ package io.jitter.core.selection.methods;
 
 import io.jitter.api.search.Document;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,23 +15,10 @@ public class CRCSEXP extends CRCS {
 
     @Override
     public Map<String, Double> rank(List<Document> results) {
-        HashMap<String, Double> map = new HashMap<>();
-        int j = 1;
-        for (Document result : results) {
-            double r = getScore(j);
-            String screenName = result.getScreen_name();
-            if (!map.containsKey(screenName)) {
-                map.put(screenName, r);
-            } else {
-                double cur = map.get(screenName);
-                map.put(screenName, cur + r);
-            }
-            j++;
-        }
-        return map;
+        return getScores(results);
     }
 
-    private double getScore(int j) {
+    double weight(int j, int size) {
         return alpha * Math.exp(-beta * j);
     }
 
