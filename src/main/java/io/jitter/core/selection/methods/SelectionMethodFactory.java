@@ -11,10 +11,8 @@ public class SelectionMethodFactory {
             return new CRCSLIN();
         } else if ("CRCSEXP".equalsIgnoreCase(method)) {
             return new CRCSEXP();
-        } else if ("CRCSISR".equalsIgnoreCase(method)) {
-            return new CRCSISR();
-        } else if ("CRCSLOGISR".equalsIgnoreCase(method)) {
-            return new CRCSLOGISR();
+        } else if ("CRCSLOGEXP".equalsIgnoreCase(method)) {
+            return new CRCSLOGEXP();
         } else if ("RankS".equalsIgnoreCase(method)) {
             return new RankS(true);
         }
