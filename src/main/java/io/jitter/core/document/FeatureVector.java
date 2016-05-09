@@ -76,9 +76,7 @@ public class FeatureVector {
      */
     public void addText(String text) {
         List<String> terms = AnalyzerUtils.analyze(analyzer, text);
-        for (String term : terms) {
-            addTerm(term);
-        }
+        terms.forEach(this::addTerm);
     }
 
     /**

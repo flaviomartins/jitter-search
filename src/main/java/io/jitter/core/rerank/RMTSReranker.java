@@ -261,7 +261,7 @@ public class RMTSReranker {
         }
 
         try {
-            results = rankRankLib(query, results, "RMTS", numResults, numRerank);
+            results = rankRankLib(query, results, numResults, numRerank);
         } catch (SecurityException e) {
             logger.warn("RankLib caught calling System.exit(int).");
         }
@@ -285,7 +285,7 @@ public class RMTSReranker {
     }
 
     @SuppressWarnings("UnusedAssignment")
-    public List<Document> rankRankLib(String query, List<Document> results, String runTag, int numResults, int numRerank) {
+    public List<Document> rankRankLib(String query, List<Document> results, int numResults, int numRerank) {
         int[] features = ranker.getFeatures();
         List<DataPoint> rl = new ArrayList<>();
 
@@ -325,8 +325,8 @@ public class RMTSReranker {
                 finalResults.add(updatedResult);
 //            }
 
-//            System.out.println(String.format("%s Q0 %s %d %." + (int) (6 + Math.ceil(Math.log10(numResults))) + "f %s # rel = %s, rt = %s, text = %s", qid, docno, (j + 1),
-//                    scores[k], runTag, rel, results.get(j).getRetweeted_status_id(), results.get(j).getText().replaceAll("\\r?\\n", " --linebreak-- ")));
+//            System.out.println(String.format("%s Q0 %s %d %." + (int) (6 + Math.ceil(Math.log10(numResults))) + "f RUN # rel = %s, rt = %s, text = %s", qid, docno, (j + 1),
+//                    scores[k], rel, results.get(j).getRetweeted_status_id(), results.get(j).getText().replaceAll("\\r?\\n", " --linebreak-- ")));
         }
         return finalResults;
     }

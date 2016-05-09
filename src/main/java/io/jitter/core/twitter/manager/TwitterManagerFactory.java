@@ -65,7 +65,7 @@ public class TwitterManagerFactory {
     }
 
     public TwitterManager build(Environment environment) {
-        final TwitterManager twitterManager = new TwitterManager(databasePath, collectionPath, users);
+        final TwitterManager twitterManager = new TwitterManager(users);
         environment.lifecycle().manage(twitterManager);
         return twitterManager;
     }

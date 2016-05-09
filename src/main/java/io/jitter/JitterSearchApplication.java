@@ -150,7 +150,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TrecFeedbackResource trecFeedbackResource = new TrecFeedbackResource(trecMicroblogAPIWrapper);
         environment.jersey().register(trecFeedbackResource);
         
-        final TrecAllShardsFeedbackResource trecAllShardsFeedbackResource = new TrecAllShardsFeedbackResource(trecMicroblogAPIWrapper, selectionManager, shardsManager, tailyManager);
+        final TrecAllShardsFeedbackResource trecAllShardsFeedbackResource = new TrecAllShardsFeedbackResource(trecMicroblogAPIWrapper, shardsManager);
         environment.jersey().register(trecAllShardsFeedbackResource);
 
         final TrecMultiFeedbackResource trecMultiFeedbackResource = new TrecMultiFeedbackResource(trecMicroblogAPIWrapper, selectionManager, shardsManager, tailyManager);

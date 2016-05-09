@@ -1,7 +1,6 @@
 package io.jitter.resources;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
@@ -29,6 +28,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/trecfb")
@@ -70,7 +70,7 @@ public class TrecFeedbackResource {
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
-        String query = URLDecoder.decode(q.or(""), "UTF-8");
+        String query = URLDecoder.decode(q.orElse(""), "UTF-8");
 
         long startTime = System.currentTimeMillis();
 

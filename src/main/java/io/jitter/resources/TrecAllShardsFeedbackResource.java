@@ -1,7 +1,6 @@
 package io.jitter.resources;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
@@ -10,7 +9,6 @@ import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.shards.ShardsManager;
-import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
@@ -19,7 +17,6 @@ import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
-import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.jitter.core.utils.AnalyzerUtils;
 import org.slf4j.Logger;
@@ -44,21 +41,15 @@ public class TrecAllShardsFeedbackResource {
 
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
-    private final SelectionManager selectionManager;
     private final ShardsManager shardsManager;
-    private final TailyManager tailyManager;
 
-    public TrecAllShardsFeedbackResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager, ShardsManager shardsManager, TailyManager tailyManager) throws IOException {
+    public TrecAllShardsFeedbackResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, ShardsManager shardsManager) throws IOException {
         Preconditions.checkNotNull(trecMicroblogAPIWrapper);
-        Preconditions.checkNotNull(selectionManager);
         Preconditions.checkNotNull(shardsManager);
-        Preconditions.checkNotNull(tailyManager);
 
         counter = new AtomicLong();
         this.trecMicroblogAPIWrapper = trecMicroblogAPIWrapper;
-        this.selectionManager = selectionManager;
         this.shardsManager = shardsManager;
-        this.tailyManager = tailyManager;
     }
 
     @GET
@@ -87,7 +78,7 @@ public class TrecAllShardsFeedbackResource {
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
-        String query = URLDecoder.decode(q.or(""), "UTF-8");
+        String query = URLDecoder.decode(q.orElse(""), "UTF-8");
 
         long[] epochs = new long[2];
         if (epoch.isPresent()) {

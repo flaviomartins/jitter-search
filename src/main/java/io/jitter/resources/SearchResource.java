@@ -1,7 +1,6 @@
 package io.jitter.resources;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.caching.CacheControl;
 import io.dropwizard.jersey.params.BooleanParam;
@@ -24,6 +23,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -55,7 +55,7 @@ public class SearchResource {
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
-        String query = URLDecoder.decode(q.or("empty"), "UTF-8");
+        String query = URLDecoder.decode(q.orElse(""), "UTF-8");
 
         long[] epochs = new long[2];
         if (epoch.isPresent()) {

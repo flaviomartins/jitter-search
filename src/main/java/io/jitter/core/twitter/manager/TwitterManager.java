@@ -32,8 +32,6 @@ public class TwitterManager implements Managed {
     private static final int MAX_USERS_LOOKUP = 100;
     private static final int MAX_STATUSES_REQUEST = 200;
 
-    private final String databasePath;
-    private final String collectionPath;
     private final ImmutableSortedSet<String> screenNames;
 
     private final Map<String, User> usersMap;
@@ -42,9 +40,7 @@ public class TwitterManager implements Managed {
     // The factory instance is re-usable and thread safe.
     private final Twitter twitter = TwitterFactory.getSingleton();
 
-    public TwitterManager(String databasePath, String collectionPath, Set<String> screenNames) {
-        this.databasePath = databasePath;
-        this.collectionPath = collectionPath;
+    public TwitterManager(Set<String> screenNames) {
         this.screenNames = new ImmutableSortedSet.Builder<>(String.CASE_INSENSITIVE_ORDER).addAll(screenNames).build();
         this.usersMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         this.userTimelines = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -139,6 +135,7 @@ public class TwitterManager implements Managed {
         }
     }
 
+    @SuppressWarnings("UnusedParameters")
     public void index(String collection, String indexPath, Analyzer analyzer, boolean removeDuplicates) throws IOException {
         long startTime = System.currentTimeMillis();
         File file = new File(collection);
