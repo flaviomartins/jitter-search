@@ -3,8 +3,13 @@ package io.jitter.core.probabilitydistributions;
 import com.google.common.primitives.Doubles;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class CommonsKDE implements KDE  {
+public class CommonsKDE implements KDE {
+
+    private static final Logger logger = LoggerFactory.getLogger(JsatKDE.class);
+
     private final double[] data;
     private final double[] weights;
     private double bw;
@@ -17,7 +22,7 @@ public class CommonsKDE implements KDE  {
         this.bw = bw;
 
         if (bw <= 0.0) {
-            this.bw = silvermanBandwidthEstimate(data);
+            this.bw = KDE.silvermanBandwidthEstimate(data);
         }
 
         DescriptiveStatistics ds = new DescriptiveStatistics(weights);
@@ -68,23 +73,6 @@ public class CommonsKDE implements KDE  {
 
     public double getBandwidth() {
         return bw;
-    }
-
-    private static double selectSigma(double[] X) {
-        double normalize = 1.349;
-        DescriptiveStatistics ds = new DescriptiveStatistics(X);
-        double IQR = (ds.getPercentile(75) - ds.getPercentile(25)) / normalize;
-        return Math.min(ds.getStandardDeviation(), IQR);
-    }
-
-    public static double silvermanBandwidthEstimate(double[] X) {
-        double A = selectSigma(X);
-
-        if (X.length == 1)
-            return 1;
-        else if (A == 0)
-            return 1.06 * Math.pow(X.length, -1.0/5.0);
-        return 1.06 * A * Math.pow(X.length, -1.0/5.0);
     }
 
 }

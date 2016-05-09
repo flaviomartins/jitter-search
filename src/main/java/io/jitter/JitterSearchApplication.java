@@ -23,7 +23,6 @@ import io.jitter.core.stream.StreamLogger;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import twitter4j.RawStreamListener;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
