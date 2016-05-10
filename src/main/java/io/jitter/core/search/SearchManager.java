@@ -1,7 +1,6 @@
 package io.jitter.core.search;
 
 import cc.twittertools.index.IndexStatuses;
-import cc.twittertools.thrift.gen.TResult;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
@@ -184,53 +183,6 @@ public class SearchManager implements Managed {
                 logger.error(e.getMessage());
             }
         }
-    }
-
-    private void addDocumentsToDatabase(List<TResult> results) {
-        Connection connection = null;
-        try {
-            // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
-            connection.setAutoCommit(false);
-
-            for (TResult result : results) {
-                try {
-                    PreparedStatement statement = connection.prepareStatement(
-                            "INSERT INTO tweets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-                    statement.setLong(1, result.id);
-                    statement.setString(2, result.screen_name);
-                    statement.setLong(3, result.epoch);
-                    statement.setString(4, result.text);
-                    statement.setLong(5, result.followers_count);
-                    statement.setLong(6, result.statuses_count);
-                    statement.setString(7, result.lang);
-                    statement.setLong(8, result.in_reply_to_status_id);
-                    statement.setLong(9, result.in_reply_to_user_id);
-                    statement.setLong(10, result.retweeted_status_id);
-                    statement.setLong(11, result.retweeted_user_id);
-                    statement.setLong(12, result.retweeted_count);
-                    statement.executeUpdate();
-                } catch (SQLException e) {
-                    if (!e.getMessage().startsWith("[SQLITE_CONSTRAINT]"))
-                        logger.error(e.getMessage());
-                }
-            }
-            connection.commit();
-            connection.setAutoCommit(true);
-        } catch (SQLException e) {
-            // if the error message is "out of memory",
-            // it probably means no database file is found
-            logger.error(e.getMessage());
-        } finally {
-            try {
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException e) {
-                // connection close failed.
-                logger.error(e.getMessage());
-            }
-        }
-
     }
 
     public void index() throws IOException {
