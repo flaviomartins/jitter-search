@@ -10,10 +10,8 @@ import io.jitter.api.search.FeedbackDocumentsResponse;
 import io.jitter.api.search.SearchResponse;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
-import io.jitter.core.feedback.FeedbackRelevanceModel;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
-import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
@@ -28,7 +26,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/fb")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
-public class FeedbackResource {
+public class FeedbackResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(FeedbackResource.class);
 
     private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
@@ -99,41 +96,9 @@ public class FeedbackResource {
         }
 
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
-            FeatureVector queryFV = new FeatureVector(null);
-            for (String term : AnalyzerUtils.analyze(analyzer, query)) {
-                if (term.isEmpty())
-                    continue;
-                if ("AND".equals(term) || "OR".equals(term))
-                    continue;
-                queryFV.addTerm(term.toLowerCase(Locale.ROOT), 1.0);
-            }
-            queryFV.normalizeToOne();
-
-            // cap results
-            selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
-
-            FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
-            fb.setOriginalQueryFV(queryFV);
-            fb.setRes(selectResults.scoreDocs);
-            fb.build(searchManager.getStopper());
-
-            FeatureVector fbVector = fb.asFeatureVector();
-            fbVector.pruneToSize(fbTerms.get());
-            fbVector.normalizeToOne();
-            fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
-
-            logger.info("fbDocs: {} Feature Vector:\n{}", selectResults.scoreDocs.size(), fbVector.toString());
-
-            StringBuilder builder = new StringBuilder();
-            Iterator<String> terms = fbVector.iterator();
-            while (terms.hasNext()) {
-                String term = terms.next();
-                double prob = fbVector.getFeatureWeight(term);
-                if (prob < 0)
-                    continue;
-                builder.append('"').append(term).append('"').append("^").append(prob).append(" ");
-            }
-            query = builder.toString().trim();
+            FeatureVector queryFV = buildQueryFV(query);
+            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, selectResults, searchManager.getStopper());
+            query = buildFeedbackQuery(fbVector);
         }
 
         TopDocuments results = null;

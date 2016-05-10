@@ -9,7 +9,6 @@ import io.dropwizard.jersey.caching.CacheControl;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.filter.MaxTFFilter;
 import io.jitter.core.filter.NaiveLanguageFilter;
 import io.jitter.core.search.TopDocuments;
@@ -18,16 +17,13 @@ import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.util.Version;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.document.FeatureVector;
-import io.jitter.core.feedback.FeedbackRelevanceModel;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
-import io.jitter.core.utils.AnalyzerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,10 +40,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/mf")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
-public class MultiFeedbackResource {
+public class MultiFeedbackResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(MultiFeedbackResource.class);
-
-    private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
 
     private final AtomicLong counter;
     private final SearchManager searchManager;
@@ -157,28 +151,8 @@ public class MultiFeedbackResource {
         }
 
         if (shardResults.totalHits > 0) {
-            FeatureVector queryFV = new FeatureVector(null);
-            for (String term : AnalyzerUtils.analyze(analyzer, query)) {
-                if (term.isEmpty())
-                    continue;
-                if ("AND".equals(term) || "OR".equals(term))
-                    continue;
-                queryFV.addTerm(term.toLowerCase(Locale.ROOT), 1.0);
-            }
-            queryFV.normalizeToOne();
-
-            // cap results
-            shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs.get(), shardResults.scoreDocs.size()));
-
-            FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
-            fb.setOriginalQueryFV(queryFV);
-            fb.setRes(shardResults.scoreDocs);
-            fb.build(searchManager.getStopper());
-
-            FeatureVector fbVector = fb.asFeatureVector();
-            fbVector.pruneToSize(fbTerms.get());
-            fbVector.normalizeToOne();
-            fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
+            FeatureVector queryFV = buildQueryFV(query);
+            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, shardResults, searchManager.getStopper());
 
             if (fbUseSources.get()) {
                 logger.info("Sources: {}\n fbDocs: {} Feature Vector:\n{}", fbSourcesEnabled != null ? Joiner.on(", ").join(fbSourcesEnabled) : "all", shardResults.scoreDocs.size(), fbVector.toString());
@@ -186,16 +160,7 @@ public class MultiFeedbackResource {
                 logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", fbTopicsEnabled != null ? Joiner.on(", ").join(fbTopicsEnabled) : "all", shardResults.scoreDocs.size(), fbVector.toString());
             }
 
-            StringBuilder builder = new StringBuilder();
-            Iterator<String> terms = fbVector.iterator();
-            while (terms.hasNext()) {
-                String term = terms.next();
-                double prob = fbVector.getFeatureWeight(term);
-                if (prob < 0)
-                    continue;
-                builder.append('"').append(term).append('"').append("^").append(prob).append(" ");
-            }
-            query = builder.toString().trim();
+            query = buildFeedbackQuery(fbVector);
         }
 
         TopDocuments results = null;
