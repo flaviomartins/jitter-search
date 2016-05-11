@@ -4,9 +4,12 @@ import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.selection.Selection;
+import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,5 +118,42 @@ public class TailyManager implements Managed {
             ranking = select(query, v.get());
         }
         return ranking;
+    }
+
+    public TailySelection selection(String query, IntParam v) throws IOException, ParseException {
+        return new TailySelection(query, v).invoke();
+    }
+
+    public class TailySelection implements Selection {
+        private final String query;
+        private final IntParam v;
+        private Map<String, Double> sources;
+        private Map<String, Double> topics;
+
+        public TailySelection(String query, IntParam v) {
+            this.query = query;
+            this.v = v;
+        }
+
+        @Override
+        public SelectionTopDocuments getResults() {
+            return null;
+        }
+
+        @Override
+        public Map<String, Double> getSources() {
+            return sources;
+        }
+
+        @Override
+        public Map<String, Double> getTopics() {
+            return topics;
+        }
+
+        public TailySelection invoke() {
+            sources = select(query, v.get());
+            topics = selectTopics(query, v.get());
+            return this;
+        }
     }
 }

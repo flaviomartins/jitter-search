@@ -9,6 +9,7 @@ import io.jitter.api.search.Document;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
+import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.shards.ShardStatsBuilder;
 import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.shards.ShardStats;
@@ -423,5 +424,63 @@ public class SelectionManager implements Managed {
             selected = selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
         }
         return selected;
+    }
+
+    public CsiSelection selection(Optional<Long> maxId, Optional<String> epoch, IntParam sLimit, BooleanParam sRetweets, BooleanParam sFuture, String method, IntParam maxCol, Double minRanks, BooleanParam normalize, String query, long[] epochs) throws IOException, ParseException {
+        return new CsiSelection(maxId, epoch, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query, epochs).invoke();
+    }
+
+    public class CsiSelection implements Selection {
+        private final Optional<Long> maxId;
+        private final Optional<String> epoch;
+        private final IntParam sLimit;
+        private final BooleanParam sRetweets;
+        private final BooleanParam sFuture;
+        private final String method;
+        private final IntParam maxCol;
+        private final Double minRanks;
+        private final BooleanParam normalize;
+        private final String query;
+        private final long[] epochs;
+        private SelectionTopDocuments results;
+        private Map<String, Double> sources;
+        private Map<String, Double> topics;
+
+        public CsiSelection(Optional<Long> maxId, Optional<String> epoch, IntParam sLimit, BooleanParam sRetweets, BooleanParam sFuture, String method, IntParam maxCol, Double minRanks, BooleanParam normalize, String query, long[] epochs) {
+            this.maxId = maxId;
+            this.epoch = epoch;
+            this.sLimit = sLimit;
+            this.sRetweets = sRetweets;
+            this.sFuture = sFuture;
+            this.method = method;
+            this.maxCol = maxCol;
+            this.minRanks = minRanks;
+            this.normalize = normalize;
+            this.query = query;
+            this.epochs = epochs;
+        }
+
+        @Override
+        public SelectionTopDocuments getResults() {
+            return results;
+        }
+
+        @Override
+        public Map<String, Double> getSources() {
+            return sources;
+        }
+
+        @Override
+        public Map<String, Double> getTopics() {
+            return topics;
+        }
+
+        public CsiSelection invoke() throws IOException, ParseException {
+            results = search(maxId, epoch, sLimit, sRetweets, sFuture, query, epochs);
+            SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
+            sources = select(results, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+            topics = selectTopics(results, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+            return this;
+        }
     }
 }

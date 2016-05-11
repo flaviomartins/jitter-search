@@ -9,6 +9,7 @@ import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.core.search.TopDocuments;
+import io.jitter.core.selection.Selection;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.taily.TailyManager;
@@ -19,8 +20,6 @@ import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.selection.SelectionManager;
-import io.jitter.core.selection.methods.SelectionMethod;
-import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,28 +89,20 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
 
         long startTime = System.currentTimeMillis();
 
-        SelectionTopDocuments selectResults = null;
-
-        Map<String, Double> selectedSources;
-        Map<String, Double> selectedTopics;
+        Selection selection;
         if ("taily".equalsIgnoreCase(method)) {
-            selectedSources = tailyManager.select(query, v.get());
-            selectedTopics = tailyManager.selectTopics(query, v.get());
+            selection = tailyManager.selection(query, v);
         } else {
-            selectResults = selectionManager.search(maxId, epoch, sLimit, sRetweets, sFuture, query, epochs);
-            SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-            selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-            selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+            selection = selectionManager.selection(maxId, epoch, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query, epochs);
         }
 
-        Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selectedSources.keySet(), fbCols.get()));
-        Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selectedTopics.keySet(), fbCols.get()));
-
         Set<String> selected;
-        if (!topic.isPresent()) {
-            selected = !fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
-        } else {
+        if (topic.isPresent()) {
             selected = Sets.newHashSet(topic.get());
+        } else {
+            Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selection.getSources().keySet(), fbCols.get()));
+            Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selection.getTopics().keySet(), fbCols.get()));
+            selected = !fbUseSources.get() ? fbTopicsEnabled : fbSourcesEnabled;
         }
 
         SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, fbDocs, fbUseSources, query, epochs, selected);
@@ -120,12 +111,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
             FeatureVector queryFV = buildQueryFV(query);
             FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, shardResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
             query = buildFeedbackQuery(fbVector);
-
-            if (fbUseSources.get()) {
-                logger.info("Sources: {}\n fbDocs: {} Feature Vector:\n{}", fbSourcesEnabled != null ? Joiner.on(", ").join(fbSourcesEnabled) : "all", shardResults.scoreDocs.size(), fbVector.toString());
-            } else {
-                logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", fbTopicsEnabled != null ? Joiner.on(", ").join(fbTopicsEnabled) : "all", shardResults.scoreDocs.size(), fbVector.toString());
-            }
+            logger.info("Selected: {}\n fbDocs: {} Feature Vector:\n{}", selected != null ? Joiner.on(", ").join(selected) : "all", shardResults.scoreDocs.size(), fbVector.toString());
         }
 
         TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
@@ -137,7 +123,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selectedSources, selectedTopics, method, totalFbDocs, fbTerms.get(), 0, selectResults, shardResults, results);
+        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selection.getSources(), selection.getTopics(), method, totalFbDocs, fbTerms.get(), 0, selection.getResults(), shardResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

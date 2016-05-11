@@ -2,6 +2,8 @@ package io.jitter.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import io.dropwizard.jersey.caching.CacheControl;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
@@ -11,10 +13,9 @@ import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.rerank.RMTSReranker;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
+import io.jitter.core.selection.Selection;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.SelectionTopDocuments;
-import io.jitter.core.selection.methods.SelectionMethod;
-import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
@@ -30,7 +31,6 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -95,21 +95,21 @@ public class RMTSResource extends AbstractFeedbackResource {
 
         long startTime = System.currentTimeMillis();
 
-        SelectionTopDocuments selectResults = null;
-
-        Map<String, Double> selectedSources;
-        Map<String, Double> selectedTopics;
+        Selection selection;
         if ("taily".equalsIgnoreCase(method)) {
-            selectedSources = tailyManager.select(query, v.get());
-            selectedTopics = tailyManager.selectTopics(query, v.get());
+            selection = tailyManager.selection(query, v);
         } else {
-            selectResults = selectionManager.search(maxId, epoch, sLimit, sRetweets, sFuture, query, epochs);
-            SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-            selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-            selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+            selection = selectionManager.selection(maxId, epoch, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query, epochs);
         }
-        Set<String> selected = !fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
 
+        Set<String> selected;
+        if (topic.isPresent()) {
+            selected = Sets.newHashSet(topic.get());
+        } else {
+            Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selection.getSources().keySet(), fbCols.get()));
+            Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selection.getTopics().keySet(), fbCols.get()));
+            selected = !fbUseSources.get() ? fbTopicsEnabled : fbSourcesEnabled;
+        }
 
         SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, fbDocs, fbUseSources, query, epochs, selected);
 
@@ -131,7 +131,7 @@ public class RMTSResource extends AbstractFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selectedSources, selectedTopics, method, 0, selectResults, shardResults, results);
+        RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selection.getSources(), selection.getTopics(), method, 0, selection.getResults(), shardResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }
