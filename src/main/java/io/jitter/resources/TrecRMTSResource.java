@@ -81,7 +81,7 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
                                           @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                           @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                           @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
-                                          @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
+                                          @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
                                           @QueryParam("numRerank") @DefaultValue("1000") IntParam numRerank,
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
@@ -93,13 +93,13 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
 
         Selection selection;
         if ("taily".equalsIgnoreCase(method)) {
-            selection = tailyManager.selection(query, v);
+            selection = tailyManager.selection(query, v.get());
         } else {
-            selection = selectionManager.selection(maxId, epoch, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query, epochs);
+            selection = selectionManager.selection(maxId, epoch, sLimit.get(), sRetweets.get(), sFuture.get(), method, maxCol.get(), minRanks, normalize.get(), query, epochs);
         }
-        Set<String> selected = !fbUseSources.get() ? selection.getTopics().keySet() : selection.getSources().keySet();
+        Set<String> selected = topics.get() ? selection.getTopics().keySet() : selection.getSources().keySet();
 
-        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, fbDocs, fbUseSources, query, epochs, selected);
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets.get(), sFuture.get(), fbDocs.get(), topics.get(), query, epochs, selected);
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;

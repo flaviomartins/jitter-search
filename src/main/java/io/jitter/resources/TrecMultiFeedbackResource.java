@@ -80,7 +80,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
                                           @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                           @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                           @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
-                                          @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
+                                          @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -91,9 +91,9 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
 
         Selection selection;
         if ("taily".equalsIgnoreCase(method)) {
-            selection = tailyManager.selection(query, v);
+            selection = tailyManager.selection(query, v.get());
         } else {
-            selection = selectionManager.selection(maxId, epoch, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query, epochs);
+            selection = selectionManager.selection(maxId, epoch, sLimit.get(), sRetweets.get(), sFuture.get(), method, maxCol.get(), minRanks, normalize.get(), query, epochs);
         }
 
         Set<String> selected;
@@ -102,10 +102,10 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
         } else {
             Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selection.getSources().keySet(), fbCols.get()));
             Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selection.getTopics().keySet(), fbCols.get()));
-            selected = !fbUseSources.get() ? fbTopicsEnabled : fbSourcesEnabled;
+            selected = topics.get() ? fbTopicsEnabled : fbSourcesEnabled;
         }
 
-        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, fbDocs, fbUseSources, query, epochs, selected);
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets.get(), sFuture.get(), fbDocs.get(), topics.get(), query, epochs, selected);
         
         if (shardResults.totalHits > 0) {
             FeatureVector queryFV = buildQueryFV(query);

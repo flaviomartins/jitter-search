@@ -53,7 +53,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
                                  @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
                                  @QueryParam("maxId") Optional<Long> maxId,
                                  @QueryParam("epoch") Optional<String> epoch,
-                                 @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
+                                 @QueryParam("sLimit") @DefaultValue("1000") IntParam sLimit,
                                  @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
                                  @QueryParam("sFuture") @DefaultValue("false") BooleanParam sFuture,
                                  @QueryParam("method") @DefaultValue("crcsexp") String method,
@@ -71,7 +71,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
         
         long startTime = System.currentTimeMillis();
 
-        TopDocuments selectResults = searchManager.search(limit, retweets, sFuture.get(), maxId, epoch, query, epochs);
+        TopDocuments selectResults = searchManager.search(sLimit.get(), sRetweets.get(), sFuture.get(), maxId, epoch, query, epochs);
 
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = buildQueryFV(query);
@@ -79,7 +79,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
             query = buildFeedbackQuery(fbVector);
         }
 
-        TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
+        TopDocuments results = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);
 
         long endTime = System.currentTimeMillis();
 

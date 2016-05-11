@@ -1,8 +1,6 @@
 package io.jitter.core.search;
 
 import cc.twittertools.index.IndexStatuses;
-import io.dropwizard.jersey.params.BooleanParam;
-import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
@@ -112,7 +110,7 @@ public class SearchManager implements Managed {
         for (int i = 0; i < nDocsReturned; i++) {
             ScoreDoc scoreDoc = topDocs.scoreDocs[i];
             ids[i] = scoreDoc.doc;
-            if (scores != null) scores[i] = scoreDoc.score;
+            scores[i] = scoreDoc.score;
         }
 
         List<Document> docs = SearchUtils.getDocs(indexSearcher, topDocs, n, filterRT, true);
@@ -298,23 +296,23 @@ public class SearchManager implements Managed {
         return new IndexCollectionStats(reader, IndexStatuses.StatusField.TEXT.name);
     }
 
-    public TopDocuments search(IntParam limit, BooleanParam retweets, boolean future, Optional<Long> maxId, Optional<String> epoch, String query, long[] epochs) throws IOException, ParseException {
+    public TopDocuments search(int limit, boolean retweets, boolean future, Optional<Long> maxId, Optional<String> epoch, String query, long[] epochs) throws IOException, ParseException {
         TopDocuments results;
         if (!future) {
             if (maxId.isPresent()) {
-                results = search(query, limit.get(), !retweets.get(), maxId.get());
+                results = search(query, limit, !retweets, maxId.get());
             } else if (epoch.isPresent()) {
-                results = search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
+                results = search(query, limit, !retweets, epochs[0], epochs[1]);
             } else {
-                results = search(query, limit.get(), !retweets.get());
+                results = search(query, limit, !retweets);
             }
         } else {
-            results = search(query, limit.get(), !retweets.get(), Long.MAX_VALUE);
+            results = search(query, limit, !retweets, Long.MAX_VALUE);
         }
         return results;
     }
 
-    public TopDocuments search(IntParam limit, BooleanParam retweets, Optional<Long> maxId, Optional<String> epoch, String query, long[] epochs) throws IOException, ParseException {
+    public TopDocuments search(int limit, boolean retweets, Optional<Long> maxId, Optional<String> epoch, String query, long[] epochs) throws IOException, ParseException {
         return search(limit, retweets, false, maxId, epoch, query, epochs);
     }
 }

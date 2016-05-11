@@ -1,7 +1,5 @@
 package io.jitter.core.taily;
 
-import io.dropwizard.jersey.params.BooleanParam;
-import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.selection.Selection;
@@ -9,7 +7,6 @@ import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +38,10 @@ public class TailyManager implements Managed {
         this.nc = nc;
         this.users = users;
 
-        Stopper stopper = new Stopper(stopwords);
+        Stopper stopper = null;
+        if (!stopwords.isEmpty()) {
+            stopper = new Stopper(stopwords);
+        }
         if (stopper == null || stopper.asSet().size() == 0) {
             analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
         } else {
@@ -110,27 +110,27 @@ public class TailyManager implements Managed {
         topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
     }
 
-    public Map<String, Double> select(IntParam v, BooleanParam topics, String query) {
+    public Map<String, Double> select(String query, int v, boolean topics) {
         Map<String, Double> ranking;
-        if (topics.get()) {
-            ranking = selectTopics(query, v.get());
+        if (topics) {
+            ranking = selectTopics(query, v);
         } else {
-            ranking = select(query, v.get());
+            ranking = select(query, v);
         }
         return ranking;
     }
 
-    public TailySelection selection(String query, IntParam v) throws IOException, ParseException {
+    public TailySelection selection(String query, int v) {
         return new TailySelection(query, v).invoke();
     }
 
     public class TailySelection implements Selection {
         private final String query;
-        private final IntParam v;
+        private final int v;
         private Map<String, Double> sources;
         private Map<String, Double> topics;
 
-        public TailySelection(String query, IntParam v) {
+        public TailySelection(String query, int v) {
             this.query = query;
             this.v = v;
         }
@@ -151,8 +151,8 @@ public class TailyManager implements Managed {
         }
 
         public TailySelection invoke() {
-            sources = select(query, v.get());
-            topics = selectTopics(query, v.get());
+            sources = select(query, v);
+            topics = selectTopics(query, v);
             return this;
         }
     }

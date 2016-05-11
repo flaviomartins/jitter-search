@@ -85,7 +85,7 @@ public class RMTSResource extends AbstractFeedbackResource {
                                           @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                           @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                           @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
-                                          @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
+                                          @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
                                           @QueryParam("numRerank") @DefaultValue("1000") IntParam numRerank,
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException {
@@ -97,9 +97,9 @@ public class RMTSResource extends AbstractFeedbackResource {
 
         Selection selection;
         if ("taily".equalsIgnoreCase(method)) {
-            selection = tailyManager.selection(query, v);
+            selection = tailyManager.selection(query, v.get());
         } else {
-            selection = selectionManager.selection(maxId, epoch, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query, epochs);
+            selection = selectionManager.selection(maxId, epoch, sLimit.get(), sRetweets.get(), sFuture.get(), method, maxCol.get(), minRanks, normalize.get(), query, epochs);
         }
 
         Set<String> selected;
@@ -108,16 +108,16 @@ public class RMTSResource extends AbstractFeedbackResource {
         } else {
             Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selection.getSources().keySet(), fbCols.get()));
             Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selection.getTopics().keySet(), fbCols.get()));
-            selected = !fbUseSources.get() ? fbTopicsEnabled : fbSourcesEnabled;
+            selected = topics.get() ? fbTopicsEnabled : fbSourcesEnabled;
         }
 
-        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, fbDocs, fbUseSources, query, epochs, selected);
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets.get(), sFuture.get(), fbDocs.get(), topics.get(), query, epochs, selected);
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;
         double queryEpoch = epoch.isPresent() ? epochs[1] : currentEpoch;
 
-        TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
+        TopDocuments results = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);
 
 //        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
 //        langFilter.setResults(results.scoreDocs);

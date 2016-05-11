@@ -67,7 +67,7 @@ public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
                                           @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                           @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                           @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
-                                          @QueryParam("fbUseSources") @DefaultValue("false") BooleanParam fbUseSources,
+                                          @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -76,7 +76,7 @@ public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
 
         long startTime = System.currentTimeMillis();
 
-        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, fbDocs, fbUseSources, query, epochs, null);
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets.get(), sFuture.get(), fbDocs.get(), topics.get(), query, epochs, null);
 
         if (shardResults.totalHits > 0) {
             FeatureVector queryFV = buildQueryFV(query);

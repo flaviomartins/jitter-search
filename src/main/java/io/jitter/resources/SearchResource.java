@@ -59,7 +59,7 @@ public class SearchResource {
 
         long startTime = System.currentTimeMillis();
 
-        TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
+        TopDocuments results = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);
 
         long endTime = System.currentTimeMillis();
 

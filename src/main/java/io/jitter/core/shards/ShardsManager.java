@@ -2,8 +2,6 @@ package io.jitter.core.shards;
 
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
-import io.dropwizard.jersey.params.BooleanParam;
-import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
@@ -45,7 +43,7 @@ public class ShardsManager implements Managed {
 
     private final String collection;
     private final String indexPath;
-    private final Stopper stopper;
+    private Stopper stopper;
     private final int mu;
     private final String method;
     private final boolean removeDuplicates;
@@ -76,7 +74,10 @@ public class ShardsManager implements Managed {
         this.topics = treeMap;
 
         SIMILARITY = new LMDirichletSimilarity(mu);
-        stopper = new Stopper(stopwords);
+
+        if (!stopwords.isEmpty()) {
+            stopper = new Stopper(stopwords);
+        }
         if (stopper == null || stopper.asSet().size() == 0) {
             analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
         } else {
@@ -299,7 +300,7 @@ public class ShardsManager implements Managed {
         for (int i = 0; i < nDocsReturned; i++) {
             ScoreDoc scoreDoc = topDocs.scoreDocs[i];
             ids[i] = scoreDoc.doc;
-            if (scores != null) scores[i] = scoreDoc.score;
+            scores[i] = scoreDoc.score;
         }
 
         List<Document> docs = SearchUtils.getDocs(indexSearcher, topDocs, n, filterRT);
@@ -390,18 +391,18 @@ public class ShardsManager implements Managed {
         return searcher;
     }
 
-    public SelectionTopDocuments search(Optional<Long> maxId, Optional<String> epoch, BooleanParam sRetweets, BooleanParam sFuture, IntParam sLimit, BooleanParam topics, String query, long[] epochs, Set<String> selected) throws IOException, ParseException {
+    public SelectionTopDocuments search(Optional<Long> maxId, Optional<String> epoch, boolean retweets, boolean future, int limit, boolean topics, String query, long[] epochs, Set<String> selected) throws IOException, ParseException {
         SelectionTopDocuments shardResults;
-        if (!sFuture.get()) {
+        if (!future) {
             if (maxId.isPresent()) {
-                shardResults = search(topics.get(), selected, query, sLimit.get(), !sRetweets.get(), maxId.get());
+                shardResults = search(topics, selected, query, limit, !retweets, maxId.get());
             } else if (epoch.isPresent()) {
-                shardResults = search(topics.get(), selected, query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+                shardResults = search(topics, selected, query, limit, !retweets, epochs[0], epochs[1]);
             } else {
-                shardResults = search(topics.get(), selected, query, sLimit.get(), !sRetweets.get());
+                shardResults = search(topics, selected, query, limit, !retweets);
             }
         } else {
-            shardResults = search(topics.get(), selected, query, sLimit.get(), !sRetweets.get());
+            shardResults = search(topics, selected, query, limit, !retweets);
         }
         return shardResults;
     }

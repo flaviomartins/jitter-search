@@ -68,10 +68,10 @@ public class SelectionResource {
 
         long startTime = System.currentTimeMillis();
 
-        SelectionTopDocuments selectResults = selectionManager.search(maxId, epoch, sLimit, sRetweets, sFuture, query, epochs);
+        SelectionTopDocuments selectResults = selectionManager.search(maxId, epoch, sLimit.get(), sRetweets.get(), sFuture.get(), query, epochs);
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         
-        Map<String, Double> selected = selectionManager.select(sLimit, topics, maxCol, minRanks, normalize, selectResults, selectionMethod);
+        Map<String, Double> selected = selectionManager.select(sLimit.get(), topics.get(), maxCol.get(), minRanks, normalize.get(), selectResults, selectionMethod);
 
         long endTime = System.currentTimeMillis();
 
