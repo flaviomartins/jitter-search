@@ -298,15 +298,23 @@ public class SearchManager implements Managed {
         return new IndexCollectionStats(reader, IndexStatuses.StatusField.TEXT.name);
     }
 
-    public TopDocuments search(IntParam limit, BooleanParam retweets, Optional<Long> maxId, Optional<String> epoch, String query, long[] epochs) throws IOException, ParseException {
+    public TopDocuments search(IntParam limit, BooleanParam retweets, boolean future, Optional<Long> maxId, Optional<String> epoch, String query, long[] epochs) throws IOException, ParseException {
         TopDocuments results;
-        if (maxId.isPresent()) {
-            results = search(query, limit.get(), !retweets.get(), maxId.get());
-        } else if (epoch.isPresent()) {
-            results = search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
+        if (!future) {
+            if (maxId.isPresent()) {
+                results = search(query, limit.get(), !retweets.get(), maxId.get());
+            } else if (epoch.isPresent()) {
+                results = search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
+            } else {
+                results = search(query, limit.get(), !retweets.get());
+            }
         } else {
-            results = search(query, limit.get(), !retweets.get());
+            results = search(query, limit.get(), !retweets.get(), Long.MAX_VALUE);
         }
         return results;
+    }
+
+    public TopDocuments search(IntParam limit, BooleanParam retweets, Optional<Long> maxId, Optional<String> epoch, String query, long[] epochs) throws IOException, ParseException {
+        return search(limit, retweets, false, maxId, epoch, query, epochs);
     }
 }

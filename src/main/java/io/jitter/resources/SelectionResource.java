@@ -71,13 +71,8 @@ public class SelectionResource {
         SelectionTopDocuments selectResults = selectionManager.search(maxId, epoch, sLimit, sRetweets, sFuture, query, epochs);
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         
-        Map<String, Double> selected;
-        if (!topics.get()) {
-            selected = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-        } else {
-            selected = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
-        }
-        
+        Map<String, Double> selected = selectionManager.select(sLimit, topics, maxCol, minRanks, normalize, selectResults, selectionMethod);
+
         long endTime = System.currentTimeMillis();
 
         int totalHits = selectResults.totalHits;

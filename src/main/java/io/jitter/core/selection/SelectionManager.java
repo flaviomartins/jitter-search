@@ -414,4 +414,14 @@ public class SelectionManager implements Managed {
         }
         return selectResults;
     }
+
+    public Map<String, Double> select(IntParam sLimit, BooleanParam topics, IntParam maxCol, Double minRanks, BooleanParam normalize, SelectionTopDocuments selectResults, SelectionMethod selectionMethod) {
+        Map<String, Double> selected;
+        if (!topics.get()) {
+            selected = select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        } else {
+            selected = selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
+        }
+        return selected;
+    }
 }

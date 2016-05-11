@@ -265,13 +265,21 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
     }
 
-    public TopDocuments search(IntParam limit, BooleanParam retweets, Optional<Long> maxId, String query) throws TException, IOException, ClassNotFoundException, ParseException {
-        TopDocuments results;
-        if (maxId.isPresent()) {
-            results = search(query, maxId.get(), limit.get(), !retweets.get());
+    public TopDocuments search(IntParam limit, Optional<Long> maxId, BooleanParam sRetweets, boolean sFuture, String query) throws ClassNotFoundException, TException, ParseException, IOException {
+        TopDocuments selectResults;
+        if (!sFuture) {
+            if (maxId.isPresent()) {
+                selectResults = search(query, maxId.get(), limit.get(), !sRetweets.get());
+            } else {
+                selectResults = search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
+            }
         } else {
-            results = search(query, Long.MAX_VALUE, limit.get(), !retweets.get());
+            selectResults = search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
         }
-        return results;
+        return selectResults;
+    }
+
+    public TopDocuments search(IntParam limit, BooleanParam retweets, Optional<Long> maxId, String query) throws TException, IOException, ClassNotFoundException, ParseException {
+        return search(limit, maxId, retweets, false, query);
     }
 }

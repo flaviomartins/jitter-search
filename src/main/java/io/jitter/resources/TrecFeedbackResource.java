@@ -70,16 +70,7 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
 
         long startTime = System.currentTimeMillis();
 
-        TopDocuments selectResults;
-        if (!sFuture.get()) {
-            if (maxId.isPresent()) {
-                selectResults = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !sRetweets.get());
-            } else {
-                selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
-            }
-        } else {
-            selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
-        }
+        TopDocuments selectResults = trecMicroblogAPIWrapper.search(limit, maxId, sRetweets, sFuture.get(), query);
 
         if (qid.isPresent()) {
             QrelsReranker qrelsReranker = new QrelsReranker(selectResults.scoreDocs, qrels, qid.get().replaceFirst("^MB0*", ""));

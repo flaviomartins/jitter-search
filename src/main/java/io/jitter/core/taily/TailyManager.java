@@ -1,5 +1,7 @@
 package io.jitter.core.taily;
 
+import io.dropwizard.jersey.params.BooleanParam;
+import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.utils.Stopper;
@@ -105,4 +107,13 @@ public class TailyManager implements Managed {
         topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
     }
 
+    public Map<String, Double> select(IntParam v, BooleanParam topics, String query) {
+        Map<String, Double> ranking;
+        if (topics.get()) {
+            ranking = selectTopics(query, v.get());
+        } else {
+            ranking = select(query, v.get());
+        }
+        return ranking;
+    }
 }

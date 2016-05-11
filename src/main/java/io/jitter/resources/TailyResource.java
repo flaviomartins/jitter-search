@@ -52,12 +52,7 @@ public class TailyResource {
 
         long startTime = System.currentTimeMillis();
 
-        Map<String, Double> ranking;
-        if (topics.get()) {
-            ranking = tailyManager.selectTopics(query, v.get());
-        } else {
-            ranking = tailyManager.select(query, v.get());
-        }
+        Map<String, Double> ranking = tailyManager.select(v, topics, query);
 
         long endTime = System.currentTimeMillis();
         logger.info(String.format(Locale.ENGLISH, "%4dms %s", (endTime - startTime), query));

@@ -71,18 +71,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
         
         long startTime = System.currentTimeMillis();
 
-        TopDocuments selectResults;
-        if (!sFuture.get()) {
-            if (maxId.isPresent()) {
-                selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-            } else if (epoch.isPresent()) {
-                selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
-            } else {
-                selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), Long.MAX_VALUE);
-            }
-        } else {
-            selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), Long.MAX_VALUE);
-        }
+        TopDocuments selectResults = searchManager.search(limit, retweets, sFuture.get(), maxId, epoch, query, epochs);
 
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = buildQueryFV(query);

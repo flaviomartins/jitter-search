@@ -76,18 +76,7 @@ public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
 
         long startTime = System.currentTimeMillis();
 
-        SelectionTopDocuments shardResults;
-        if (!sFuture.get()) {
-            if (maxId.isPresent()) {
-                shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get(), maxId.get());
-            } else if (epoch.isPresent()) {
-                shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get(), epochs[0], epochs[1]);
-            } else {
-                shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get());
-            }
-        } else {
-            shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get());
-        }
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, fbDocs, fbUseSources, query, epochs, null);
 
         if (shardResults.totalHits > 0) {
             FeatureVector queryFV = buildQueryFV(query);
