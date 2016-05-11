@@ -35,7 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Path("/trecrmts")
+@Path("/trec/rmts")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class TrecRMTSResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(TrecRMTSResource.class);

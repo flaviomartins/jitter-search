@@ -28,7 +28,7 @@ import java.net.URLDecoder;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Path("/trecallshardsfb")
+@Path("/trec/shardsfb")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(TrecAllShardsFeedbackResource.class);

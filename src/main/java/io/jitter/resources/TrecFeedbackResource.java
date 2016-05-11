@@ -27,7 +27,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Path("/trecfb")
+@Path("/trec/fb")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class TrecFeedbackResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(TrecFeedbackResource.class);

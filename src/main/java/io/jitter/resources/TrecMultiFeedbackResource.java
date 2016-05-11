@@ -35,7 +35,7 @@ import java.net.URLDecoder;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Path("/trecmf")
+@Path("/trec/mf")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(TrecMultiFeedbackResource.class);
