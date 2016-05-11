@@ -70,7 +70,7 @@ public class FeedbackRelevanceModel extends FeedbackModel {
 
                 if (totalTerms != 0) {
                     String stem = stemmer.stem(term);
-                    double rm3IDF = totalTerms / (double) collectionStats.getDF(stem);
+                    double rm3IDF = (double) totalTerms / (1.0 + collectionStats.getDF(stem));
                     fbWeight *= Math.log(rm3IDF);
                 }
 
