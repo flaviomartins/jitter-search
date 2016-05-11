@@ -1,6 +1,8 @@
 package io.jitter.core.search;
 
 import cc.twittertools.index.IndexStatuses;
+import io.dropwizard.jersey.params.BooleanParam;
+import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
@@ -28,6 +30,7 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 public class SearchManager implements Managed {
 
@@ -146,43 +149,6 @@ public class SearchManager implements Managed {
 
     public TopDocuments search(String query, int n) throws IOException, ParseException {
         return isearch(query, n);
-    }
-
-    private void createDatabase() {
-        Connection connection = null;
-        try {
-            // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
-            Statement statement = connection.createStatement();
-            statement.setQueryTimeout(30);  // set timeout to 30 sec.
-
-            statement.executeUpdate("create table tweets (" +
-                    "id integer, " +
-                    "screen_name string, " +
-                    "epoch integer, " +
-                    "text string, " +
-                    "followers_count integer, " +
-                    "statuses_count integer, " +
-                    "lang string, " +
-                    "in_reply_to_status_id integer, " +
-                    "in_reply_to_user_id integer, " +
-                    "retweeted_status_id integer, " +
-                    "retweeted_user_id integer, " +
-                    "retweet_count integer, " +
-                    "PRIMARY KEY (id))");
-        } catch (SQLException e) {
-            // if the error message is "out of memory",
-            // it probably means no database file is found
-            logger.error(e.getMessage());
-        } finally {
-            try {
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException e) {
-                // connection close failed.
-                logger.error(e.getMessage());
-            }
-        }
     }
 
     public void index() throws IOException {
@@ -330,5 +296,17 @@ public class SearchManager implements Managed {
 
     public CollectionStats getCollectionStats() {
         return new IndexCollectionStats(reader, IndexStatuses.StatusField.TEXT.name);
+    }
+
+    public TopDocuments search(IntParam limit, BooleanParam retweets, Optional<Long> maxId, Optional<String> epoch, String query, long[] epochs) throws IOException, ParseException {
+        TopDocuments results;
+        if (maxId.isPresent()) {
+            results = search(query, limit.get(), !retweets.get(), maxId.get());
+        } else if (epoch.isPresent()) {
+            results = search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
+        } else {
+            results = search(query, limit.get(), !retweets.get());
+        }
+        return results;
     }
 }

@@ -51,24 +51,15 @@ public class TrecSearchResource {
                                  @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
 
         long startTime = System.currentTimeMillis();
 
-        TopDocuments results = null;
-        if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                results = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !retweets.get());
-            } else {
-                results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !retweets.get());
-            }
-        }
+        TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
 
         long endTime = System.currentTimeMillis();
 
         int totalHits = results != null ? results.totalHits : 0;
-
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);

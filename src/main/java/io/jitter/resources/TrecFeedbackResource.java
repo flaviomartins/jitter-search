@@ -7,9 +7,10 @@ import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.*;
 import io.jitter.core.document.FeatureVector;
-import io.jitter.core.filter.NaiveLanguageFilter;
+import io.jitter.core.rerank.QrelsReranker;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
+import io.jitter.core.utils.Qrels;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -31,6 +32,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TrecFeedbackResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(TrecFeedbackResource.class);
 
+    private static final Qrels qrels = new Qrels("/home/fmartins/IdeaProjects/microblog-search/microblog-search/data/qrels.microblog2014.txt");
+
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
 
@@ -43,7 +46,8 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
 
     @GET
     @Timed
-    public SearchResponse search(@QueryParam("q") Optional<String> q,
+    public SearchResponse search(@QueryParam("qid") Optional<String> qid,
+                                 @QueryParam("q") Optional<String> q,
                                  @QueryParam("fq") Optional<String> fq,
                                  @QueryParam("limit") @DefaultValue("1000") IntParam limit,
                                  @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
@@ -62,22 +66,24 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
                                  @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
 
         long startTime = System.currentTimeMillis();
 
-        TopDocuments selectResults = null;
-        if (q.isPresent()) {
-            if (!sFuture.get()) {
-                if (maxId.isPresent()) {
-                    selectResults = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !sRetweets.get());
-                } else {
-                    selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
-                }
+        TopDocuments selectResults;
+        if (!sFuture.get()) {
+            if (maxId.isPresent()) {
+                selectResults = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !sRetweets.get());
             } else {
                 selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
             }
+        } else {
+            selectResults = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
+        }
+
+        if (qid.isPresent()) {
+            QrelsReranker qrelsReranker = new QrelsReranker(selectResults.scoreDocs, qrels, qid.get().replaceFirst("^MB0*", ""));
+            selectResults.scoreDocs = qrelsReranker.getReranked();
         }
 
 //        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
@@ -86,24 +92,16 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
 
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = buildQueryFV(query);
-            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, selectResults, trecMicroblogAPIWrapper.getStopper());
+            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
             query = buildFeedbackQuery(fbVector);
         }
 
-        TopDocuments results = null;
-        if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                results = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !retweets.get());
-            } else {
-                results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !retweets.get());
-            }
-        }
+        TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
 
         long endTime = System.currentTimeMillis();
 
         int totalFbDocs = selectResults != null ? selectResults.totalHits : 0;
         int totalHits = results != null ? results.totalHits : 0;
-
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);

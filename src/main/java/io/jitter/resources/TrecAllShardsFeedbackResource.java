@@ -71,51 +71,36 @@ public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
-
-        long[] epochs = new long[2];
-        if (epoch.isPresent()) {
-            epochs = Epochs.parseEpochRange(epoch.get());
-        }
+        long[] epochs = Epochs.parseEpoch(epoch);
 
         long startTime = System.currentTimeMillis();
 
-        SelectionTopDocuments shardResults = null;
-        if (q.isPresent()) {
-            if (!sFuture.get()) {
-                if (maxId.isPresent()) {
-                    shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get(), maxId.get());
-                } else if (epoch.isPresent()) {
-                    shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get(), epochs[0], epochs[1]);
-                } else {
-                    shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get());
-                }
+        SelectionTopDocuments shardResults;
+        if (!sFuture.get()) {
+            if (maxId.isPresent()) {
+                shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get(), maxId.get());
+            } else if (epoch.isPresent()) {
+                shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get(), epochs[0], epochs[1]);
             } else {
                 shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get());
             }
+        } else {
+            shardResults = shardsManager.search(!fbUseSources.get(), null, query, fbDocs.get(), !sRetweets.get());
         }
 
         if (shardResults.totalHits > 0) {
             FeatureVector queryFV = buildQueryFV(query);
-            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, shardResults, trecMicroblogAPIWrapper.getStopper());
+            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, shardResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
             query = buildFeedbackQuery(fbVector);
         }
 
-        TopDocuments results = null;
-        if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                results = trecMicroblogAPIWrapper.search(query, maxId.get(), limit.get(), !retweets.get());
-            } else {
-                results = trecMicroblogAPIWrapper.search(query, Long.MAX_VALUE, limit.get(), !retweets.get());
-            }
-        }
+        TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
 
         long endTime = System.currentTimeMillis();
 
         int totalFbDocs = shardResults.totalHits;
         int totalHits = results != null ? results.totalHits : 0;
-
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);

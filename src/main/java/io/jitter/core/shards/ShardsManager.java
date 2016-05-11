@@ -2,6 +2,8 @@ package io.jitter.core.shards;
 
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
+import io.dropwizard.jersey.params.BooleanParam;
+import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
@@ -386,5 +388,21 @@ public class ShardsManager implements Managed {
             logger.error(e.getMessage());
         }
         return searcher;
+    }
+
+    public SelectionTopDocuments search(Optional<Long> maxId, Optional<String> epoch, BooleanParam sRetweets, BooleanParam sFuture, IntParam sLimit, BooleanParam topics, String query, long[] epochs, Set<String> selected) throws IOException, ParseException {
+        SelectionTopDocuments shardResults;
+        if (!sFuture.get()) {
+            if (maxId.isPresent()) {
+                shardResults = search(topics.get(), selected, query, sLimit.get(), !sRetweets.get(), maxId.get());
+            } else if (epoch.isPresent()) {
+                shardResults = search(topics.get(), selected, query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+            } else {
+                shardResults = search(topics.get(), selected, query, sLimit.get(), !sRetweets.get());
+            }
+        } else {
+            shardResults = search(topics.get(), selected, query, sLimit.get(), !sRetweets.get());
+        }
+        return shardResults;
     }
 }

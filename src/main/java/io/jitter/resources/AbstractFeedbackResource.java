@@ -1,5 +1,6 @@
 package io.jitter.resources;
 
+import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.FeedbackRelevanceModel;
@@ -31,14 +32,14 @@ public class AbstractFeedbackResource {
         return builder.toString().trim();
     }
 
-    FeatureVector buildFbVector(int fbDocs, int fbTerms, double fbWeight, FeatureVector queryFV, TopDocuments selectResults, Stopper stopper) {
+    FeatureVector buildFbVector(int fbDocs, int fbTerms, double fbWeight, FeatureVector queryFV, TopDocuments selectResults, Stopper stopper, CollectionStats collectionStats) {
         // cap results
         selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs, selectResults.scoreDocs.size()));
 
         FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
         fb.setOriginalQueryFV(queryFV);
         fb.setRes(selectResults.scoreDocs);
-        fb.build(stopper);
+        fb.build(stopper, collectionStats);
 
         FeatureVector fbVector = fb.asFeatureVector();
         fbVector.pruneToSize(fbTerms);

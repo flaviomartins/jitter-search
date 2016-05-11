@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/ss")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
-public class SelectSearchResource {
+public class SelectSearchResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(SelectSearchResource.class);
 
     private final AtomicLong counter;
@@ -72,13 +72,8 @@ public class SelectSearchResource {
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
-
-        long[] epochs = new long[2];
-        if (epoch.isPresent()) {
-            epochs = Epochs.parseEpochRange(epoch.get());
-        }
+        long[] epochs = Epochs.parseEpoch(epoch);
 
         long startTime = System.currentTimeMillis();
 
@@ -90,19 +85,7 @@ public class SelectSearchResource {
             selectedSources = tailyManager.select(query, v.get());
             selectedTopics = tailyManager.selectTopics(query, v.get());
         } else {
-            if (q.isPresent()) {
-                if (!sFuture.get()) {
-                    if (maxId.isPresent()) {
-                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-                    } else if (epoch.isPresent()) {
-                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
-                    } else {
-                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
-                    }
-                } else {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
-                }
-            }
+            selectResults = selectionManager.search(maxId, epoch, sLimit, sRetweets, sFuture, query, epochs);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
             selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
             selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
@@ -110,20 +93,7 @@ public class SelectSearchResource {
         Set<String> selected = topics.get() ? selectedTopics.keySet() : selectedSources.keySet();
 
 
-        SelectionTopDocuments shardResults = null;
-        if (q.isPresent()) {
-            if (!sFuture.get()) {
-                if (maxId.isPresent()) {
-                    shardResults = shardsManager.search(topics.get(), selected, query, limit.get(), !retweets.get(), maxId.get());
-                } else if (epoch.isPresent()) {
-                    shardResults = shardsManager.search(topics.get(), selected, query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
-                } else {
-                    shardResults = shardsManager.search(topics.get(), selected, query, limit.get(), !retweets.get());
-                }
-            } else {
-                shardResults = shardsManager.search(topics.get(), selected, query, limit.get(), !retweets.get());
-            }
-        }
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, sLimit, topics, query, epochs, selected);
 
         long endTime = System.currentTimeMillis();
 

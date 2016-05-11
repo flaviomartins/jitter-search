@@ -2,6 +2,8 @@ package io.jitter.core.selection;
 
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
+import io.dropwizard.jersey.params.BooleanParam;
+import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.search.Document;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
@@ -395,5 +397,21 @@ public class SelectionManager implements Managed {
             logger.error(e.getMessage());
         }
         return searcher;
+    }
+
+    public SelectionTopDocuments search(Optional<Long> maxId, Optional<String> epoch, IntParam sLimit, BooleanParam sRetweets, BooleanParam sFuture, String query, long[] epochs) throws IOException, ParseException {
+        SelectionTopDocuments selectResults;
+        if (!sFuture.get()) {
+            if (maxId.isPresent()) {
+                selectResults = search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+            } else if (epoch.isPresent()) {
+                selectResults = search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
+            } else {
+                selectResults = search(query, sLimit.get(), !sRetweets.get());
+            }
+        } else {
+            selectResults = search(query, sLimit.get(), !sRetweets.get());
+        }
+        return selectResults;
     }
 }

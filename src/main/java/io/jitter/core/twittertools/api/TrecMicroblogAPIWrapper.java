@@ -4,6 +4,8 @@ import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.search.api.TrecSearchThriftClient;
 import cc.twittertools.thrift.gen.TResult;
 import com.google.common.base.Preconditions;
+import io.dropwizard.jersey.params.BooleanParam;
+import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
@@ -261,5 +263,15 @@ public class TrecMicroblogAPIWrapper implements Managed {
             }
         }
 
+    }
+
+    public TopDocuments search(IntParam limit, BooleanParam retweets, Optional<Long> maxId, String query) throws TException, IOException, ClassNotFoundException, ParseException {
+        TopDocuments results;
+        if (maxId.isPresent()) {
+            results = search(query, maxId.get(), limit.get(), !retweets.get());
+        } else {
+            results = search(query, Long.MAX_VALUE, limit.get(), !retweets.get());
+        }
+        return results;
     }
 }

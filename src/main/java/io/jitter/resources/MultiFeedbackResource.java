@@ -89,13 +89,8 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
-
-        long[] epochs = new long[2];
-        if (epoch.isPresent()) {
-            epochs = Epochs.parseEpochRange(epoch.get());
-        }
+        long[] epochs = Epochs.parseEpoch(epoch);
 
         long startTime = System.currentTimeMillis();
 
@@ -107,19 +102,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             selectedSources = tailyManager.select(query, v.get());
             selectedTopics = tailyManager.selectTopics(query, v.get());
         } else {
-            if (q.isPresent()) {
-                if (!sFuture.get()) {
-                    if (maxId.isPresent()) {
-                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-                    } else if (epoch.isPresent()) {
-                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
-                    } else {
-                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
-                    }
-                } else {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
-                }
-            }
+            selectResults = selectionManager.search(maxId, epoch, sLimit, sRetweets, sFuture, query, epochs);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
             selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
             selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
@@ -135,44 +118,21 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             selected = Sets.newHashSet(topic.get());
         }
 
-        SelectionTopDocuments shardResults = null;
-        if (q.isPresent()) {
-            if (!sFuture.get()) {
-                if (maxId.isPresent()) {
-                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !sRetweets.get(), maxId.get());
-                } else if (epoch.isPresent()) {
-                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !sRetweets.get(), epochs[0], epochs[1]);
-                } else {
-                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !sRetweets.get());
-                }
-            } else {
-                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, fbDocs.get(), !sRetweets.get());
-            }
-        }
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, fbDocs, fbUseSources, query, epochs, selected);
 
         if (shardResults.totalHits > 0) {
             FeatureVector queryFV = buildQueryFV(query);
-            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, shardResults, searchManager.getStopper());
+            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, shardResults, searchManager.getStopper(), searchManager.getCollectionStats());
+            query = buildFeedbackQuery(fbVector);
 
             if (fbUseSources.get()) {
                 logger.info("Sources: {}\n fbDocs: {} Feature Vector:\n{}", fbSourcesEnabled != null ? Joiner.on(", ").join(fbSourcesEnabled) : "all", shardResults.scoreDocs.size(), fbVector.toString());
             } else {
                 logger.info("Topics: {}\n fbDocs: {} Feature Vector:\n{}", fbTopicsEnabled != null ? Joiner.on(", ").join(fbTopicsEnabled) : "all", shardResults.scoreDocs.size(), fbVector.toString());
             }
-
-            query = buildFeedbackQuery(fbVector);
         }
 
-        TopDocuments results = null;
-        if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                results = searchManager.search(query, limit.get(), !retweets.get(), maxId.get());
-            } else if (epoch.isPresent()) {
-                results = searchManager.search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
-            } else {
-                results = searchManager.search(query, limit.get(), !retweets.get());
-            }
-        }
+        TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
 
         NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
         langFilter.setResults(results.scoreDocs);
@@ -185,8 +145,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
         long endTime = System.currentTimeMillis();
 
         int totalFbDocs = shardResults.totalHits;
-        int totalHits = results != null ? results.totalHits : 0;
-
+        int totalHits = results.totalHits;
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);

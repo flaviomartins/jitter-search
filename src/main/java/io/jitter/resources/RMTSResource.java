@@ -8,7 +8,6 @@ import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.RMTSDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
-import io.jitter.core.filter.NaiveLanguageFilter;
 import io.jitter.core.rerank.RMTSReranker;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
@@ -39,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/rmts")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
-public class RMTSResource {
+public class RMTSResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(RMTSResource.class);
 
     private final AtomicLong counter;
@@ -91,13 +90,8 @@ public class RMTSResource {
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
-
-        long[] epochs = new long[2];
-        if (epoch.isPresent()) {
-            epochs = Epochs.parseEpochRange(epoch.get());
-        }
+        long[] epochs = Epochs.parseEpoch(epoch);
 
         long startTime = System.currentTimeMillis();
 
@@ -109,19 +103,7 @@ public class RMTSResource {
             selectedSources = tailyManager.select(query, v.get());
             selectedTopics = tailyManager.selectTopics(query, v.get());
         } else {
-            if (q.isPresent()) {
-                if (!sFuture.get()) {
-                    if (maxId.isPresent()) {
-                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-                    } else if (epoch.isPresent()) {
-                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
-                    } else {
-                        selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
-                    }
-                } else {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
-                }
-            }
+            selectResults = selectionManager.search(maxId, epoch, sLimit, sRetweets, sFuture, query, epochs);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
             selectedSources = selectionManager.select(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
             selectedTopics = selectionManager.selectTopics(selectResults, sLimit.get(), selectionMethod, maxCol.get(), minRanks, normalize.get());
@@ -129,46 +111,23 @@ public class RMTSResource {
         Set<String> selected = !fbUseSources.get() ? selectedTopics.keySet() : selectedSources.keySet();
 
 
-        SelectionTopDocuments shardResults = null;
-        if (q.isPresent()) {
-            if (!sFuture.get()) {
-                if (maxId.isPresent()) {
-                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get(), maxId.get());
-                } else if (epoch.isPresent()) {
-                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
-                } else {
-                    shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get());
-                }
-            } else {
-                shardResults = shardsManager.search(!fbUseSources.get(), selected, query, limit.get(), !retweets.get());
-            }
-        }
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, fbDocs, fbUseSources, query, epochs, selected);
 
         // get the query epoch
         double currentEpoch = System.currentTimeMillis() / 1000L;
         double queryEpoch = epoch.isPresent() ? epochs[1] : currentEpoch;
 
-        TopDocuments results = null;
-        if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                results = searchManager.search(query, numRerank.get(), !retweets.get(), maxId.get());
-            } else if (epoch.isPresent()) {
-                results = searchManager.search(query, numRerank.get(), !retweets.get(), epochs[0], epochs[1]);
-            } else {
-                results = searchManager.search(query, numRerank.get(), !retweets.get());
-            }
-        }
+        TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
 
-        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
-        langFilter.setResults(results.scoreDocs);
-        results.scoreDocs = langFilter.getFiltered();
+//        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
+//        langFilter.setResults(results.scoreDocs);
+//        results.scoreDocs = langFilter.getFiltered();
 
         results.scoreDocs = rmtsReranker.score(query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get());
 
         long endTime = System.currentTimeMillis();
 
         int totalHits = results.totalHits;
-
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);

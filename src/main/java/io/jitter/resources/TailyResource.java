@@ -48,18 +48,15 @@ public class TailyResource {
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
 
         long startTime = System.currentTimeMillis();
 
-        Map<String, Double> ranking = null;
-        if (q.isPresent()) {
-            if (topics.get()) {
-                ranking = tailyManager.selectTopics(query, v.get());
-            } else {
-                ranking = tailyManager.select(query, v.get());
-            }
+        Map<String, Double> ranking;
+        if (topics.get()) {
+            ranking = tailyManager.selectTopics(query, v.get());
+        } else {
+            ranking = tailyManager.select(query, v.get());
         }
 
         long endTime = System.currentTimeMillis();

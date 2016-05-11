@@ -1,6 +1,16 @@
 package io.jitter.core.utils;
 
+import java.util.Optional;
+
 public class Epochs {
+
+    public static long[] parseEpoch(Optional<String> epoch) {
+        long[] epochs = new long[2];
+        if (epoch.isPresent()) {
+            epochs = Epochs.parseEpochRange(epoch.get());
+        }
+        return epochs;
+    }
 
     public static long[] parseEpochRange(String epochRange) {
         long[] epochs = new long[]{0L, Long.MAX_VALUE};

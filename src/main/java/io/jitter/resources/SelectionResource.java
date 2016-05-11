@@ -63,31 +63,12 @@ public class SelectionResource {
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
-
-        long[] epochs = new long[2];
-        if (epoch.isPresent()) {
-            epochs = Epochs.parseEpochRange(epoch.get());
-        }
+        long[] epochs = Epochs.parseEpoch(epoch);
 
         long startTime = System.currentTimeMillis();
 
-        SelectionTopDocuments selectResults = null;
-        if (q.isPresent()) {
-            if (!sFuture.get()) {
-                if (maxId.isPresent()) {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-                } else if (epoch.isPresent()) {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
-                } else {
-                    selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
-                }
-            } else {
-                selectResults = selectionManager.search(query, sLimit.get(), !sRetweets.get());
-            }
-        }
-
+        SelectionTopDocuments selectResults = selectionManager.search(maxId, epoch, sLimit, sRetweets, sFuture, query, epochs);
         SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
         
         Map<String, Double> selected;
@@ -100,7 +81,6 @@ public class SelectionResource {
         long endTime = System.currentTimeMillis();
 
         int totalHits = selectResults.totalHits;
-
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);

@@ -54,31 +54,16 @@ public class SearchResource {
                                  @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
-
-        long[] epochs = new long[2];
-        if (epoch.isPresent()) {
-            epochs = Epochs.parseEpochRange(epoch.get());
-        }
+        long[] epochs = Epochs.parseEpoch(epoch);
 
         long startTime = System.currentTimeMillis();
 
-        TopDocuments results = null;
-        if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                results = searchManager.search(query, limit.get(), !retweets.get(), maxId.get());
-            } else if (epoch.isPresent()) {
-                results = searchManager.search(query, limit.get(), !retweets.get(), epochs[0], epochs[1]);
-            } else {
-                results = searchManager.search(query, limit.get(), !retweets.get());
-            }
-        }
+        TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
 
         long endTime = System.currentTimeMillis();
 
         int totalHits = results != null ? results.totalHits : 0;
-
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);

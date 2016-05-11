@@ -8,13 +8,11 @@ import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.FeedbackDocumentsResponse;
 import io.jitter.api.search.SearchResponse;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.util.Version;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +33,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class FeedbackResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(FeedbackResource.class);
-
-    private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
 
     private final AtomicLong counter;
     private final SearchManager searchManager;
@@ -70,51 +66,36 @@ public class FeedbackResource extends AbstractFeedbackResource {
                                  @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
-
-        long[] epochs = new long[2];
-        if (epoch.isPresent()) {
-            epochs = Epochs.parseEpochRange(epoch.get());
-        }
+        long[] epochs = Epochs.parseEpoch(epoch);
         
         long startTime = System.currentTimeMillis();
 
-        TopDocuments selectResults = null;
-        if (q.isPresent()) {
-            if (!sFuture.get()) {
-                if (maxId.isPresent()) {
-                    selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
-                } else if (epoch.isPresent()) {
-                    selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
-                } else {
-                    selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), Long.MAX_VALUE);
-                }
+        TopDocuments selectResults;
+        if (!sFuture.get()) {
+            if (maxId.isPresent()) {
+                selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), maxId.get());
+            } else if (epoch.isPresent()) {
+                selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), epochs[0], epochs[1]);
             } else {
                 selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), Long.MAX_VALUE);
             }
+        } else {
+            selectResults = searchManager.search(query, sLimit.get(), !sRetweets.get(), Long.MAX_VALUE);
         }
 
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = buildQueryFV(query);
-            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, selectResults, searchManager.getStopper());
+            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, selectResults, searchManager.getStopper(), searchManager.getCollectionStats());
             query = buildFeedbackQuery(fbVector);
         }
 
-        TopDocuments results = null;
-        if (q.isPresent()) {
-            if (maxId.isPresent()) {
-                results = searchManager.search(query, limit.get(), !retweets.get(), maxId.get());
-            } else {
-                results = searchManager.search(query, limit.get(), !retweets.get(), Long.MAX_VALUE);
-            }
-        }
+        TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
 
         long endTime = System.currentTimeMillis();
 
         int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
         int totalHits = results != null ? results.totalHits : 0;
-
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
