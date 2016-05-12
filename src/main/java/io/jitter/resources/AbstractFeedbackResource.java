@@ -40,7 +40,7 @@ public class AbstractFeedbackResource {
         TweetFeedbackRelevanceModel fb = new TweetFeedbackRelevanceModel(analyzer);
         fb.setCollectionStats(collectionStats);
         fb.setMinWordLen(2);
-        fb.setMinTermFreq(0);
+        fb.setMinTermFreq(1);
         fb.setMinDocFreq(10);
         fb.setMaxQueryTerms(fbTerms);
         logger.info(fb.describeParams());
