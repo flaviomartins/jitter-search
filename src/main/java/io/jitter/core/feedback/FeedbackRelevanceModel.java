@@ -1,26 +1,25 @@
 package io.jitter.core.feedback;
 
-import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
 import io.jitter.core.document.FeatureVector;
-import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.KeyValuePair;
-import io.jitter.core.utils.TweetUtils;
-import jsat.text.stemming.PorterStemmer;
-import org.apache.lucene.analysis.Analyzer;
 
-import java.io.IOException;
 import java.util.*;
 
 
 public class FeedbackRelevanceModel extends FeedbackModel {
     private double[] docWeights = null;
 
-    private final PorterStemmer stemmer = new PorterStemmer();
+    public FeedbackRelevanceModel() {
+        super();
+    }
+
+    public List<String> extractTerms(String text) {
+        return Arrays.asList(text.split(" "));
+    }
 
     @Override
-    public void build(Analyzer analyzer) {
-        this.analyzer = analyzer;
+    public void build() {
         Set<String> vocab = new HashSet<>();
         List<FeatureVector> fbDocVectors = new LinkedList<>();
 
@@ -35,8 +34,7 @@ public class FeedbackRelevanceModel extends FeedbackModel {
         hitIterator = relDocs.iterator();
         while (hitIterator.hasNext()) {
             Document hit = hitIterator.next();
-            String cleanText = TweetUtils.clean(hit.getText());
-            List<String> terms = AnalyzerUtils.analyze(analyzer, cleanText);
+            List<String> terms = extractTerms(hit.getText());
             FeatureVector docVector = new FeatureVector(terms);
             vocab.addAll(docVector.getFeatures());
             fbDocVectors.add(docVector);
@@ -67,28 +65,7 @@ public class FeedbackRelevanceModel extends FeedbackModel {
         }
     }
 
-    public void idfFix(CollectionStats collectionStats) {
-        try {
-            int totalTerms = 0;
-            if (collectionStats != null) {
-                totalTerms = collectionStats.getTotalTerms();
-            }
-
-            if (totalTerms != 0) {
-                for (KeyValuePair f : features) {
-                    String stem = stemmer.stem(f.getKey());
-                    double idfWeight = (double) totalTerms / (1.0 + collectionStats.getDF(stem));
-                    f.setScore(f.getScore() * Math.log(idfWeight));
-                }
-            }
-        } catch (IOException e) {
-            // do nothing
-        }
-    }
-
     public void setDocWeights(double[] docWeights) {
         this.docWeights = docWeights;
     }
-
-
 }

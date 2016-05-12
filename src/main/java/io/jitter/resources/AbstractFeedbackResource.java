@@ -4,10 +4,8 @@ import cc.twittertools.index.IndexStatuses;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
-import io.jitter.core.feedback.FeedbackRelevanceModel;
+import io.jitter.core.feedback.TweetFeedbackRelevanceModel;
 import io.jitter.core.search.TopDocuments;
-import io.jitter.core.utils.AnalyzerUtils;
-import io.jitter.core.utils.KeyValuePair;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
@@ -19,8 +17,6 @@ import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.*;
 
 public class AbstractFeedbackResource {
@@ -41,11 +37,15 @@ public class AbstractFeedbackResource {
             analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, false, false, true);
         }
 
-        FeedbackRelevanceModel fb = new FeedbackRelevanceModel();
+        TweetFeedbackRelevanceModel fb = new TweetFeedbackRelevanceModel(analyzer);
+        fb.setCollectionStats(collectionStats);
+        fb.setMinWordLen(2);
+        fb.setMinTermFreq(0);
+        fb.setMinDocFreq(11);
+        logger.info(fb.describeParams());
         fb.setOriginalQueryFV(queryFV);
-        fb.setRes(selectResults.scoreDocs);
-        fb.build(analyzer);
-        fb.idfFix(collectionStats);
+        fb.build(selectResults.scoreDocs);
+        fb.idfFix();
 
         FeatureVector fbVector = fb.asFeatureVector();
         fbVector.pruneToSize(fbTerms);
