@@ -88,7 +88,7 @@ public class TrecCollectionStats implements CollectionStats {
         cumulativeCollectionFrequency = (int) corpusStore.getFeature(ctfFeatKey);
     }
 
-    public int getDF(String term) {
+    public int docFreq(String term) {
         String dfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.SIZE_FEAT_SUFFIX;
         int df = (int) corpusStore.getFeature(dfFeatKey);
         if (df == -1) {
@@ -97,7 +97,7 @@ public class TrecCollectionStats implements CollectionStats {
         return df;
     }
 
-    public long getCF(String term) {
+    public long totalTermFreq(String term) {
         String ctfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
         int cf = (int) corpusStore.getFeature(ctfFeatKey);
         if (cf == -1) {
@@ -106,11 +106,11 @@ public class TrecCollectionStats implements CollectionStats {
         return cf;
     }
 
-    public double getIDF(String term) {
-        return Math.log(1.0 + (double)getCollectionSize() / (double)getDF(term));
+    public double idf(String term) {
+        return Math.log(1.0 + (double) numDocs() / (double) docFreq(term));
     }
 
-    public int getCollectionSize() {
+    public int numDocs() {
         return collectionSize;
     }
 
@@ -118,7 +118,7 @@ public class TrecCollectionStats implements CollectionStats {
         this.collectionSize = collectionSize;
     }
 
-    public long getCumulativeDocumentFrequency() {
+    public long getSumDocFreq() {
         return cumulativeDocumentFrequency;
     }
 
@@ -126,7 +126,7 @@ public class TrecCollectionStats implements CollectionStats {
         this.cumulativeDocumentFrequency = cumulativeDocumentFrequency;
     }
 
-    public long getCumulativeCollectionFrequency() {
+    public long getSumTotalTermFreq() {
         return cumulativeCollectionFrequency;
     }
 
@@ -134,7 +134,7 @@ public class TrecCollectionStats implements CollectionStats {
         this.cumulativeCollectionFrequency = cumulativeCollectionFrequency;
     }
 
-    public int getTotalTerms() {
+    public int numTerms() {
         return DEFAULT_TERM_SIZE;
     }
 

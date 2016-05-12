@@ -171,7 +171,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
                 String text = term.text();
                 if (text.isEmpty())
                     continue;
-                totalDF += collectionStats.getDF(text);
+                totalDF += collectionStats.docFreq(text);
             }
         }
 

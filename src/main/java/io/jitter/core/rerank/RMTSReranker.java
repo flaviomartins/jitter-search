@@ -186,8 +186,8 @@ public class RMTSReranker {
                 if (qTerms.contains(term)) {
                     double tfValue = tf.getValue();
                     if (tfValue > 0) {
-                        idf += collectionStats.getIDF(term);
-                        bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, collectionStats.getDF(term), collectionStats.getCollectionSize());
+                        idf += collectionStats.idf(term);
+                        bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, collectionStats.docFreq(term), collectionStats.numDocs());
                         coord += 1;
                         tfMax = Math.max(tfMax, tfValue);
                     }

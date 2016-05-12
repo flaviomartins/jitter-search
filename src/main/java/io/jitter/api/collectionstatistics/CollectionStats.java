@@ -3,17 +3,17 @@ package io.jitter.api.collectionstatistics;
 import java.io.IOException;
 
 public interface CollectionStats {
-    int getDF(String term);
+    int docFreq(String term);
 
-    long getCF(String term);
+    long totalTermFreq(String term);
 
-    double getIDF(String term);
+    double idf(String term);
 
-    int getCollectionSize();
+    int numDocs();
 
-    long getCumulativeDocumentFrequency();
+    long getSumDocFreq();
 
-    long getCumulativeCollectionFrequency();
+    long getSumTotalTermFreq();
 
-    int getTotalTerms() throws IOException;
+    int numTerms() throws IOException;
 }

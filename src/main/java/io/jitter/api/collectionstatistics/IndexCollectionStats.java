@@ -17,7 +17,7 @@ public class IndexCollectionStats implements CollectionStats {
         this.field = field;
     }
 
-    public int getDF(String term) {
+    public int docFreq(String term) {
         try {
             return indexReader.docFreq(new Term(term));
         } catch (IOException e) {
@@ -25,7 +25,7 @@ public class IndexCollectionStats implements CollectionStats {
         }
     }
 
-    public long getCF(String term) {
+    public long totalTermFreq(String term) {
         try {
             return indexReader.totalTermFreq(new Term(term));
         } catch (IOException e) {
@@ -33,15 +33,15 @@ public class IndexCollectionStats implements CollectionStats {
         }
     }
 
-    public double getIDF(String term) {
-        return Math.log(1.0 + (double)getCollectionSize() / (double)getDF(term));
+    public double idf(String term) {
+        return Math.log(1.0 + (double) numDocs() / (double) docFreq(term));
     }
 
-    public int getCollectionSize() {
+    public int numDocs() {
         return indexReader.numDocs();
     }
 
-    public long getCumulativeDocumentFrequency() {
+    public long getSumDocFreq() {
         try {
             return indexReader.getSumDocFreq(field);
         } catch (IOException e) {
@@ -49,7 +49,7 @@ public class IndexCollectionStats implements CollectionStats {
         }
     }
 
-    public long getCumulativeCollectionFrequency() {
+    public long getSumTotalTermFreq() {
         try {
             return indexReader.getSumTotalTermFreq(field);
         } catch (IOException e) {
@@ -57,7 +57,7 @@ public class IndexCollectionStats implements CollectionStats {
         }
     }
 
-    public int getTotalTerms() throws IOException {
+    public int numTerms() throws IOException {
         Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
         TermsEnum termEnum = terms.iterator(null);
 
