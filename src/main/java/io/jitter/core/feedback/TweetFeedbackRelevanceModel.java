@@ -7,6 +7,7 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
 
     public TweetFeedbackRelevanceModel(Analyzer analyzer) {
         super(analyzer);
+        setMinTermFreq(1);
     }
 
     @Override

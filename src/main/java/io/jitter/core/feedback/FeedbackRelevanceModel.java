@@ -5,19 +5,15 @@ import io.jitter.api.search.Document;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.KeyValuePair;
-import io.jitter.core.utils.ScorableComparator;
 import jsat.text.stemming.PorterStemmer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.BooleanQuery;
 
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.*;
 
 
 public class FeedbackRelevanceModel {
-    private List<KeyValuePair> features;
 
     /**
      * Ignore terms with less than this frequency in the source doc.
@@ -459,25 +455,6 @@ public class FeedbackRelevanceModel {
      * @param term The word being considered
      * @return true if should be ignored, false if should be used in further analysis
      */
-    private boolean isUnfreqWord(String term) {
-        String stem = stemmer.stem(term);
-        long termFreq = collectionStats.totalTermFreq(stem);
-        if (minTermFreq > 0 && termFreq < minTermFreq) {
-            return true;
-        }
-        int docFreq = collectionStats.docFreq(stem);
-        if (minDocFreq > 0 && docFreq < minDocFreq) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * determines if the passed term is likely to be of interest in "more like" comparisons
-     *
-     * @param term The word being considered
-     * @return true if should be ignored, false if should be used in further analysis
-     */
     private boolean isNoiseWord(String term) {
         int len = term.length();
         if (minWordLen > 0 && len < minWordLen) {
@@ -487,6 +464,21 @@ public class FeedbackRelevanceModel {
             return true;
         }
         return stopWords != null && stopWords.contains(term);
+    }
+
+    /**
+     * determines if the passed term is likely to be of interest in "more like" comparisons
+     *
+     * @param term The word being considered
+     * @return true if should be ignored, false if should be used in further analysis
+     */
+    private boolean isUnfreqWord(String term) {
+        String stem = stemmer.stem(term);
+        int docFreq = collectionStats.docFreq(stem);
+        if (minDocFreq > 0 && docFreq < minDocFreq) {
+            return true;
+        }
+        return false;
     }
 
     public String cleanText(String text) {
@@ -518,11 +510,18 @@ public class FeedbackRelevanceModel {
             Document hit = hitIterator.next();
             List<String> terms = extractTerms(hit.getText());
             FeatureVector docVector = new FeatureVector(terms);
-            vocab.addAll(docVector.getFeatures());
+
+            List<KeyValuePair> orderedFeatures = docVector.getOrderedFeatures();
+            for (KeyValuePair f : orderedFeatures) {
+                if (f.getScore() < minTermFreq) {
+                    break;
+                }
+                vocab.add(f.getKey());
+            }
             fbDocVectors.add(docVector);
         }
 
-        features = new LinkedList<>();
+        List<KeyValuePair> features = new LinkedList<>();
         for (String term : vocab) {
             double fbWeight = 0.0;
 
@@ -546,15 +545,7 @@ public class FeedbackRelevanceModel {
             features.add(tuple);
         }
 
-        idfFix();
-
-        FeatureVector fbVector = asFeatureVector();
-        fbVector.pruneToSize(maxQueryTerms);
-        fbVector.normalizeToOne();
-        return fbVector;
-    }
-
-    public void idfFix() {
+        // Metzler's RM3 IDF fix
         try {
             int totalTerms = 0;
             if (collectionStats != null) {
@@ -571,55 +562,13 @@ public class FeedbackRelevanceModel {
         } catch (IOException e) {
             // do nothing
         }
-    }
 
-    public FeatureVector asFeatureVector() {
-        FeatureVector f = new FeatureVector();
-
+        FeatureVector fbVector = new FeatureVector();
         for (KeyValuePair tuple : features) {
-            f.addTerm(tuple.getKey(), tuple.getScore());
+            fbVector.addTerm(tuple.getKey(), tuple.getScore());
         }
-
-        return f;
-    }
-
-    public Map<String, Double> asMap() {
-        Map<String, Double> map = new HashMap<>(features.size());
-        for (KeyValuePair tuple : features) {
-            map.put(tuple.getKey(), tuple.getScore());
-        }
-
-        return map;
-    }
-
-    @Override
-    public String toString() {
-        return toString(features.size());
-    }
-
-    private String toString(int k) {
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.ROOT);
-        DecimalFormat df = (DecimalFormat)nf;
-        df.applyPattern("#.#########");
-
-        ScorableComparator comparator = new ScorableComparator(true);
-        Collections.sort(features, comparator);
-
-        double sum = 0.0;
-        Iterator<KeyValuePair> it = features.iterator();
-        int i = 0;
-        while (it.hasNext() && i++ < k) {
-            sum += it.next().getScore();
-        }
-
-        StringBuilder b = new StringBuilder();
-        it = features.iterator();
-        i = 0;
-        while (it.hasNext() && i++ < k) {
-            KeyValuePair tuple = it.next();
-            b.append(df.format(tuple.getScore() / sum)).append(" ").append(tuple.getKey()).append("\n");
-        }
-
-        return b.toString();
+        fbVector.pruneToSize(maxQueryTerms);
+        fbVector.normalizeToOne();
+        return fbVector;
     }
 }
