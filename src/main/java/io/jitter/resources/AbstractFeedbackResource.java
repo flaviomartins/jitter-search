@@ -1,5 +1,6 @@
 package io.jitter.resources;
 
+import cc.twittertools.index.IndexStatuses;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
@@ -10,34 +11,23 @@ import io.jitter.core.utils.KeyValuePair;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(AbstractFeedbackResource.class);
 
     private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
-
-    String buildFeedbackQuery(FeatureVector fbVector) {
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.ROOT);
-        DecimalFormat df = (DecimalFormat)nf;
-        df.applyPattern("#.#########");
-        StringBuilder b = new StringBuilder();
-        List<KeyValuePair> kvpList = fbVector.getOrderedFeatures();
-        Iterator<KeyValuePair> it = kvpList.iterator();
-        while (it.hasNext()) {
-            KeyValuePair pair = it.next();
-            b.append('"').append(pair.getKey()).append('"').append("^").append(df.format(pair.getScore())).append(" ");
-        }
-        return b.toString();
-    }
+    private static final QueryParser QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
 
     FeatureVector buildFbVector(int fbDocs, int fbTerms, double fbWeight, FeatureVector queryFV, TopDocuments selectResults, Stopper stopper, CollectionStats collectionStats) {
         // cap results
@@ -66,14 +56,16 @@ public class AbstractFeedbackResource {
         return fbVector;
     }
 
-    FeatureVector buildQueryFV(String query) {
+    FeatureVector buildQueryFV(String query) throws ParseException {
         FeatureVector queryFV = new FeatureVector();
-        for (String term : AnalyzerUtils.analyze(analyzer, query)) {
-            if (term.isEmpty())
+        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
+        Set<Term> queryTerms = new TreeSet<>();
+        q.extractTerms(queryTerms);
+        for (Term term : queryTerms) {
+            String text = term.text();
+            if (text.isEmpty())
                 continue;
-            if ("AND".equals(term) || "OR".equals(term))
-                continue;
-            queryFV.addTerm(term.toLowerCase(Locale.ROOT), 1.0);
+            queryFV.addTerm(text, 1.0);
         }
         queryFV.normalizeToOne();
         return queryFV;

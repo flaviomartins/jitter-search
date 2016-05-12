@@ -81,7 +81,7 @@ public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
         if (shardResults.totalHits > 0) {
             FeatureVector queryFV = buildQueryFV(query);
             FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, shardResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
-            query = buildFeedbackQuery(fbVector);
+            query = fbVector.buildQuery();
         }
 
         TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);

@@ -183,6 +183,24 @@ public class FeatureVector {
 
     }
 
+    public String buildQuery() {
+        return this.buildQuery(features.size());
+    }
+
+    String buildQuery(int k) {
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.ROOT);
+        DecimalFormat df = (DecimalFormat)nf;
+        df.applyPattern("#.#########");
+        StringBuilder b = new StringBuilder();
+        List<KeyValuePair> kvpList = getOrderedFeatures();
+        Iterator<KeyValuePair> it = kvpList.iterator();
+        int i = 0;
+        while (it.hasNext() && i++ < k) {
+            KeyValuePair pair = it.next();
+            b.append('"').append(pair.getKey()).append('"').append("^").append(df.format(pair.getScore())).append(" ");
+        }
+        return b.toString();
+    }
 
     // UTILS
     public static FeatureVector interpolate(FeatureVector x, FeatureVector y, double xWeight) {
