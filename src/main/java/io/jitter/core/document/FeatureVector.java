@@ -1,11 +1,7 @@
 package io.jitter.core.document;
 
 
-import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.utils.*;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.util.Version;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -17,52 +13,18 @@ import java.util.*;
  *
  * @author Miles Efron
  */
-@SuppressWarnings("deprecation")
 public class FeatureVector {
-    private static final int MIN_TERM_LENGTH = 2;
-    private static Analyzer analyzer;
     private Map<String, Double> features;
-    private final Stopper stopper;
     private double length = 0.0;
 
 
     // CONSTRUCTORS
-    public FeatureVector(String text, Stopper stopper) {
-        this.stopper = stopper;
-        if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, false, false, true);
-        } else {
-            CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, false, false, true);
-        }
+    public FeatureVector(List<String> terms) {
         features = new HashMap<>();
-
-        // Remove entities and microsyntax, unescape html
-        String cleanText = TweetUtils.clean(text);
-
-        List<String> terms = AnalyzerUtils.analyze(analyzer, cleanText);
-        for (String term : terms) {
-            if (term.length() < MIN_TERM_LENGTH)
-                continue;
-            length += 1.0;
-            Double val = features.get(term);
-            if (val == null) {
-                features.put(term, 1.0);
-            } else {
-                double v = val + 1.0;
-                features.put(term, v);
-            }
-        }
+        terms.forEach(this::addTerm);
     }
 
-    public FeatureVector(Stopper stopper) {
-        this.stopper = stopper;
-        if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, false, false, true);
-        } else {
-            CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, false, false, true);
-        }
+    public FeatureVector() {
         features = new HashMap<>();
     }
 
@@ -72,10 +34,9 @@ public class FeatureVector {
     /**
      * Add all the terms in a string to this vector
      *
-     * @param text a space-delimited string where we want to add each word.
+     * @param terms a list of string where we want to add each word.
      */
-    public void addText(String text) {
-        List<String> terms = AnalyzerUtils.analyze(analyzer, text);
+    public void addText(List<String> terms) {
         terms.forEach(this::addTerm);
     }
 
@@ -83,9 +44,6 @@ public class FeatureVector {
      * Add a term to this vector.  if it's already here, increment its count.
      */
     private void addTerm(String term) {
-        if (stopper != null && stopper.isStopWord(term))
-            return;
-
         Double freq = features.get(term);
         if (freq == null) {
             features.put(term, 1.0);
@@ -196,7 +154,7 @@ public class FeatureVector {
         return this.toString(features.size());
     }
 
-    private List<KeyValuePair> getOrderedFeatures() {
+    public List<KeyValuePair> getOrderedFeatures() {
         List<KeyValuePair> kvpList = new ArrayList<>(features.size());
         for (String feature : features.keySet()) {
             double value = features.get(feature);
@@ -228,7 +186,7 @@ public class FeatureVector {
 
     // UTILS
     public static FeatureVector interpolate(FeatureVector x, FeatureVector y, double xWeight) {
-        FeatureVector z = new FeatureVector(null);
+        FeatureVector z = new FeatureVector();
         Set<String> vocab = new HashSet<>();
         vocab.addAll(x.getFeatures());
         vocab.addAll(y.getFeatures());

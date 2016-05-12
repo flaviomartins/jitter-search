@@ -5,6 +5,7 @@ import io.jitter.core.document.FeatureVector;
 import io.jitter.core.utils.KeyValuePair;
 import io.jitter.core.utils.ScorableComparator;
 import io.jitter.core.utils.Stopper;
+import org.apache.lucene.analysis.Analyzer;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -15,16 +16,16 @@ public abstract class FeedbackModel {
     protected List<Document> relDocs;
     protected FeatureVector originalQueryFV;
     protected List<KeyValuePair> features;        // these will be KeyValuePair objects
-    protected Stopper stopper;
+    protected Analyzer analyzer;
 
 
-    public void build(Stopper stopper) {
-        this.stopper = stopper;
+    public void build(Analyzer analyzer) {
+        this.analyzer = analyzer;
     }
 
 
     public FeatureVector asFeatureVector() {
-        FeatureVector f = new FeatureVector(stopper);
+        FeatureVector f = new FeatureVector();
 
         for (KeyValuePair tuple : features) {
             f.addTerm(tuple.getKey(), tuple.getScore());
