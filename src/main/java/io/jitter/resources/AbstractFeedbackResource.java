@@ -41,15 +41,11 @@ public class AbstractFeedbackResource {
         fb.setCollectionStats(collectionStats);
         fb.setMinWordLen(2);
         fb.setMinTermFreq(0);
-        fb.setMinDocFreq(11);
+        fb.setMinDocFreq(10);
+        fb.setMaxQueryTerms(fbTerms);
         logger.info(fb.describeParams());
-        fb.setOriginalQueryFV(queryFV);
-        fb.build(selectResults.scoreDocs);
-        fb.idfFix();
-
-        FeatureVector fbVector = fb.asFeatureVector();
-        fbVector.pruneToSize(fbTerms);
-        fbVector.normalizeToOne();
+//        fb.setOriginalQueryFV(queryFV);
+        FeatureVector fbVector = fb.like(selectResults.scoreDocs);
         fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
 
         logger.info("fbDocs: {} Feature Vector:\n{}", selectResults.scoreDocs.size(), fbVector.toString());
