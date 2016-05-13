@@ -22,7 +22,7 @@ import java.util.*;
 public class AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(AbstractFeedbackResource.class);
 
-    private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, false);
+    private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
     private static final QueryParser QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
 
     FeatureVector buildFbVector(int fbDocs, int fbTerms, double fbWeight, FeatureVector queryFV, TopDocuments selectResults, Stopper stopper, CollectionStats collectionStats) {
@@ -31,10 +31,10 @@ public class AbstractFeedbackResource {
 
         Analyzer analyzer;
         if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, false, false, true);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
         } else {
             CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, false, false, true);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true, false, true);
         }
 
         TweetFeedbackRelevanceModel fb = new TweetFeedbackRelevanceModel(analyzer);

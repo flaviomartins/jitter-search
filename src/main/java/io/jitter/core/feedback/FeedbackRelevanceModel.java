@@ -2,10 +2,10 @@ package io.jitter.core.feedback;
 
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
+import io.jitter.core.document.DocVector;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.KeyValuePair;
-import jsat.text.stemming.PorterStemmer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.BooleanQuery;
 
@@ -97,11 +97,6 @@ public class FeedbackRelevanceModel {
      * Analyzer that will be used to parse the doc.
      */
     private Analyzer analyzer = null;
-
-    /**
-     * Stemmer that will be used to stem the terms.
-     */
-    private PorterStemmer stemmer = new PorterStemmer();
 
     /**
      * Ignore words less frequent that this.
@@ -473,29 +468,22 @@ public class FeedbackRelevanceModel {
      * @return true if should be ignored, false if should be used in further analysis
      */
     private boolean isUnfreqWord(String term) {
-        String stem = stemmer.stem(term);
-        int docFreq = collectionStats.docFreq(stem);
+        int docFreq = collectionStats.docFreq(term);
         if (minDocFreq > 0 && docFreq < minDocFreq) {
             return true;
         }
         return false;
     }
 
-    public String cleanText(String text) {
-        return text;
-    }
-
-    public List<String> extractTerms(String text) {
-        String cleanText = cleanText(text);
-        List<String> strings = AnalyzerUtils.analyze(analyzer, cleanText);
-        strings.removeIf(this::isNoiseWord);
-        strings.removeIf(this::isUnfreqWord);
-        return strings;
+    public Collection<String> filterTerms(Collection<String> terms) {
+        terms.removeIf(this::isNoiseWord);
+        terms.removeIf(this::isUnfreqWord);
+        return terms;
     }
 
     public FeatureVector like(List<Document> relDocs) {
         Set<String> vocab = new HashSet<>();
-        List<FeatureVector> fbDocVectors = new LinkedList<>();
+        List<DocVector> fbDocVectors = new LinkedList<>();
 
         double[] scores = new double[relDocs.size()];
         int k = 0;
@@ -508,16 +496,26 @@ public class FeedbackRelevanceModel {
         hitIterator = relDocs.iterator();
         while (hitIterator.hasNext()) {
             Document hit = hitIterator.next();
-            List<String> terms = extractTerms(hit.getText());
-            FeatureVector docVector = new FeatureVector(terms);
+            DocVector docVector = hit.getDocVector();
+            // if the term vectors are unavailable generate it here
+            if (docVector == null) {
+                DocVector aDocVector = new DocVector();
+                List<String> docTerms = AnalyzerUtils.analyze(analyzer, hit.getText());
 
-            List<KeyValuePair> orderedFeatures = docVector.getOrderedFeatures();
-            for (KeyValuePair f : orderedFeatures) {
-                if (f.getScore() < minTermFreq) {
-                    break;
+                for (String t : docTerms) {
+                    if (!t.isEmpty()) {
+                        Integer n = aDocVector.vector.get(t);
+                        n = (n == null) ? 1 : ++n;
+                        aDocVector.vector.put(t, n);
+                    }
                 }
-                vocab.add(f.getKey());
+
+                docVector = aDocVector;
             }
+
+            Collection<String> terms = filterTerms(docVector.vector.keySet());
+            // TODO: minTermFreq filtering
+            vocab.addAll(terms);
             fbDocVectors.add(docVector);
         }
 
@@ -525,15 +523,15 @@ public class FeedbackRelevanceModel {
         for (String term : vocab) {
             double fbWeight = 0.0;
 
-            Iterator<FeatureVector> docIT = fbDocVectors.iterator();
+            Iterator<DocVector> docIT = fbDocVectors.iterator();
             k = 0;
             while (docIT.hasNext()) {
                 double docWeight = 1.0;
                 if (docWeights != null)
                     docWeight = docWeights[k];
-                FeatureVector docVector = docIT.next();
+                DocVector docVector = docIT.next();
                 if (docVector.getLength() > 0) {
-                    double docProb = docVector.getFeatureWeight(term) / docVector.getLength();
+                    double docProb = (double) docVector.getTermFreq(term) / docVector.getLength();
                     docProb *= scores[k++] * docWeight;
                     fbWeight += docProb;
                 }
@@ -554,8 +552,7 @@ public class FeedbackRelevanceModel {
 
             if (totalTerms != 0) {
                 for (KeyValuePair f : features) {
-                    String stem = stemmer.stem(f.getKey());
-                    double idfWeight = (double) totalTerms / (1.0 + collectionStats.docFreq(stem));
+                    double idfWeight = (double) totalTerms / (1.0 + collectionStats.docFreq(f.getKey()));
                     f.setScore(f.getScore() * Math.log(idfWeight));
                 }
             }

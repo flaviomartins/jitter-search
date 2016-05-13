@@ -83,7 +83,7 @@ public class SearchUtils {
         while ((bytesRef = termsEnum.next()) != null) {
             String term = bytesRef.utf8ToString();
             int freq = (int) termsEnum.totalTermFreq();
-            docVector.put(term, freq);
+            docVector.setTermFreq(term, freq);
         }
         return docVector;
     }

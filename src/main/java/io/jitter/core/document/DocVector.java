@@ -10,8 +10,16 @@ public class DocVector {
         this.vector = new LinkedHashMap<>();
     }
 
-    public void put(String term, int freq) {
+    public int getTermFreq(String term) {
+        Integer w = vector.get(term);
+        return (w == null) ? 0 : w;
+    }
+
+    public void setTermFreq(String term, int freq) {
         vector.put(term, freq);
     }
 
+    public int getLength() {
+        return vector.size();
+    }
 }
