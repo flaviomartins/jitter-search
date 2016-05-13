@@ -1,13 +1,10 @@
 package io.jitter.api.collectionstatistics;
 
-import cc.twittertools.index.IndexStatuses;
-import org.apache.log4j.Logger;
 import org.apache.lucene.index.*;
 
 import java.io.*;
 
 public class IndexCollectionStats implements CollectionStats {
-    private static final Logger LOG = Logger.getLogger(IndexCollectionStats.class);
 
     private final IndexReader indexReader;
     private final String field;
@@ -19,17 +16,17 @@ public class IndexCollectionStats implements CollectionStats {
 
     public int docFreq(String term) {
         try {
-            return indexReader.docFreq(new Term(term));
+            return indexReader.docFreq(new Term(field, term));
         } catch (IOException e) {
-            return 10;
+            return 9;
         }
     }
 
     public long totalTermFreq(String term) {
         try {
-            return indexReader.totalTermFreq(new Term(term));
+            return indexReader.totalTermFreq(new Term(field, term));
         } catch (IOException e) {
-            return 10;
+            return 9;
         }
     }
 
@@ -58,7 +55,7 @@ public class IndexCollectionStats implements CollectionStats {
     }
 
     public int numTerms() throws IOException {
-        Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
+        Terms terms = MultiFields.getTerms(indexReader, field);
         TermsEnum termEnum = terms.iterator(null);
 
         int termCnt = 0;
