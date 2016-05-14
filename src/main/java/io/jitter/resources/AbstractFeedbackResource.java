@@ -47,9 +47,9 @@ public class AbstractFeedbackResource {
         logger.info(fb.describeParams());
 //        fb.setOriginalQueryFV(queryFV);
         FeatureVector fbVector = fb.like(selectResults.scoreDocs);
-        fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
+        fbVector = FeatureVector.interpolate(queryFV, fbVector, (float)fbWeight); // ORIG_QUERY_WEIGHT
         fbVector.pruneToSize(fbTerms);
-        fbVector.normalizeToOne();
+        fbVector.scaleToUnitL1Norm();
 
         logger.info("fbDocs: {} Feature Vector:\n{}", selectResults.scoreDocs.size(), fbVector.toString());
         return fbVector;
@@ -64,10 +64,20 @@ public class AbstractFeedbackResource {
             String text = term.text();
             if (text.isEmpty())
                 continue;
-            queryFV.addTerm(text, 1.0);
+            queryFV.addFeatureWeight(text, 1f);
         }
-        queryFV.normalizeToOne();
+        queryFV.scaleToUnitL1Norm();
         return queryFV;
     }
 
+    String buildQuery(FeatureVector fbVector) {
+        StringBuilder builder = new StringBuilder();
+        Iterator<String> terms = fbVector.iterator();
+        while (terms.hasNext()) {
+            String term = terms.next();
+            double prob = fbVector.getFeatureWeight(term);
+            builder.append(term).append("^").append(prob).append(" ");
+        }
+        return builder.toString().trim();
+    }
 }

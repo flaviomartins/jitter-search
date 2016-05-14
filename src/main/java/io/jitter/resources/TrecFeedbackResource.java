@@ -7,8 +7,10 @@ import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.*;
 import io.jitter.core.document.FeatureVector;
+import io.jitter.core.rerank.QrelsReranker;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
+import io.jitter.core.utils.Qrels;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -29,6 +31,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class TrecFeedbackResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(TrecFeedbackResource.class);
+
+    private static final Qrels qrels = new Qrels("/home/fmartins/IdeaProjects/microblog-search/microblog-search/data/qrels.microblog2014.txt");
 
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
@@ -68,6 +72,11 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
 
         TopDocuments selectResults = trecMicroblogAPIWrapper.search(limit, maxId, sRetweets, sFuture.get(), query);
 
+        if (qid.isPresent()) {
+            QrelsReranker qrelsReranker = new QrelsReranker(selectResults.scoreDocs, qrels, qid.get().replaceFirst("^MB0*", ""));
+            selectResults.scoreDocs = qrelsReranker.getReranked();
+        }
+
 //        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
 //        langFilter.setResults(selectResults.scoreDocs);
 //        selectResults.scoreDocs = langFilter.getFiltered();
@@ -75,7 +84,7 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = buildQueryFV(query);
             FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
-            query = fbVector.buildQuery();
+            query = buildQuery(fbVector);
         }
 
         TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);

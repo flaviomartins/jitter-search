@@ -76,7 +76,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = buildQueryFV(query);
             FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, selectResults, searchManager.getStopper(), searchManager.getCollectionStats());
-            query = fbVector.buildQuery();
+            query = buildQuery(fbVector);
         }
 
         TopDocuments results = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);

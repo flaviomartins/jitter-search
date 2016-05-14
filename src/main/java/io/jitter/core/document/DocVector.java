@@ -23,6 +23,14 @@ public class DocVector {
         return computeL1Norm();
     }
 
+    public double computeL2Norm() {
+        double norm = 0.0;
+        for (String term : vector.keySet()) {
+            norm += Math.pow(vector.get(term), 2.0);
+        }
+        return Math.sqrt(norm);
+    }
+
     public double computeL1Norm() {
         double norm = 0.0;
         for (String term : vector.keySet()) {

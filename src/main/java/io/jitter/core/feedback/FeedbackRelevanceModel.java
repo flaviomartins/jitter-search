@@ -5,7 +5,6 @@ import io.jitter.api.search.Document;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.utils.AnalyzerUtils;
-import io.jitter.core.utils.KeyValuePair;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.similarities.DefaultSimilarity;
@@ -493,21 +492,16 @@ public class FeedbackRelevanceModel {
 
     public FeatureVector like(List<Document> relDocs) throws IOException {
         int numTerms = collectionStats.numTerms();
-        int numDocs = collectionStats.numDocs();
+        int numDocs = relDocs.size();
+        FeatureVector f = new FeatureVector();
         Set<String> vocab = new HashSet<>();
-        List<DocVector> fbDocVectors = new LinkedList<>();
+        DocVector[] docVectors = new DocVector[numDocs];
+        double[] scores = new double[numDocs];
 
-        double[] scores = new double[relDocs.size()];
-        int k = 0;
-        Iterator<Document> hitIterator = relDocs.iterator();
-        while (hitIterator.hasNext()) {
-            Document hit = hitIterator.next();
-            scores[k++] = hit.getRsv();
-        }
+        for (int i = 0; i < numDocs; i++) {
+            Document hit = relDocs.get(i);
+            scores[i] = hit.getRsv();
 
-        hitIterator = relDocs.iterator();
-        while (hitIterator.hasNext()) {
-            Document hit = hitIterator.next();
             DocVector docVector = hit.getDocVector();
             // if the term vectors are unavailable generate it here
             if (docVector == null) {
@@ -528,43 +522,31 @@ public class FeedbackRelevanceModel {
             Collection<String> terms = filterTerms(docVector.vector.keySet());
             // TODO: minTermFreq filtering
             vocab.addAll(terms);
-            fbDocVectors.add(docVector);
+            docVectors[i] = docVector;
         }
 
         // Precompute the norms once and cache results.
-        float[] norms = new float[fbDocVectors.size()];
-        for (int i = 0; i < fbDocVectors.size(); i++) {
-            norms[i] = (float) fbDocVectors.get(i).computeL1Norm();
+        float[] norms = new float[numDocs];
+        for (int i = 0; i < docVectors.length; i++) {
+            norms[i] = (float) docVectors[i].computeL1Norm();
         }
 
-        List<KeyValuePair> features = new LinkedList<>();
         for (String term : vocab) {
-            float fbWeight = 0f;
-
-            Iterator<DocVector> docIT = fbDocVectors.iterator();
-            k = 0;
-            while (docIT.hasNext()) {
-                DocVector docVector = docIT.next();
-                fbWeight += (docVector.getTermFreq(term) / norms[k]) * scores[k];
-                k++;
+            float fbWeight = 0.0f;
+            for (int i = 0; i < docVectors.length; i++) {
+                fbWeight += (docVectors[i].getTermFreq(term) / norms[i]) * scores[i];
             }
-
-            fbWeight /= fbDocVectors.size();
 
             // Don Metzler's idf fix
             float idf = similarity.idf(collectionStats.docFreq(term), numTerms);
             fbWeight *= Math.log(idf);
 
-            KeyValuePair tuple = new KeyValuePair(term, fbWeight);
-            features.add(tuple);
+            f.addFeatureWeight(term, fbWeight);
         }
 
-        FeatureVector fbVector = new FeatureVector();
-        for (KeyValuePair tuple : features) {
-            fbVector.addTerm(tuple.getKey(), tuple.getScore());
-        }
-        fbVector.pruneToSize(maxQueryTerms);
-        fbVector.normalizeToOne();
-        return fbVector;
+        f.pruneToSize(maxQueryTerms);
+        f.scaleToUnitL1Norm();
+
+        return f;
     }
 }
