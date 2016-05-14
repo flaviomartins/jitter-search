@@ -107,7 +107,7 @@ public class TrecCollectionStats implements CollectionStats {
     }
 
     public double idf(String term) {
-        return Math.log(1.0 + (double) numDocs() / (double) docFreq(term));
+        return (float)(Math.log(numDocs()/(double)(docFreq(term)+1)) + 1.0);
     }
 
     public int numDocs() {
