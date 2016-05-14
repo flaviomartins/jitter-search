@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TrecFeedbackResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(TrecFeedbackResource.class);
 
-    private static final Qrels qrels = new Qrels("/home/fmartins/IdeaProjects/microblog-search/microblog-search/data/qrels.microblog2014.txt");
+//    private static final Qrels qrels = new Qrels("/home/fmartins/IdeaProjects/microblog-search/microblog-search/data/qrels.microblog2014.txt");
 
     private final AtomicLong counter;
     private final TrecMicroblogAPIWrapper trecMicroblogAPIWrapper;
@@ -72,10 +72,10 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
 
         TopDocuments selectResults = trecMicroblogAPIWrapper.search(limit, maxId, sRetweets, sFuture.get(), query);
 
-        if (qid.isPresent()) {
-            QrelsReranker qrelsReranker = new QrelsReranker(selectResults.scoreDocs, qrels, qid.get().replaceFirst("^MB0*", ""));
-            selectResults.scoreDocs = qrelsReranker.getReranked();
-        }
+//        if (qid.isPresent()) {
+//            QrelsReranker qrelsReranker = new QrelsReranker(selectResults.scoreDocs, qrels, qid.get().replaceFirst("^MB0*", ""));
+//            selectResults.scoreDocs = qrelsReranker.getReranked();
+//        }
 
 //        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
 //        langFilter.setResults(selectResults.scoreDocs);
