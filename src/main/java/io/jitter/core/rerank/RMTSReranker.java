@@ -25,6 +25,8 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.similarities.DefaultSimilarity;
+import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +41,7 @@ public class RMTSReranker {
     private final Ranker ranker;
 
     private final Analyzer analyzer;
+    private final TFIDFSimilarity similarity;
     private final QueryParser QUERY_PARSER;
 
     public RMTSReranker(String rankerModel) {
@@ -46,6 +49,7 @@ public class RMTSReranker {
         ranker = rFact.loadRankerFromFile(rankerModel);
         
         analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, true);
+        similarity = new DefaultSimilarity();
         QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
     }
 
@@ -177,17 +181,17 @@ public class RMTSReranker {
                 docVector = aDocVector;
             }
 
+            docLength += docVector.getLength();
 
-            for (Integer i : docVector.vector.values()) {
-                docLength += i;
-            }
+            int numDocs = collectionStats.numDocs();
             for (Map.Entry<String, Integer> tf : docVector.vector.entrySet()) {
                 String term = tf.getKey();
                 if (qTerms.contains(term)) {
                     double tfValue = tf.getValue();
+                    int docFreq = collectionStats.docFreq(term);
                     if (tfValue > 0) {
-                        idf += collectionStats.idf(term);
-                        bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, collectionStats.docFreq(term), collectionStats.numDocs());
+                        idf += similarity.idf(docFreq, numDocs);
+                        bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, docFreq, numDocs);
                         coord += 1;
                         tfMax = Math.max(tfMax, tfValue);
                     }

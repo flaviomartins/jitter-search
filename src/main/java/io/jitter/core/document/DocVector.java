@@ -19,7 +19,15 @@ public class DocVector {
         vector.put(term, freq);
     }
 
-    public int getLength() {
-        return vector.size();
+    public double getLength() {
+        return computeL1Norm();
+    }
+
+    public double computeL1Norm() {
+        double norm = 0.0;
+        for (String term : vector.keySet()) {
+            norm += Math.abs(vector.get(term));
+        }
+        return norm;
     }
 }

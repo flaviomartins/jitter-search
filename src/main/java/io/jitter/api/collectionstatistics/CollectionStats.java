@@ -7,8 +7,6 @@ public interface CollectionStats {
 
     long totalTermFreq(String term);
 
-    double idf(String term);
-
     int numDocs();
 
     long getSumDocFreq();

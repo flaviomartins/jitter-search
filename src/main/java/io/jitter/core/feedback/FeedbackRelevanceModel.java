@@ -8,6 +8,8 @@ import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.KeyValuePair;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.similarities.DefaultSimilarity;
+import org.apache.lucene.search.similarities.TFIDFSimilarity;
 
 import java.io.IOException;
 import java.util.*;
@@ -141,6 +143,11 @@ public class FeedbackRelevanceModel {
     /**
      * For idf() calculations.
      */
+    private TFIDFSimilarity similarity;// = new DefaultSimilarity();
+
+    /**
+     * For numTerms() and docFreq() calculations.
+     */
     private CollectionStats collectionStats;
 
     /**
@@ -189,10 +196,13 @@ public class FeedbackRelevanceModel {
     }
 
     public FeedbackRelevanceModel(Analyzer analyzer) {
-        super();
-        this.analyzer = analyzer;
+        this(analyzer, new DefaultSimilarity());
     }
 
+    public FeedbackRelevanceModel(Analyzer analyzer, TFIDFSimilarity sim) {
+        this.analyzer = analyzer;
+        this.similarity = sim;
+    }
 
     public CollectionStats getCollectionStats() {
         return collectionStats;
@@ -481,7 +491,9 @@ public class FeedbackRelevanceModel {
         return terms;
     }
 
-    public FeatureVector like(List<Document> relDocs) {
+    public FeatureVector like(List<Document> relDocs) throws IOException {
+        int numTerms = collectionStats.numTerms();
+        int numDocs = collectionStats.numDocs();
         Set<String> vocab = new HashSet<>();
         List<DocVector> fbDocVectors = new LinkedList<>();
 
@@ -519,45 +531,32 @@ public class FeedbackRelevanceModel {
             fbDocVectors.add(docVector);
         }
 
+        // Precompute the norms once and cache results.
+        float[] norms = new float[fbDocVectors.size()];
+        for (int i = 0; i < fbDocVectors.size(); i++) {
+            norms[i] = (float) fbDocVectors.get(i).computeL1Norm();
+        }
+
         List<KeyValuePair> features = new LinkedList<>();
         for (String term : vocab) {
-            double fbWeight = 0.0;
+            float fbWeight = 0f;
 
             Iterator<DocVector> docIT = fbDocVectors.iterator();
             k = 0;
             while (docIT.hasNext()) {
-                double docWeight = 1.0;
-                if (docWeights != null)
-                    docWeight = docWeights[k];
                 DocVector docVector = docIT.next();
-                if (docVector.getLength() > 0) {
-                    double docProb = (double) docVector.getTermFreq(term) / docVector.getLength();
-                    docProb *= scores[k++] * docWeight;
-                    fbWeight += docProb;
-                }
+                fbWeight += (docVector.getTermFreq(term) / norms[k]) * scores[k];
+                k++;
             }
 
-            fbWeight /= (double) fbDocVectors.size();
+            fbWeight /= fbDocVectors.size();
+
+            // Don Metzler's idf fix
+            float idf = similarity.idf(collectionStats.docFreq(term), numTerms);
+            fbWeight *= Math.log(idf);
 
             KeyValuePair tuple = new KeyValuePair(term, fbWeight);
             features.add(tuple);
-        }
-
-        // Metzler's RM3 IDF fix
-        try {
-            int totalTerms = 0;
-            if (collectionStats != null) {
-                totalTerms = collectionStats.numTerms();
-            }
-
-            if (totalTerms != 0) {
-                for (KeyValuePair f : features) {
-                    double idfWeight = (double) totalTerms / (1.0 + collectionStats.docFreq(f.getKey()));
-                    f.setScore(f.getScore() * Math.log(idfWeight));
-                }
-            }
-        } catch (IOException e) {
-            // do nothing
         }
 
         FeatureVector fbVector = new FeatureVector();
