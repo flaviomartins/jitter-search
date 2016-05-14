@@ -48,6 +48,8 @@ public class AbstractFeedbackResource {
 //        fb.setOriginalQueryFV(queryFV);
         FeatureVector fbVector = fb.like(selectResults.scoreDocs);
         fbVector = FeatureVector.interpolate(queryFV, fbVector, fbWeight); // ORIG_QUERY_WEIGHT
+        fbVector.pruneToSize(fbTerms);
+        fbVector.normalizeToOne();
 
         logger.info("fbDocs: {} Feature Vector:\n{}", selectResults.scoreDocs.size(), fbVector.toString());
         return fbVector;
