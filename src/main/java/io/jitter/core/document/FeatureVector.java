@@ -25,10 +25,9 @@ public class FeatureVector {
 
         int i = 0;
         for (KeyValuePair pair : pairs) {
-            pruned.put(pair.getKey(), pair.getValue());
-            if (i++ > k) {
+            if (++i > k)
                 break;
-            }
+            pruned.put(pair.getKey(), pair.getValue());
         }
 
         this.features = pruned;
