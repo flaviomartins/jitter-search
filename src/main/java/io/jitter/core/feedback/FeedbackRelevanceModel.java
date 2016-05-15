@@ -492,13 +492,13 @@ public class FeedbackRelevanceModel {
 
     public FeatureVector like(List<Document> relDocs) throws IOException {
         int numTerms = collectionStats.numTerms();
-        int numDocs = relDocs.size();
+        int numDocVectors = relDocs.size();
         FeatureVector f = new FeatureVector();
         Set<String> vocab = new HashSet<>();
-        DocVector[] docVectors = new DocVector[numDocs];
-        double[] scores = new double[numDocs];
+        DocVector[] docVectors = new DocVector[numDocVectors];
+        double[] scores = new double[numDocVectors];
 
-        for (int i = 0; i < numDocs; i++) {
+        for (int i = 0; i < numDocVectors; i++) {
             Document hit = relDocs.get(i);
             scores[i] = hit.getRsv();
 
@@ -526,7 +526,7 @@ public class FeedbackRelevanceModel {
         }
 
         // Precompute the norms once and cache results.
-        float[] norms = new float[numDocs];
+        float[] norms = new float[numDocVectors];
         for (int i = 0; i < docVectors.length; i++) {
             norms[i] = (float) docVectors[i].computeL1Norm();
         }
