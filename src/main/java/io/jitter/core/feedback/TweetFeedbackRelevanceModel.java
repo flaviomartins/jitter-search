@@ -7,7 +7,7 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
     public TweetFeedbackRelevanceModel(Analyzer analyzer) {
         super(analyzer);
         setMinWordLen(1);
-        setMinTermFreq(1);
+        setMinDocFreq(10);
     }
 
 }
