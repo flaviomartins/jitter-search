@@ -10,4 +10,12 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
         setMinDocFreq(10);
     }
 
+    @Override
+    public boolean isNoiseWord(String term) {
+        if (super.isNoiseWord(term)) {
+            return true;
+        }
+        return (term.startsWith("@"));
+    }
+
 }

@@ -459,7 +459,7 @@ public class FeedbackRelevanceModel {
      * @param term The word being considered
      * @return true if should be ignored, false if should be used in further analysis
      */
-    private boolean isNoiseWord(String term) {
+    public boolean isNoiseWord(String term) {
         int len = term.length();
         if (minWordLen > 0 && len < minWordLen) {
             return true;
