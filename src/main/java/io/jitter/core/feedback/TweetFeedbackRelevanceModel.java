@@ -20,7 +20,7 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
         if (term.startsWith("@")) {
             return true;
         }
-        return (!CharMatcher.ASCII.matchesAllOf(term));
+        return (!CharMatcher.ascii().matchesAllOf(term));
     }
 
 }

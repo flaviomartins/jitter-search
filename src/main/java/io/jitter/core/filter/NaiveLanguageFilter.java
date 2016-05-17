@@ -47,10 +47,10 @@ public class NaiveLanguageFilter extends Filter {
 
     private boolean isProbablyEnglish(String text) {
         // Replace invisible characters
-        text = CharMatcher.INVISIBLE.replaceFrom(text, " ");
+        text = CharMatcher.invisible().replaceFrom(text, " ");
         // Replace unicode whitespace
-        text = CharMatcher.WHITESPACE.replaceFrom(text, " ");
-        return CharMatcher.ASCII.matchesAllOf(text);
+        text = CharMatcher.whitespace().replaceFrom(text, " ");
+        return CharMatcher.ascii().matchesAllOf(text);
     }
 
 }
