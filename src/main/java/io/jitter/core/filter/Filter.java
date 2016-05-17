@@ -4,7 +4,7 @@ import io.jitter.api.search.Document;
 
 import java.util.List;
 
-public abstract class SearchFilter {
+public abstract class Filter {
     List<Document> results;
 
     protected abstract void filter();

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class RetweetFilter extends SearchFilter {
+public class RetweetFilter extends Filter {
 
     public RetweetFilter(List<Document> results) {
         this.results = results;

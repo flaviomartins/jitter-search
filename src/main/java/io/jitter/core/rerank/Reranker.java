@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public abstract class SearchReranker {
+public abstract class Reranker {
     List<Document> results;
 
     protected abstract void score();

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class NaiveLanguageFilter extends SearchFilter {
+public class NaiveLanguageFilter extends Filter {
     private final String lang;
     
     public NaiveLanguageFilter(String lang) {

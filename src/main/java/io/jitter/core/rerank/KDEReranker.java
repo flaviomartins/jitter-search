@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public class KDEReranker extends SearchReranker {
+public class KDEReranker extends Reranker {
     public static final double DAY = 60.0 * 60.0 * 24.0;
     public static final double HOUR = 60.0 * 60.0;
 

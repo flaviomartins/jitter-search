@@ -33,36 +33,50 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class RMTSReranker {
+public class RMTSReranker extends Reranker {
     private static final Logger logger = LoggerFactory.getLogger(RMTSReranker.class);
 
     private static final double DAY = 60.0 * 60.0 * 24.0;
 
-    private final Ranker ranker;
+    private static final Analyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, true);
+    private static final TFIDFSimilarity similarity = new DefaultSimilarity();;
+    private static final QueryParser QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
 
-    private final Analyzer analyzer;
-    private final TFIDFSimilarity similarity;
-    private final QueryParser QUERY_PARSER;
+    private final String rankerModel;
+    private final String query;
+    private final double queryEpoch;
+    private List<Document> shardResults;
+    private final CollectionStats collectionStats;
+    private final int numResults;
+    private final int numRerank;
 
-    public RMTSReranker(String rankerModel) {
-        RankerFactory rFact = new RankerFactory();
-        ranker = rFact.loadRankerFromFile(rankerModel);
-        
-        analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, true);
-        similarity = new DefaultSimilarity();
-        QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
+    public RMTSReranker(String rankerModel, String query, double queryEpoch, List<Document> results, List<Document> shardResults, CollectionStats collectionStats, int numResults, int numRerank) {
+        this.rankerModel = rankerModel;
+        this.query = query;
+        this.queryEpoch = queryEpoch;
+        this.results = results;
+        this.shardResults = shardResults;
+        this.collectionStats = collectionStats;
+        this.numResults = numResults;
+        this.numRerank = numRerank;
+        this.score();
     }
 
-    public List<Document> score(String query, double queryEpoch, List<Document> results, List<Document> shardResults, CollectionStats collectionStats, int numResults, int numRerank) throws ParseException {
-        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
-        Set<Term> queryTerms = new TreeSet<>();
-        q.extractTerms(queryTerms);
+    public void score() {
+        Query q;
         Set<String> qTerms = new HashSet<>();
-        for (Term term : queryTerms) {
-            String text = term.text();
-            if (text.isEmpty())
-                continue;
-            qTerms.add(text);
+        try {
+            q = QUERY_PARSER.parse(query.replaceAll(",", ""));
+            Set<Term> queryTerms = new TreeSet<>();
+            q.extractTerms(queryTerms);
+            for (Term term : queryTerms) {
+                String text = term.text();
+                if (text.isEmpty())
+                    continue;
+                qTerms.add(text);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
 
         BM25Feature bm25Feature = new BM25Feature(1.2D, 1.0D);
@@ -265,11 +279,12 @@ public class RMTSReranker {
         }
 
         try {
-            results = rankRankLib(query, results, numResults, numRerank);
+            RankerFactory rFact = new RankerFactory();
+            Ranker ranker = rFact.loadRankerFromFile(rankerModel);
+            results = rankRankLib(ranker, query, results, numResults, numRerank);
         } catch (SecurityException e) {
             logger.warn("RankLib caught calling System.exit(int).");
         }
-        return results;
     }
 
     private List<Document> KDERerank(List<Double> oracleRawEpochs, List<Double> oracleWeights, List<Document> results, double queryEpoch, KDE.METHOD method, double weight) {
@@ -289,7 +304,7 @@ public class RMTSReranker {
     }
 
     @SuppressWarnings("UnusedAssignment")
-    private List<Document> rankRankLib(String query, List<Document> results, int numResults, int numRerank) {
+    private List<Document> rankRankLib(Ranker ranker, String query, List<Document> results, int numResults, int numRerank) {
         int[] features = ranker.getFeatures();
         List<DataPoint> rl = new ArrayList<>();
 

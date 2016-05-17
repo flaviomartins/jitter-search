@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class QrelsReranker extends SearchReranker {
+public class QrelsReranker extends Reranker {
 
     private final Qrels qrels;
     private final String qid;

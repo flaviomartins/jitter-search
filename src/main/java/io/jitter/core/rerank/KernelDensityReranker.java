@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class KernelDensityReranker extends SearchReranker {
+public class KernelDensityReranker extends Reranker {
     private final List<Double> scaledEpochs;
     private KDE kde;
     private double beta = 1.0;

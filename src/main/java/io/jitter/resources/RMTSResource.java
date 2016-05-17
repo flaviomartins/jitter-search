@@ -46,7 +46,6 @@ public class RMTSResource extends AbstractFeedbackResource {
     private final SelectionManager selectionManager;
     private final ShardsManager shardsManager;
     private final TailyManager tailyManager;
-    private final RMTSReranker rmtsReranker;
 
     public RMTSResource(SearchManager searchManager, SelectionManager selectionManager, ShardsManager shardsManager, TailyManager tailyManager) throws IOException {
         Preconditions.checkNotNull(searchManager);
@@ -59,7 +58,6 @@ public class RMTSResource extends AbstractFeedbackResource {
         this.selectionManager = selectionManager;
         this.shardsManager = shardsManager;
         this.tailyManager = tailyManager;
-        this.rmtsReranker = new RMTSReranker("ltr-all.model");
     }
 
     @GET
@@ -123,7 +121,8 @@ public class RMTSResource extends AbstractFeedbackResource {
 //        langFilter.setResults(results.scoreDocs);
 //        results.scoreDocs = langFilter.getFiltered();
 
-        results.scoreDocs = rmtsReranker.score(query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get());
+        RMTSReranker rmtsReranker = new RMTSReranker("ltr-all.model", query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get());
+        results.scoreDocs = rmtsReranker.getReranked();
 
         long endTime = System.currentTimeMillis();
 

@@ -5,7 +5,7 @@ import io.jitter.core.document.DocVector;
 
 import java.util.*;
 
-public class MaxTFFilter extends SearchFilter {
+public class MaxTFFilter extends Filter {
     private final int maxTF;
 
     public MaxTFFilter(int maxTF) {

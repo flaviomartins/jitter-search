@@ -43,7 +43,6 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
     private final SelectionManager selectionManager;
     private final ShardsManager shardsManager;
     private final TailyManager tailyManager;
-    private final RMTSReranker rmtsReranker;
 
     public TrecRMTSResource(TrecMicroblogAPIWrapper trecMicroblogAPIWrapper, SelectionManager selectionManager, ShardsManager shardsManager, TailyManager tailyManager) throws IOException {
         Preconditions.checkNotNull(trecMicroblogAPIWrapper);
@@ -56,7 +55,6 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
         this.selectionManager = selectionManager;
         this.shardsManager = shardsManager;
         this.tailyManager = tailyManager;
-        this.rmtsReranker = new RMTSReranker("ltr-all.model");
     }
 
     @GET
@@ -110,8 +108,9 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
 //        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
 //        langFilter.setResults(results.scoreDocs);
 //        results.scoreDocs = langFilter.getFiltered();
-        
-        results.scoreDocs = rmtsReranker.score(query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit.get(), numRerank.get());
+
+        RMTSReranker rmtsReranker = new RMTSReranker("ltr-all.model", query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit.get(), numRerank.get());
+        results.scoreDocs = rmtsReranker.getReranked();
 
         long endTime = System.currentTimeMillis();
 
