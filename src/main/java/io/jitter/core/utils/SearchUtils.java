@@ -4,6 +4,7 @@ import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.Lists;
 import io.jitter.api.search.Document;
 import io.jitter.core.document.DocVector;
+import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
@@ -42,6 +43,11 @@ public class SearchUtils {
 
             Document doc = new Document(hit);
             doc.rsv = scoreDoc.score;
+
+            // Throw away retweets.
+            if (filterRT && StringUtils.startsWithIgnoreCase(doc.getText(), "RT ")) {
+                continue;
+            }
 
             if (buildDocVector) {
                 DocVector docVector = buildDocVector(indexReader, scoreDoc.doc);
