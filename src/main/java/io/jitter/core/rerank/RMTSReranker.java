@@ -39,7 +39,7 @@ public class RMTSReranker extends Reranker {
     private static final double DAY = 60.0 * 60.0 * 24.0;
 
     private static final Analyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, true);
-    private static final TFIDFSimilarity similarity = new DefaultSimilarity();;
+    private static final TFIDFSimilarity similarity = new DefaultSimilarity();
     private static final QueryParser QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
 
     private final String rankerModel;
