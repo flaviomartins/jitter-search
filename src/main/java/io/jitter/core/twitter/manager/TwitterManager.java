@@ -139,7 +139,7 @@ public class TwitterManager implements Managed {
     public void index(String collection, String indexPath, Analyzer analyzer, boolean removeDuplicates) throws IOException {
         long startTime = System.currentTimeMillis();
         File file = new File(collection);
-        if (!file.exists()) {
+        if (!file.isDirectory()) {
             logger.error("Error: " + file + " does not exist!");
             return;
         }

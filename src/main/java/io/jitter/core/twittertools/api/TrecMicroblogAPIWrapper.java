@@ -24,6 +24,8 @@ import org.apache.thrift.TException;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.util.*;
 
@@ -56,8 +58,9 @@ public class TrecMicroblogAPIWrapper implements Managed {
         this.cacheDir = cacheDir;
         this.useCache = useCache;
         this.collectDb = collectDb;
-        if (collectDb != null)
+        if (collectDb != null && !Files.exists(Paths.get(collectDb))) {
             createDatabase();
+        }
     }
 
     public TrecMicroblogAPIWrapper(String host, int port, String group, String token, String cacheDir, boolean useCache, String collectDb, String stopwords, @Nullable String stats, @Nullable String statsDb) {
