@@ -109,7 +109,8 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
         
         if (shardResults.totalHits > 0) {
             FeatureVector queryFV = buildQueryFV(query);
-            FeatureVector fbVector = buildFbVector(fbDocs.get(), fbTerms.get(), fbWeight, queryFV, shardResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+            FeatureVector feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+            FeatureVector fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, feedbackFV);
             query = buildQuery(fbVector);
             logger.info("Selected: {}\n fbDocs: {} Feature Vector:\n{}", selected != null ? Joiner.on(", ").join(selected) : "all", shardResults.scoreDocs.size(), fbVector.toString());
         }

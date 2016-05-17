@@ -22,33 +22,14 @@ public class AbstractFeedbackResource {
 
     private static final StopperTweetAnalyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
 
-    FeatureVector buildFbVector(int fbDocs, int fbTerms, double fbWeight, FeatureVector queryFV, TopDocuments selectResults, Stopper stopper, CollectionStats collectionStats) throws IOException {
-        // cap results
-        selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs, selectResults.scoreDocs.size()));
-
-        Analyzer analyzer;
-        if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
-        } else {
-            CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true, false, true);
-        }
-
-        TweetFeedbackRelevanceModel fb = new TweetFeedbackRelevanceModel(analyzer);
-        if (stopper != null) {
-            fb.setStopWords(stopper.asSet());
-        }
+    FeatureVector buildFeedbackFV(int fbDocs, int fbTerms, TopDocuments results, Stopper stopper, CollectionStats collectionStats) throws IOException {
+        TweetFeedbackRelevanceModel fb = new TweetFeedbackRelevanceModel(stopper);
         fb.setCollectionStats(collectionStats);
         fb.setMaxQueryTerms(fbTerms);
-        logger.info(fb.describeParams());
+//        logger.info(fb.describeParams());
 //        fb.setOriginalQueryFV(queryFV);
-        FeatureVector fbVector = fb.like(selectResults.scoreDocs);
-        fbVector = FeatureVector.interpolate(queryFV, fbVector, (float)fbWeight); // ORIG_QUERY_WEIGHT
-        fbVector.pruneToSize(fbTerms);
-        fbVector.scaleToUnitL1Norm();
 
-        logger.info("fbDocs: {} Feature Vector:\n{}", selectResults.scoreDocs.size(), fbVector.toString());
-        return fbVector;
+        return fb.like(results.scoreDocs.subList(0, Math.min(fbDocs, results.scoreDocs.size())));
     }
 
     FeatureVector buildQueryFV(String query) throws ParseException {
@@ -71,5 +52,12 @@ public class AbstractFeedbackResource {
             builder.append(term).append("^").append(prob).append(" ");
         }
         return builder.toString().trim();
+    }
+
+    FeatureVector interpruneFV(int fbTerms, float fbWeight, FeatureVector fv1, FeatureVector fv2) {
+        FeatureVector fv = FeatureVector.interpolate(fv1, fv2, fbWeight);
+        fv.pruneToSize(fbTerms);
+        fv.scaleToUnitL1Norm();
+        return fv;
     }
 }

@@ -6,6 +6,7 @@ import io.jitter.core.document.DocVector;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.utils.AnalyzerUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.similarities.DefaultSimilarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
@@ -192,6 +193,10 @@ public class FeedbackRelevanceModel {
      */
     public void setDocWeights(double[] docWeights) {
         this.docWeights = docWeights;
+    }
+
+    public FeedbackRelevanceModel() {
+        this(new StandardAnalyzer(), new DefaultSimilarity());
     }
 
     public FeedbackRelevanceModel(Analyzer analyzer) {
