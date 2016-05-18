@@ -85,10 +85,11 @@ public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
             shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), shardsManager.getCollectionStats());
         }
 
+        FeatureVector feedbackFV = null;
         FeatureVector fbVector;
         if (fbMerge.get()) {
             TopDocuments selectResults = trecMicroblogAPIWrapper.search(limit, maxId, sRetweets, sFuture.get(), query);
-            FeatureVector feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+            feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
             fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), shardsFV, feedbackFV);
         } else {
             fbVector = shardsFV;
@@ -110,7 +111,7 @@ public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(null, null, method, totalFbDocs, fbTerms.get(), fbVector.getMap(), 0, null, shardResults, results);
+        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(null, null, method, totalFbDocs, fbTerms.get(), shardsFV.getMap(), feedbackFV != null ? feedbackFV.getMap() : null, fbVector.getMap(), 0, null, shardResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }
