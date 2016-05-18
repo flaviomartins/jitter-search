@@ -3,6 +3,8 @@ package io.jitter.core.shards;
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
+import io.jitter.api.collectionstatistics.CollectionStats;
+import io.jitter.api.collectionstatistics.IndexCollectionStats;
 import io.jitter.api.search.Document;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.selection.SelectionTopDocuments;
@@ -389,6 +391,10 @@ public class ShardsManager implements Managed {
             logger.error(e.getMessage());
         }
         return searcher;
+    }
+
+    public CollectionStats getCollectionStats() {
+        return new IndexCollectionStats(reader, IndexStatuses.StatusField.TEXT.name);
     }
 
     public SelectionTopDocuments search(Optional<Long> maxId, Optional<String> epoch, boolean retweets, boolean future, int limit, boolean topics, String query, long[] epochs, Set<String> selected) throws IOException, ParseException {

@@ -3,6 +3,8 @@ package io.jitter.core.selection;
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
+import io.jitter.api.collectionstatistics.CollectionStats;
+import io.jitter.api.collectionstatistics.IndexCollectionStats;
 import io.jitter.api.search.Document;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.selection.methods.RankS;
@@ -399,6 +401,10 @@ public class SelectionManager implements Managed {
             logger.error(e.getMessage());
         }
         return searcher;
+    }
+
+    public CollectionStats getCollectionStats() {
+        return new IndexCollectionStats(reader, IndexStatuses.StatusField.TEXT.name);
     }
 
     public SelectionTopDocuments search(Optional<Long> maxId, Optional<String> epoch, int limit, boolean retweets, boolean future, String query, long[] epochs) throws IOException, ParseException {
