@@ -30,13 +30,15 @@ public class FeedbackDocumentsResponse extends DocumentsResponse {
         this.docs = docs;
     }
 
-    public FeedbackDocumentsResponse(int fbDocs, int fbTerms, Map<String, Float> fbVector, int numFound, int start, TopDocuments topDocuments) {
+    public FeedbackDocumentsResponse(int fbDocs, int fbTerms, Map<String, Float> fbVector, int start, TopDocuments topDocuments) {
         this.fbDocs = fbDocs;
         this.fbTerms = fbTerms;
         this.fbVector = fbVector;
-        this.numFound = numFound;
         this.start = start;
-        this.docs = topDocuments.scoreDocs;
+        if (topDocuments != null) {
+            this.numFound = topDocuments.totalHits;
+            this.docs = topDocuments.scoreDocs;
+        }
     }
 
     @JsonProperty

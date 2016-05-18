@@ -2,13 +2,14 @@ package io.jitter.api.search;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.google.common.collect.Sets;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.SelectionTopDocuments;
 
 import java.util.List;
 import java.util.Map;
 
-@JsonPropertyOrder({"method", "c_sel", "c_r", "sources", "topics", "fbDocs", "fbTerms", "shardsFV", "feedbackFV", "fbVector", "numFound", "start", "selectDocs", "shardDocs", "docs"})
+@JsonPropertyOrder({"method", "c_sel", "c_r", "sources", "topics", "fbDocs", "fbTerms", "fbFeatures", "fbFeaturesSize", "fbJaccSimilarity", "shardsFV", "feedbackFV", "fbVector", "numFound", "start", "selectDocs", "shardDocs", "docs"})
 public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocumentsResponse {
 
     private int fbDocs;
@@ -17,6 +18,9 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
     private Map<String, Float> feedbackFV;
     private Map<String, Float> fbVector;
     private List<?> docs;
+    private Sets.SetView<String> fbFeatures;
+    private double fbFeaturesSize;
+    private double fbJaccSimilarity;
 
     public SelectionFeedbackDocumentsResponse() {
         // Jackson deserialization
@@ -38,8 +42,10 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
         this.shardsFV = shardsFV;
         this.feedbackFV = feedbackFV;
         this.fbVector = fbVector;
-        this.numFound = topDocuments.totalHits;
-        this.docs = topDocuments.scoreDocs;
+        if (topDocuments != null) {
+            this.numFound = topDocuments.totalHits;
+            this.docs = topDocuments.scoreDocs;
+        }
     }
 
     @JsonProperty
@@ -70,5 +76,32 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
     @JsonProperty
     public List<?> getDocs() {
         return docs;
+    }
+
+    public void setFbFeatures(Sets.SetView<String> fbFeatures) {
+        this.fbFeatures = fbFeatures;
+    }
+
+    @JsonProperty
+    public Sets.SetView<String> getFbFeatures() {
+        return fbFeatures;
+    }
+
+    public void setFbFeaturesSize(double fbFeaturesSize) {
+        this.fbFeaturesSize = fbFeaturesSize;
+    }
+
+    @JsonProperty
+    public double getFbFeaturesSize() {
+        return fbFeaturesSize;
+    }
+
+    public void setFbJaccSimilarity(double fbJaccSimilarity) {
+        this.fbJaccSimilarity = fbJaccSimilarity;
+    }
+
+    @JsonProperty
+    public double getFbJaccSimilarity() {
+        return fbJaccSimilarity;
     }
 }

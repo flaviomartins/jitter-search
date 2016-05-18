@@ -116,9 +116,21 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
 
         FeatureVector feedbackFV = null;
         FeatureVector fbVector;
+        Sets.SetView<String> fbFeatures = null;
+        double fbFeaturesSize = 0;
+        double fbJaccSimilarity = 0;
         if (fbMerge.get()) {
             TopDocuments selectResults = trecMicroblogAPIWrapper.search(limit, maxId, sRetweets, sFuture.get(), query);
             feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+
+            HashSet<String> feedbackFeatures = Sets.newHashSet(feedbackFV.getFeatures());
+            HashSet<String> shardsFeatures = Sets.newHashSet(shardsFV.getFeatures());
+            fbFeatures = Sets.intersection(shardsFeatures, feedbackFeatures);
+            fbFeaturesSize = (double) fbFeatures.size();
+            fbJaccSimilarity = fbFeaturesSize / (shardsFeatures.size() + feedbackFeatures.size() - fbFeaturesSize);
+            logger.warn("FV IntersectionSize: {}", fbFeaturesSize);
+            logger.warn("FV JaccardSimilarity: {}", fbJaccSimilarity);
+
             fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), shardsFV, feedbackFV);
         } else {
             fbVector = shardsFV;
@@ -141,6 +153,12 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
         SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selection.getSources(), selection.getTopics(), method, totalFbDocs, fbTerms.get(), shardsFV.getMap(), feedbackFV != null ? feedbackFV.getMap() : null, fbVector.getMap(), 0, selection.getResults(), shardResults, results);
+        if (fbMerge.get()) {
+            documentsResponse.setFbFeatures(fbFeatures);
+            documentsResponse.setFbFeaturesSize(fbFeaturesSize);
+            documentsResponse.setFbJaccSimilarity(fbJaccSimilarity);
+        }
+
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }
