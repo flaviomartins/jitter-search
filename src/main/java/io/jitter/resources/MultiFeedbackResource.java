@@ -84,6 +84,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
                                           @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                           @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                           @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
+                                          @QueryParam("fbMerge") @DefaultValue("false") BooleanParam fbMerge,
                                           @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException {
@@ -109,15 +110,29 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             selected = topics.get() ? fbTopicsEnabled : fbSourcesEnabled;
         }
 
-        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets.get(), sFuture.get(), fbDocs.get(), topics.get(), query, epochs, selected);
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets.get(), sFuture.get(), limit.get(), topics.get(), query, epochs, selected);
+        shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs.get(), shardResults.scoreDocs.size()));
 
+        FeatureVector shardsFV = null;
         if (shardResults.totalHits > 0) {
-            FeatureVector queryFV = buildQueryFV(query);
-            FeatureVector feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, searchManager.getStopper(), searchManager.getCollectionStats());
-            FeatureVector fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, feedbackFV);
-            query = buildQuery(fbVector);
-            logger.info("Selected: {}\n fbDocs: {} Feature Vector:\n{}", selected != null ? Joiner.on(", ").join(selected) : "all", shardResults.scoreDocs.size(), fbVector.toString());
+            shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), shardsManager.getCollectionStats());
         }
+
+        FeatureVector fbVector;
+        if (fbMerge.get()) {
+            TopDocuments selectResults = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);
+            FeatureVector feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), selectResults, searchManager.getStopper(), searchManager.getCollectionStats());
+            fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), shardsFV, feedbackFV);
+        } else {
+            fbVector = shardsFV;
+        }
+
+        FeatureVector queryFV = buildQueryFV(query);
+        fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, fbVector);
+
+        logger.info("Selected: {}\n fbDocs: {} Feature Vector:\n{}", selected != null ? Joiner.on(", ").join(selected) : "all", shardResults.scoreDocs.size(), fbVector.toString());
+
+        query = buildQuery(fbVector);
 
         TopDocuments results = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);
 
@@ -136,7 +151,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selection.getSources(), selection.getTopics(), method, totalFbDocs, fbTerms.get(), 0, selection.getResults(), shardResults, results);
+        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selection.getSources(), selection.getTopics(), method, totalFbDocs, fbTerms.get(), fbVector.getMap(), 0, selection.getResults(), shardResults, results);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }
