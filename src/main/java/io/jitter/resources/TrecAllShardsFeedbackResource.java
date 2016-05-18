@@ -115,7 +115,7 @@ public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
 
         query = buildQuery(fbVector);
 
-        TopDocuments results = null;// = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
+        TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
 
         long endTime = System.currentTimeMillis();
 
