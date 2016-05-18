@@ -72,11 +72,13 @@ public class FeedbackResource extends AbstractFeedbackResource {
         long startTime = System.currentTimeMillis();
 
         TopDocuments selectResults = searchManager.search(sLimit.get(), sRetweets.get(), sFuture.get(), maxId, epoch, query, epochs);
+        selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
 
+        FeatureVector fbVector = null;
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = buildQueryFV(query);
             FeatureVector feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), selectResults, searchManager.getStopper(), searchManager.getCollectionStats());
-            FeatureVector fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, feedbackFV);
+            fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, feedbackFV);
             query = buildQuery(fbVector);
         }
 
@@ -89,7 +91,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(totalFbDocs, fbTerms.get(), totalHits, 0, results);
+        FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(totalFbDocs, fbTerms.get(), fbVector.getMap(), totalHits, 0, results);
         return new SearchResponse(responseHeader, documentsResponse);
     }
 }

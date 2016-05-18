@@ -5,12 +5,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.jitter.core.search.TopDocuments;
 
 import java.util.List;
+import java.util.Map;
 
-@JsonPropertyOrder({"numFound", "start", "fbDocs", "fbTerms", "docs"})
+@JsonPropertyOrder({"numFound", "start", "fbDocs", "fbTerms", "fbVector", "docs"})
 public class FeedbackDocumentsResponse extends DocumentsResponse {
 
     private int fbDocs;
     private int fbTerms;
+    private Map<String, Float> fbVector;
     private int numFound;
     private int start;
     private List<?> docs;
@@ -19,17 +21,19 @@ public class FeedbackDocumentsResponse extends DocumentsResponse {
         // Jackson deserialization
     }
 
-    public FeedbackDocumentsResponse(int fbDocs, int fbTerms, int numFound, int start, List<Document> docs) {
+    public FeedbackDocumentsResponse(int fbDocs, int fbTerms, Map<String, Float> fbVector, int numFound, int start, List<Document> docs) {
         this.fbDocs = fbDocs;
         this.fbTerms = fbTerms;
+        this.fbVector = fbVector;
         this.numFound = numFound;
         this.start = start;
         this.docs = docs;
     }
 
-    public FeedbackDocumentsResponse(int fbDocs, int fbTerms, int numFound, int start, TopDocuments topDocuments) {
+    public FeedbackDocumentsResponse(int fbDocs, int fbTerms, Map<String, Float> fbVector, int numFound, int start, TopDocuments topDocuments) {
         this.fbDocs = fbDocs;
         this.fbTerms = fbTerms;
+        this.fbVector = fbVector;
         this.numFound = numFound;
         this.start = start;
         this.docs = topDocuments.scoreDocs;
@@ -43,6 +47,11 @@ public class FeedbackDocumentsResponse extends DocumentsResponse {
     @JsonProperty
     public int getFbTerms() {
         return fbTerms;
+    }
+
+    @JsonProperty
+    public Map<String, Float> getFbVector() {
+        return fbVector;
     }
 
     @JsonProperty

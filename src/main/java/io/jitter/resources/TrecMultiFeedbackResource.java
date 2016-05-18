@@ -107,11 +107,11 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
         }
 
         SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets.get(), sFuture.get(), limit.get(), topics.get(), query, epochs, selected);
-        shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs.get(), shardResults.scoreDocs.size()));
+        shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(20, shardResults.scoreDocs.size()));
 
         FeatureVector shardsFV = null;
         if (shardResults.totalHits > 0) {
-            shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), shardsManager.getCollectionStats());
+            shardsFV = buildFeedbackFV(20, fbTerms.get(), shardResults, shardsManager.getStopper(), shardsManager.getCollectionStats());
         }
 
         FeatureVector fbVector;

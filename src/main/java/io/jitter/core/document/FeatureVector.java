@@ -117,6 +117,17 @@ public class FeatureVector {
         return kvpList;
     }
 
+    public Map<String, Float> getMap() {
+        LinkedHashMap<String, Float> map = new LinkedHashMap<>();
+        List<KeyValuePair> kvpList = getOrderedFeatures();
+        Iterator<KeyValuePair> it = kvpList.iterator();
+        while (it.hasNext()) {
+            KeyValuePair pair = it.next();
+            map.put(pair.getKey(), pair.getValue());
+        }
+        return map;
+    }
+
     public String toString(int k) {
         DecimalFormat format = new DecimalFormat("#.#########");
         StringBuilder b = new StringBuilder();

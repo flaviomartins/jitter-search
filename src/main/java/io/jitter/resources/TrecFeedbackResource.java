@@ -51,7 +51,7 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
                                  @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
                                  @QueryParam("maxId") Optional<Long> maxId,
                                  @QueryParam("epoch") Optional<String> epoch,
-                                 @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
+                                 @QueryParam("sLimit") @DefaultValue("1000") IntParam sLimit,
                                  @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
                                  @QueryParam("sFuture") @DefaultValue("false") BooleanParam sFuture,
                                  @QueryParam("method") @DefaultValue("crcsexp") String method,
@@ -68,7 +68,9 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
 
         long startTime = System.currentTimeMillis();
 
-        TopDocuments selectResults = trecMicroblogAPIWrapper.search(limit, maxId, sRetweets, sFuture.get(), query);
+        TopDocuments selectResults = trecMicroblogAPIWrapper.search(sLimit, maxId, sRetweets, sFuture.get(), query);
+        selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
+
 
 //        if (qid.isPresent()) {
 //            QrelsReranker qrelsReranker = new QrelsReranker(selectResults.scoreDocs, qrels, qid.get().replaceFirst("^MB0*", ""));
@@ -79,10 +81,11 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
 //        langFilter.setResults(selectResults.scoreDocs);
 //        selectResults.scoreDocs = langFilter.getFiltered();
 
+        FeatureVector fbVector = null;
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = buildQueryFV(query);
             FeatureVector feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
-            FeatureVector fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, feedbackFV);
+            fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, feedbackFV);
             query = buildQuery(fbVector);
         }
 
@@ -95,7 +98,7 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(totalFbDocs, fbTerms.get(), totalHits, 0, results);
+        FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(totalFbDocs, fbTerms.get(), fbVector.getMap(), totalHits, 0, results);
         return new SearchResponse(responseHeader, documentsResponse);
     }
 }
