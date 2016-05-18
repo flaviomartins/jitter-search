@@ -15,7 +15,7 @@ public class AnalyzerUtils {
         List<String> result = new LinkedList<>();
         try {
             TokenStream stream;
-            stream = analyzer.tokenStream("text", new StringReader(text));
+            stream = analyzer.tokenStream(null, new StringReader(text));
 
             CharTermAttribute charTermAttribute = stream.addAttribute(CharTermAttribute.class);
             stream.reset();
