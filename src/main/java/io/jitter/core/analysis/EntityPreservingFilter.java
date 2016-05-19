@@ -244,6 +244,7 @@ public final class EntityPreservingFilter extends TokenFilter {
             case '…':
             case '¬':
             case '·':
+            case '“':
                 return true;
             case '.':
                 // A complex looking way of saying that a period isn't a delimiter if the
