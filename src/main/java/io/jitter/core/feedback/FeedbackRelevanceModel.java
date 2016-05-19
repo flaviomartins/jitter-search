@@ -546,7 +546,7 @@ public class FeedbackRelevanceModel {
             }
 
             // Don Metzler's idf fix
-            float idf = similarity.idf(collectionStats.docFreq(term), numTerms);
+            float idf = similarity.idf(collectionStats.totalTermFreq(term), collectionStats.getSumTotalTermFreq());
             fbWeight *= idf;
 
             f.addFeatureWeight(term, fbWeight);
