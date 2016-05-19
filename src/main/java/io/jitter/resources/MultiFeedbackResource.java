@@ -137,13 +137,13 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
 
         TopDocuments results = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);
 
-        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
-        langFilter.setResults(results.scoreDocs);
-        results.scoreDocs = langFilter.getFiltered();
-
-        MaxTFFilter maxTFFilter = new MaxTFFilter(3);
-        maxTFFilter.setResults(results.scoreDocs);
-        results.scoreDocs = maxTFFilter.getFiltered();
+//        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
+//        langFilter.setResults(results.scoreDocs);
+//        results.scoreDocs = langFilter.getFiltered();
+//
+//        MaxTFFilter maxTFFilter = new MaxTFFilter(3);
+//        maxTFFilter.setResults(results.scoreDocs);
+//        results.scoreDocs = maxTFFilter.getFiltered();
 
         long endTime = System.currentTimeMillis();
 
