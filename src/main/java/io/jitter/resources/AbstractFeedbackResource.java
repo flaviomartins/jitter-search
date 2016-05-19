@@ -20,7 +20,7 @@ import java.util.*;
 public class AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(AbstractFeedbackResource.class);
 
-    private static final Analyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
+    private static final Analyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, false);
 
     FeatureVector buildFeedbackFV(int fbDocs, int fbTerms, TopDocuments results, Stopper stopper, CollectionStats collectionStats) throws IOException {
         TweetFeedbackRelevanceModel fb = new TweetFeedbackRelevanceModel(stopper);
@@ -49,7 +49,7 @@ public class AbstractFeedbackResource {
         while (terms.hasNext()) {
             String term = terms.next();
             double prob = fbVector.getFeatureWeight(term);
-            builder.append(term).append("^").append(prob).append(" ");
+            builder.append(term).append("^").append(Math.abs(prob)).append(" ");
         }
         return builder.toString().trim();
     }

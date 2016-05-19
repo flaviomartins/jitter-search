@@ -1,6 +1,7 @@
 package io.jitter.core.feedback;
 
 import com.google.common.base.CharMatcher;
+import com.twitter.Regex;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
@@ -13,11 +14,11 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
         super();
         Analyzer analyzer;
         if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, false);
         } else {
             setStopWords(stopper.asSet());
             CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true, false, true);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true, false, false);
         }
         setAnalyzer(analyzer);
         setMinWordLen(3);
@@ -30,9 +31,19 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
         if (super.isNoiseWord(term)) {
             return true;
         }
+        // no mentions
         if (term.startsWith("@")) {
             return true;
         }
+        // no hashtags
+        if (term.startsWith("#")) {
+            return false;
+        }
+        // blocks URLs (Regex.VALID_URL is not needed)
+        if (!CharMatcher.javaLetterOrDigit().matchesAllOf(term)) {
+            return true;
+        }
+        // allow only ascii chars
         return (!CharMatcher.ascii().matchesAllOf(term));
     }
 
