@@ -1,5 +1,3 @@
-package io.jitter.core.analysis;
-
 /**
  * Twitter Tools
  *
@@ -16,14 +14,17 @@ package io.jitter.core.analysis;
  * limitations under the License.
  */
 
-import com.twitter.Regex;
+package io.jitter.core.analysis;
+
+import java.io.IOException;
+import java.util.Arrays;
+
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.KeywordAttribute;
 
-import java.io.IOException;
-import java.util.Arrays;
+import com.twitter.Regex;
 
 public final class EntityPreservingFilter extends TokenFilter {
 
@@ -67,15 +68,12 @@ public final class EntityPreservingFilter extends TokenFilter {
             tailBufferSaved = null;
         }
 
-        // Check for additional whitespace chars
-        for (int i = 0; i < termAtt.length(); i++) {
-            if (isWhiteSpace(i)) {
-                // Remove the tail of the string from the buffer and save it
-                // for the next iteration
-                tailBuffer = Arrays.copyOfRange(buffer, i + 1, termAtt.length());
-                termAtt.setLength(i);
-                break;
-            }
+        int k = termAtt.length() - 1;
+        if (k > 0 && isNonentitySuffix(k)) {
+            // Remove the tail of the string from the buffer and save it
+            // for the next iteration
+            tailBuffer = Arrays.copyOfRange(buffer, k, termAtt.length());
+            termAtt.setLength(k);
         }
 
         int entityType = isEntity(termAtt.toString());
@@ -180,15 +178,27 @@ public final class EntityPreservingFilter extends TokenFilter {
      * Check if the given string is a valid entity (mention, hashtag or URL)
      */
     public int isEntity(String term) {
-//        if (Regex.VALID_URL.matcher(term).matches())
-//            return VALID_URL;
-//        else
-        if (Regex.VALID_MENTION_OR_LIST.matcher(term).matches())
+        if (Regex.VALID_URL.matcher(term).matches())
+            return VALID_URL;
+        else if (Regex.VALID_MENTION_OR_LIST.matcher(term).matches())
             return VALID_MENTION;
         else if (Regex.VALID_HASHTAG.matcher(term).matches())
             return VALID_HASHTAG;
         else
             return INVALID_ENTITY;
+    }
+
+    /**
+    * Check if the character at position i in the buffer is a delimiter which
+    * wouldn't be used as suffix of an entity
+    */
+    public boolean isNonentitySuffix(int i) {
+        final char[] buffer = termAtt.buffer();
+        switch (buffer[i]) {
+            case '…':
+                return true;
+        }
+        return false;
     }
 
     /**
@@ -258,22 +268,6 @@ public final class EntityPreservingFilter extends TokenFilter {
             case '#':
             case '\uFF03': // Unicode #
             case '_':
-                return true;
-        }
-        return false;
-    }
-
-  /**
-   * Check if the character at position i in the buffer is whitespace,
-   * which Character.isWhitespace does not define (i.e: non-breaking spaces)
-   */
-    public boolean isWhiteSpace(int i) {
-        final char[] buffer = termAtt.buffer();
-        switch (buffer[i]) {
-            case '\u00A0': // Unicode nbsp
-            case '\u2007':
-            case '\u202f':
-            case '…':
                 return true;
         }
         return false;

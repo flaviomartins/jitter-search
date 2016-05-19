@@ -1,17 +1,35 @@
+/**
+ * Twitter Tools
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.jitter.core.analysis;
 
+import java.io.Reader;
+
+import com.google.common.base.CharMatcher;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.core.StopFilter;
-import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.en.EnglishPossessiveFilter;
 import org.apache.lucene.analysis.en.PorterStemFilter;
 import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.analysis.util.CharTokenizer;
 import org.apache.lucene.analysis.util.StopwordAnalyzerBase;
 import org.apache.lucene.util.Version;
 
-import java.io.Reader;
 
 public final class StopperTweetAnalyzer extends StopwordAnalyzerBase {
 
@@ -64,22 +82,27 @@ public final class StopperTweetAnalyzer extends StopwordAnalyzerBase {
 
     @Override
     protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
-        Tokenizer source = new WhitespaceTokenizer(reader);
-        TokenStream tok;
+        Tokenizer source = new CharTokenizer(matchVersion, reader) {
+            @Override
+            protected boolean isTokenChar(int c) {
+                return !CharMatcher.WHITESPACE.matches((char)c);
+            }
+        };
+        TokenStream filter;
         if (possessiveFiltering) {
-            tok = new EnglishPossessiveFilter(matchVersion, source);
-            tok = new EntityPreservingFilter(tok, preserveCaps);
+            filter = new EnglishPossessiveFilter(matchVersion, source);
+            filter = new EntityPreservingFilter(filter, preserveCaps);
         } else {
-            tok = new EntityPreservingFilter(source, preserveCaps);
+            filter = new EntityPreservingFilter(source, preserveCaps);
         }
 
-        tok = new StopFilter(tok, stopwords);
+        filter = new StopFilter(filter, stopwords);
 
         if (stemming) {
             // Porter stemmer ignores words which are marked as keywords
-            tok = new PorterStemFilter(tok);
+            filter = new PorterStemFilter(filter);
         }
-        return new TokenStreamComponents(source, tok);
+        return new TokenStreamComponents(source, filter);
     }
 
 }
