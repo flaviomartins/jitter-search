@@ -539,12 +539,15 @@ public class FeedbackRelevanceModel {
         for (String term : vocab) {
             float fbWeight = 0.0f;
             for (int i = 0; i < docVectors.length; i++) {
-                fbWeight += (docVectors[i].getTermFreq(term) / norms[i]) * scores[i];
+                int termFreq = docVectors[i].getTermFreq(term);
+                if (termFreq > 0) {
+                    fbWeight += (termFreq / norms[i]) * scores[i];
+                }
             }
 
             // Don Metzler's idf fix
             float idf = similarity.idf(collectionStats.docFreq(term), numTerms);
-            fbWeight *= Math.log(idf);
+            fbWeight *= idf;
 
             f.addFeatureWeight(term, fbWeight);
         }
