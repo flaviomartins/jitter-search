@@ -40,9 +40,8 @@ public class SelectionManager implements Managed {
 
     public static final int MAX_RESULTS = 10000;
 
-    private final LMDirichletSimilarity SIMILARITY;
     private final Analyzer analyzer;
-    private final QueryParser QUERY_PARSER;
+    private final LMDirichletSimilarity similarity;
 
     private DirectoryReader reader;
     private IndexSearcher searcher;
@@ -79,7 +78,7 @@ public class SelectionManager implements Managed {
         }
         this.topics = treeMap;
 
-        SIMILARITY = new LMDirichletSimilarity(mu);
+        similarity = new LMDirichletSimilarity(mu);
 
         if (!stopwords.isEmpty()) {
             stopper = new Stopper(stopwords);
@@ -90,7 +89,6 @@ public class SelectionManager implements Managed {
             CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
             analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true, false, true);
         }
-        QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
     }
 
     @Override
@@ -278,7 +276,7 @@ public class SelectionManager implements Managed {
         float[] scores;
 
         IndexSearcher indexSearcher = getIndexSearcher();
-        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
+        Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
 
         final TopDocsCollector topCollector = TopScoreDocCollector.create(len, true);
         indexSearcher.search(q, filter, topCollector);
@@ -367,7 +365,7 @@ public class SelectionManager implements Managed {
         long startTime = System.currentTimeMillis();
         File indexPath = new File(this.indexPath);
         Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
         try (IndexWriter writer = new IndexWriter(dir, config)) {
@@ -387,14 +385,14 @@ public class SelectionManager implements Managed {
             if (reader == null) {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
                 searcher = new IndexSearcher(reader);
-                searcher.setSimilarity(SIMILARITY);
+                searcher.setSimilarity(similarity);
             } else if (live && !reader.isCurrent()) {
                 DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
                 if (newReader != null) {
                     reader.close();
                     reader = newReader;
                     searcher = new IndexSearcher(reader);
-                    searcher.setSimilarity(SIMILARITY);
+                    searcher.setSimilarity(similarity);
                 }
             }
         } catch (IndexNotFoundException e) {

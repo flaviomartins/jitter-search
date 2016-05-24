@@ -19,7 +19,6 @@ public class ShardRanker {
     private static final Logger logger = LoggerFactory.getLogger(ShardRanker.class);
 
     private final Analyzer analyzer;
-    private final QueryParser QUERY_PARSER;
 
     // array of FeatureStore pointers
     // stores[0] is the whole collection store; stores[1] onwards is each shard; length is numShards+1
@@ -44,8 +43,7 @@ public class ShardRanker {
         this._shardIds = _shardIds;
         this.indexPath = indexPath;
         this.analyzer = analyzer;
-        QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
-        
+
         this._n_c = _n_c;
         _numShards = _shardIds.length;
 
@@ -94,7 +92,7 @@ public class ShardRanker {
     private List<String> _getStems(String query) {
         List<String> stems = Lists.newArrayList();
         try {
-            Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
+            Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
             Set<Term> queryTerms = new TreeSet<>();
             q.extractTerms(queryTerms);
             for (Term term : queryTerms) {
@@ -103,8 +101,6 @@ public class ShardRanker {
         } catch (ParseException e) {
             stems = AnalyzerUtils.analyze(analyzer, query);
         }
-        // remove empty stems
-        stems.removeAll(Arrays.asList("", null));
         return stems;
     }
 

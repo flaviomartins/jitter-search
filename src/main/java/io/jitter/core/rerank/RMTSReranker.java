@@ -34,13 +34,13 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 public class RMTSReranker extends Reranker {
+
     private static final Logger logger = LoggerFactory.getLogger(RMTSReranker.class);
 
     private static final double DAY = 60.0 * 60.0 * 24.0;
 
-    private static final Analyzer analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, true);
-    private static final TFIDFSimilarity similarity = new DefaultSimilarity();
-    private static final QueryParser QUERY_PARSER = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
+    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, false);
+    private static final TFIDFSimilarity SIMILARITY = new DefaultSimilarity();
 
     private final String rankerModel;
     private final String query;
@@ -66,7 +66,7 @@ public class RMTSReranker extends Reranker {
         Query q;
         Set<String> qTerms = new HashSet<>();
         try {
-            q = QUERY_PARSER.parse(query.replaceAll(",", ""));
+            q = new QueryParser(IndexStatuses.StatusField.TEXT.name, ANALYZER).parse(query);
             Set<Term> queryTerms = new TreeSet<>();
             q.extractTerms(queryTerms);
             for (Term term : queryTerms) {
@@ -137,7 +137,7 @@ public class RMTSReranker extends Reranker {
             // if the term vectors are unavailable generate it here
             if (docVector == null) {
                 DocVector aDocVector = new DocVector();
-                List<String> docTerms = AnalyzerUtils.analyze(analyzer, shardResult.getText());
+                List<String> docTerms = AnalyzerUtils.analyze(ANALYZER, shardResult.getText());
 
                 for (String t : docTerms) {
                     if (!t.isEmpty()) {
@@ -182,7 +182,7 @@ public class RMTSReranker extends Reranker {
             // if the term vectors are unavailable generate it here
             if (docVector == null) {
                 DocVector aDocVector = new DocVector();
-                List<String> docTerms = AnalyzerUtils.analyze(analyzer, result.getText());
+                List<String> docTerms = AnalyzerUtils.analyze(ANALYZER, result.getText());
 
                 for (String t : docTerms) {
                     if (!t.isEmpty()) {
@@ -204,7 +204,7 @@ public class RMTSReranker extends Reranker {
                     double tfValue = tf.getValue();
                     int docFreq = collectionStats.docFreq(term);
                     if (tfValue > 0) {
-                        idf += similarity.idf(docFreq, numDocs);
+                        idf += SIMILARITY.idf(docFreq, numDocs);
                         bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, docFreq, numDocs);
                         coord += 1;
                         tfMax = Math.max(tfMax, tfValue);

@@ -9,6 +9,7 @@ import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
+import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Stopper;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -20,6 +21,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.Version;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nullable;
@@ -32,12 +34,10 @@ import java.util.*;
 public class TrecMicroblogAPIWrapper implements Managed {
     private static final Logger LOG = Logger.getLogger(TrecMicroblogAPIWrapper.class);
 
-    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
-    private static final QueryParser QUERY_PARSER =
-            new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
-
     private static final int MAX_NUM_RESULTS = 10000;
     private static final int DEFAULT_NUM_RESULTS = 3000;
+
+    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, false);
 
     private final String host;
     private final int port;
@@ -107,8 +107,6 @@ public class TrecMicroblogAPIWrapper implements Managed {
             IOException, ClassNotFoundException, ParseException {
 
         int numResultsToFetch = Math.min(MAX_NUM_RESULTS, Math.max(DEFAULT_NUM_RESULTS, numResults));
-        
-        query = query.replaceAll(",", "");
 
         String cacheFileName = DigestUtils.shaHex(host + port + query + maxId + numResultsToFetch);
         File f = new File(cacheDir + cacheFileName);
@@ -167,7 +165,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
         int totalDF = 0;
         if (collectionStats != null) {
-            Query q = QUERY_PARSER.parse(query);
+            Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, ANALYZER).parse(query);
             Set<Term> queryTerms = new TreeSet<>();
             q.extractTerms(queryTerms);
             for (Term term : queryTerms) {

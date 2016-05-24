@@ -2,6 +2,7 @@ package io.jitter.core.stream;
 
 import cc.twittertools.index.IndexStatuses;
 import io.dropwizard.lifecycle.Managed;
+import io.jitter.core.analysis.StopperTweetAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.FieldInfo;
@@ -24,7 +25,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
 
     private static final Logger logger = LoggerFactory.getLogger(LiveStreamIndexer.class);
 
-    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
+    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, false);
 
     private final AtomicLong counter;
     private final String indexPath;
@@ -41,7 +42,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         this.stringField = stringField;
 
         Directory dir = FSDirectory.open(new File(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         config.setMergePolicy(new TieredMergePolicy());
         config.setRAMBufferSizeMB(48);

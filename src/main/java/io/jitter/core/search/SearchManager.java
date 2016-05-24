@@ -4,6 +4,7 @@ import cc.twittertools.index.IndexStatuses;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
+import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.utils.SearchUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
@@ -37,10 +38,8 @@ public class SearchManager implements Managed {
     public static final int MAX_RESULTS = 10000;
     public static final int MAX_TERMS_RESULTS = 1000;
 
-    private static final Analyzer analyzer = IndexStatuses.ANALYZER;
-    private static final QueryParser QUERY_PARSER =
-            new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer);
-    public static final Similarity SIMILARITY = new LMDirichletSimilarity(2500);
+    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, false);
+    private static final Similarity SIMILARITY = new LMDirichletSimilarity(2500);
 
     private final String indexPath;
     private final String databasePath;
@@ -94,7 +93,7 @@ public class SearchManager implements Managed {
         float[] scores;
 
         IndexSearcher indexSearcher = getIndexSearcher();
-        Query q = QUERY_PARSER.parse(query.replaceAll(",", ""));
+        Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, ANALYZER).parse(query);
 
         final TopDocsCollector topCollector = TopScoreDocCollector.create(len, true);
         indexSearcher.search(q, filter, topCollector);
@@ -153,7 +152,7 @@ public class SearchManager implements Managed {
         logger.info("Indexing started!");
         File indexPath = new File(this.indexPath);
         Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();
@@ -243,7 +242,7 @@ public class SearchManager implements Managed {
         long startTime = System.currentTimeMillis();
         File indexPath = new File(this.indexPath);
         Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, IndexStatuses.ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         
         try (IndexWriter writer = new IndexWriter(dir, config)) {

@@ -1,7 +1,6 @@
 package io.jitter.core.feedback;
 
 import com.google.common.base.CharMatcher;
-import com.twitter.Regex;
 import io.jitter.core.analysis.StopperTweetAnalyzer;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
