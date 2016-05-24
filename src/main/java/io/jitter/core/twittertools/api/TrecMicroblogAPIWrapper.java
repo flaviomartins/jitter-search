@@ -37,7 +37,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
     private static final int MAX_NUM_RESULTS = 10000;
     private static final int DEFAULT_NUM_RESULTS = 3000;
 
-    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, false);
+    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true);
 
     private final String host;
     private final int port;

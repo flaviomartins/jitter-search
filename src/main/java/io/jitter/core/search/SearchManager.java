@@ -38,7 +38,7 @@ public class SearchManager implements Managed {
     public static final int MAX_RESULTS = 10000;
     public static final int MAX_TERMS_RESULTS = 1000;
 
-    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, false);
+    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true);
     private static final Similarity SIMILARITY = new LMDirichletSimilarity(2500);
 
     private final String indexPath;

@@ -13,11 +13,11 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
         super();
         Analyzer analyzer;
         if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, false);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true);
         } else {
             setStopWords(stopper.asSet());
             CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true, false, false);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true);
         }
         setAnalyzer(analyzer);
         setMinWordLen(3);

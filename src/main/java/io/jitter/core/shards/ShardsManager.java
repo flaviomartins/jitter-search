@@ -80,10 +80,10 @@ public class ShardsManager implements Managed {
             stopper = new Stopper(stopwords);
         }
         if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true, false, true);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true);
         } else {
             CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true, false, true);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true);
         }
     }
 

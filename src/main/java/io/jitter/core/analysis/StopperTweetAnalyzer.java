@@ -42,26 +42,12 @@ public final class StopperTweetAnalyzer extends StopwordAnalyzerBase {
     private final Version matchVersion;
     private final boolean stemming;
     private final boolean preserveCaps;
-    private final boolean possessiveFiltering;
-
-    public StopperTweetAnalyzer(Version matchVersion, CharArraySet stopWords, boolean stemming, boolean preserveCaps, boolean possessiveFiltering) {
-        super(stopWords);
-        this.matchVersion = matchVersion;
-        this.stemming = stemming;
-        this.preserveCaps = preserveCaps;
-        this.possessiveFiltering = possessiveFiltering;
-    }
 
     public StopperTweetAnalyzer(Version matchVersion, CharArraySet stopWords, boolean stemming, boolean preserveCaps) {
         super(stopWords);
         this.matchVersion = matchVersion;
         this.stemming = stemming;
         this.preserveCaps = preserveCaps;
-        this.possessiveFiltering = false;
-    }
-
-    public StopperTweetAnalyzer(Version matchVersion, boolean stemming, boolean preserveCaps, boolean possessiveFiltering) {
-        this(matchVersion, STOP_WORDS_SET, stemming, preserveCaps, possessiveFiltering);
     }
 
     public StopperTweetAnalyzer(Version matchVersion, CharArraySet stopWords, boolean stemming) {
@@ -88,14 +74,8 @@ public final class StopperTweetAnalyzer extends StopwordAnalyzerBase {
                 return !CharMatcher.WHITESPACE.matches((char)c);
             }
         };
-        TokenStream filter;
-        if (possessiveFiltering) {
-            filter = new EnglishPossessiveFilter(matchVersion, source);
-            filter = new EntityPreservingFilter(filter, preserveCaps);
-        } else {
-            filter = new EntityPreservingFilter(source, preserveCaps);
-        }
-
+        TokenStream filter = new EnglishPossessiveFilter(matchVersion, source);
+        filter = new EntityPreservingFilter(filter, preserveCaps);
         filter = new StopFilter(filter, stopwords);
 
         if (stemming) {

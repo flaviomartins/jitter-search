@@ -25,7 +25,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
 
     private static final Logger logger = LoggerFactory.getLogger(LiveStreamIndexer.class);
 
-    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true, false, false);
+    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true);
 
     private final AtomicLong counter;
     private final String indexPath;
