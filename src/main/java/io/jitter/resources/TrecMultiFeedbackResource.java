@@ -137,7 +137,13 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
         }
 
         FeatureVector queryFV = buildQueryFV(query);
-        fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, fbVector);
+        if (shardResults.scoreDocs.size() > 0) {
+            fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, fbVector);
+        } else {
+            // Not terms from shards
+            fbVector = queryFV;
+        }
+
 
         logger.info("Selected: {}\n fbDocs: {} Feature Vector:\n{}", selected != null ? Joiner.on(", ").join(selected) : "all", shardResults.scoreDocs.size(), fbVector.toString());
 
@@ -152,7 +158,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selection.getSources(), selection.getTopics(), method, totalFbDocs, fbTerms.get(), shardsFV.getMap(), feedbackFV != null ? feedbackFV.getMap() : null, fbVector.getMap(), 0, selection.getResults(), shardResults, results);
+        SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selection.getSources(), selection.getTopics(), method, totalFbDocs, fbTerms.get(), shardsFV != null ? shardsFV.getMap() : null, feedbackFV != null ? feedbackFV.getMap() : null, fbVector.getMap(), 0, selection.getResults(), shardResults, results);
         if (fbMerge.get()) {
             documentsResponse.setFbFeatures(fbFeatures);
             documentsResponse.setFbFeaturesSize(fbFeaturesSize);

@@ -15,7 +15,6 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
         if (stopper == null || stopper.asSet().size() == 0) {
             analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true);
         } else {
-            setStopWords(stopper.asSet());
             CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
             analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true);
         }
@@ -34,7 +33,7 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
         if (term.startsWith("@")) {
             return true;
         }
-        // no hashtags
+        // allow hashtags
         if (term.startsWith("#")) {
             return false;
         }
