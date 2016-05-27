@@ -496,7 +496,6 @@ public class FeedbackRelevanceModel {
     }
 
     public FeatureVector like(List<Document> relDocs) throws IOException {
-        int numTerms = collectionStats.numTerms();
         int numDocVectors = relDocs.size();
         FeatureVector f = new FeatureVector();
         Set<String> vocab = new HashSet<>();

@@ -7,7 +7,6 @@ import io.jitter.api.ResponseHeader;
 import io.jitter.api.collectionstatistics.TermsResponse;
 import io.jitter.api.collectionstatistics.TopTermsResponse;
 import io.jitter.core.selection.SelectionManager;
-import io.jitter.core.shards.ShardsManager;
 import org.apache.lucene.misc.TermStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
