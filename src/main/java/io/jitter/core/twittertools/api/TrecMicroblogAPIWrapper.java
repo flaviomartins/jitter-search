@@ -26,9 +26,6 @@ import org.apache.thrift.TException;
 
 import javax.annotation.Nullable;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.sql.*;
 import java.util.*;
 
 public class TrecMicroblogAPIWrapper implements Managed {
@@ -44,12 +41,11 @@ public class TrecMicroblogAPIWrapper implements Managed {
     private final TrecSearchThriftClient client;
     private final String cacheDir;
     private final boolean useCache;
-    private final String collectDb;
     private Stopper stopper;
     private CollectionStats collectionStats;
 
     public TrecMicroblogAPIWrapper(String host, int port, @Nullable String group,
-                                   @Nullable String token, @Nullable String cacheDir, boolean useCache, @Nullable String collectDb) {
+                                   @Nullable String token, @Nullable String cacheDir, boolean useCache) {
         Preconditions.checkNotNull(host);
         Preconditions.checkArgument(port > 0);
         this.host = host;
@@ -57,14 +53,10 @@ public class TrecMicroblogAPIWrapper implements Managed {
         this.client = new TrecSearchThriftClient(host, port, group, token);
         this.cacheDir = cacheDir;
         this.useCache = useCache;
-        this.collectDb = collectDb;
-        if (collectDb != null && !Files.exists(Paths.get(collectDb))) {
-            createDatabase();
-        }
     }
 
-    public TrecMicroblogAPIWrapper(String host, int port, String group, String token, String cacheDir, boolean useCache, String collectDb, String stopwords, @Nullable String stats, @Nullable String statsDb) {
-        this(host, port, group, token, cacheDir, useCache, collectDb);
+    public TrecMicroblogAPIWrapper(String host, int port, String group, String token, String cacheDir, boolean useCache, String stopwords, @Nullable String stats, @Nullable String statsDb) {
+        this(host, port, group, token, cacheDir, useCache);
         stopper = new Stopper(stopwords);
         if (stats != null && statsDb != null) {
             collectionStats = new TrecCollectionStats(stats, statsDb);
@@ -111,11 +103,9 @@ public class TrecMicroblogAPIWrapper implements Managed {
         String cacheFileName = DigestUtils.shaHex(host + port + query + maxId + numResultsToFetch);
         File f = new File(cacheDir + cacheFileName);
         List<TResult> results;
-        boolean fromCache = false;
 
         if (useCache) {
             if (f.exists()) {
-                fromCache = true;
                 LOG.info("Reading " + f.getPath() + ".");
                 ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
                 results = (List<TResult>) ois.readObject();
@@ -135,10 +125,6 @@ public class TrecMicroblogAPIWrapper implements Managed {
         } else {
             results = client.search(query, maxId, numResults);
         }
-
-        // only need to add results to database when fetching from server for the first time
-        if (collectDb != null && !fromCache)
-            addResultsToDatabase(results);
 
         // Convert to custom class
         Iterator<TResult> resultIt = results.iterator();
@@ -182,90 +168,6 @@ public class TrecMicroblogAPIWrapper implements Managed {
         
         int totalHits = totalDF > 0 ? totalDF : documents.size();
         return new TopDocuments(totalHits, documents);
-    }
-
-    private void createDatabase() {
-        Connection connection = null;
-        try {
-            // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:" + collectDb);
-            Statement statement = connection.createStatement();
-            statement.setQueryTimeout(30);  // set timeout to 30 sec.
-
-            statement.executeUpdate("create table tweets (" +
-                    "id integer, " +
-                    "screen_name string, " +
-                    "epoch integer, " +
-                    "text string, " +
-                    "followers_count integer, " +
-                    "statuses_count integer, " +
-                    "lang string, " +
-                    "in_reply_to_status_id integer, " +
-                    "in_reply_to_user_id integer, " +
-                    "retweeted_status_id integer, " +
-                    "retweeted_user_id integer, " +
-                    "retweeted_count integer, " +
-                    "PRIMARY KEY (id))");
-        } catch (SQLException e) {
-            // if the error message is "out of memory",
-            // it probably means no database file is found
-            LOG.error(e.getMessage());
-        } finally {
-            try {
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException e) {
-                // connection close failed.
-                LOG.error(e);
-            }
-        }
-    }
-
-    private void addResultsToDatabase(List<TResult> results) {
-        Connection connection = null;
-        try {
-            // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:" + collectDb);
-            connection.setAutoCommit(false);
-
-            for (TResult result : results) {
-                try {
-                    PreparedStatement statement = connection.prepareStatement(
-                            "INSERT INTO tweets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-                    statement.setLong(1, result.id);
-                    statement.setString(2, result.screen_name);
-                    statement.setLong(3, result.epoch);
-                    statement.setString(4, result.text);
-                    statement.setLong(5, result.followers_count);
-                    statement.setLong(6, result.statuses_count);
-                    statement.setString(7, result.lang);
-                    statement.setLong(8, result.in_reply_to_status_id);
-                    statement.setLong(9, result.in_reply_to_user_id);
-                    statement.setLong(10, result.retweeted_status_id);
-                    statement.setLong(11, result.retweeted_user_id);
-                    statement.setLong(12, result.retweeted_count);
-                    statement.executeUpdate();
-                } catch (SQLException e) {
-                    if (!e.getMessage().startsWith("[SQLITE_CONSTRAINT]"))
-                        LOG.error(e.getMessage());
-                }
-            }
-            connection.commit();
-            connection.setAutoCommit(true);
-        } catch (SQLException e) {
-            // if the error message is "out of memory",
-            // it probably means no database file is found
-            LOG.error(e.getMessage());
-        } finally {
-            try {
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException e) {
-                // connection close failed.
-                LOG.error(e);
-            }
-        }
-
     }
 
     public TopDocuments search(IntParam limit, Optional<Long> maxId, BooleanParam sRetweets, boolean sFuture, String query) throws ClassNotFoundException, TException, ParseException, IOException {
