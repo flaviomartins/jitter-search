@@ -127,6 +127,12 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final ShardsStatsResource shardsStatsResource = new ShardsStatsResource(shardsManager);
         environment.jersey().register(shardsStatsResource);
 
+        final SelectionTopTermsResource selectionTopTermsResource = new SelectionTopTermsResource(selectionManager);
+        environment.jersey().register(selectionTopTermsResource);
+
+        final ShardsTopTermsResource shardsTopTermsResource = new ShardsTopTermsResource(shardsManager);
+        environment.jersey().register(shardsTopTermsResource);
+
         final SelectionResource selectionResource = new SelectionResource(selectionManager);
         environment.jersey().register(selectionResource);
 

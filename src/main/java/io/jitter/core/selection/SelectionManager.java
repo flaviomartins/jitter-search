@@ -19,6 +19,8 @@ import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.index.*;
+import org.apache.lucene.misc.HighFreqTerms;
+import org.apache.lucene.misc.TermStats;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
@@ -39,6 +41,7 @@ public class SelectionManager implements Managed {
     private static final Logger logger = LoggerFactory.getLogger(SelectionManager.class);
 
     public static final int MAX_RESULTS = 10000;
+    public static final int MAX_TERMS_RESULTS = 1000;
 
     private final Analyzer analyzer;
     private final LMDirichletSimilarity similarity;
@@ -378,6 +381,11 @@ public class SelectionManager implements Managed {
             logger.info(String.format(Locale.ENGLISH, "Merging finished! Total time: %4dms", (endTime - startTime)));
 
         }
+    }
+
+    public TermStats[] getHighFreqTerms(int n) throws Exception {
+        int numResults = n > MAX_TERMS_RESULTS ? MAX_TERMS_RESULTS : n;
+        return HighFreqTerms.getHighFreqTerms(reader, numResults, IndexStatuses.StatusField.TEXT.name, new HighFreqTerms.DocFreqComparator());
     }
 
     private IndexSearcher getIndexSearcher() throws IOException {

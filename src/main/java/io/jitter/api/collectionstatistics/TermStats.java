@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TermStats {
 
-    private String termText;
+    private String term;
     private int docFreq;
     private long termFreq;
 
@@ -12,15 +12,15 @@ public class TermStats {
         // Jackson deserialization
     }
 
-    public TermStats(String termText, int docFreq, long totalTermFreq) {
-        this.termText = termText;
+    public TermStats(String term, int docFreq, long totalTermFreq) {
+        this.term = term;
         this.docFreq = docFreq;
         this.termFreq = totalTermFreq;
     }
 
     @JsonProperty
-    public String getTermText() {
-        return termText;
+    public String getTerm() {
+        return term;
     }
 
     @JsonProperty
