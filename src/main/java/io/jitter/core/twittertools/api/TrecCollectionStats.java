@@ -32,6 +32,7 @@ public class TrecCollectionStats implements CollectionStats {
     public TrecCollectionStats(String pathToStatsFile, String statsDb) {
         File statsStorePath = new File(statsDb + "/" + CORPUS_DBENV);
         if (!statsStorePath.isDirectory()) {
+            LOG.info("creating stats database...");
             corpusStore = new FeatureStore(statsDb + "/" + CORPUS_DBENV, false);
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(new File(pathToStatsFile)))));
