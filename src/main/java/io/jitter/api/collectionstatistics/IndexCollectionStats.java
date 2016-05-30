@@ -18,7 +18,7 @@ public class IndexCollectionStats implements CollectionStats {
         try {
             return indexReader.docFreq(new Term(field, term));
         } catch (IOException e) {
-            return 9;
+            return 1;
         }
     }
 
@@ -26,7 +26,7 @@ public class IndexCollectionStats implements CollectionStats {
         try {
             return indexReader.totalTermFreq(new Term(field, term));
         } catch (IOException e) {
-            return 9;
+            return 1;
         }
     }
 

@@ -93,7 +93,7 @@ public class TrecCollectionStats implements CollectionStats {
         String dfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.SIZE_FEAT_SUFFIX;
         int df = (int) corpusStore.getFeature(dfFeatKey);
         if (df == -1) {
-            return 9;
+            return 1;
         }
         return df;
     }
@@ -102,7 +102,7 @@ public class TrecCollectionStats implements CollectionStats {
         String ctfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
         int cf = (int) corpusStore.getFeature(ctfFeatKey);
         if (cf == -1) {
-            return 9;
+            return 1;
         }
         return cf;
     }
