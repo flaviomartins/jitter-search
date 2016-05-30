@@ -20,8 +20,6 @@ import java.util.*;
 public class AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(AbstractFeedbackResource.class);
 
-    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true);
-
     FeatureVector buildFeedbackFV(int fbDocs, int fbTerms, TopDocuments results, Stopper stopper, CollectionStats collectionStats) throws IOException {
         TweetFeedbackRelevanceModel fb = new TweetFeedbackRelevanceModel(stopper);
         fb.setCollectionStats(collectionStats);
@@ -32,9 +30,16 @@ public class AbstractFeedbackResource {
         return fb.like(results.scoreDocs.subList(0, Math.min(fbDocs, results.scoreDocs.size())));
     }
 
-    FeatureVector buildQueryFV(String query) throws ParseException {
+    FeatureVector buildQueryFV(String query, Stopper stopper) throws ParseException {
+        Analyzer analyzer;
+        if (stopper == null || stopper.asSet().size() == 0) {
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true);
+        } else {
+            CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
+            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true);
+        }
         FeatureVector queryFV = new FeatureVector();
-        for (String term : AnalyzerUtils.analyze(ANALYZER, query)) {
+        for (String term : AnalyzerUtils.analyze(analyzer, query)) {
             if (!term.isEmpty()) {
                 queryFV.addFeatureWeight(term, 1f);
             }

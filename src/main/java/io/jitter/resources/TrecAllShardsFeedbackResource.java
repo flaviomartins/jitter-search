@@ -83,7 +83,7 @@ public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
 
         FeatureVector shardsFV = null;
         if (shardResults.totalHits > 0) {
-            shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), shardsManager.getCollectionStats());
+            shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
         }
 
         FeatureVector feedbackFV = null;
@@ -108,7 +108,7 @@ public class TrecAllShardsFeedbackResource extends AbstractFeedbackResource {
             fbVector = shardsFV;
         }
 
-        FeatureVector queryFV = buildQueryFV(query);
+        FeatureVector queryFV = buildQueryFV(query, trecMicroblogAPIWrapper.getStopper());
         fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, fbVector);
 
         logger.info("Selected: all\n fbDocs: {} Feature Vector:\n{}", shardResults.scoreDocs.size(), fbVector.toString());

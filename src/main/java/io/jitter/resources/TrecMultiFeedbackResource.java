@@ -111,7 +111,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
 
         FeatureVector shardsFV = null;
         if (shardResults.totalHits > 0) {
-            shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), shardsManager.getCollectionStats());
+            shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
         }
 
         FeatureVector feedbackFV = null;
@@ -136,7 +136,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
             fbVector = shardsFV;
         }
 
-        FeatureVector queryFV = buildQueryFV(query);
+        FeatureVector queryFV = buildQueryFV(query, trecMicroblogAPIWrapper.getStopper());
         if (shardResults.scoreDocs.size() > 0) {
             fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, fbVector);
         } else {

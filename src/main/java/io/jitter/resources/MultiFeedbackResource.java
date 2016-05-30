@@ -115,7 +115,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
 
         FeatureVector shardsFV = null;
         if (shardResults.totalHits > 0) {
-            shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), shardsManager.getCollectionStats());
+            shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), searchManager.getCollectionStats());
         }
 
         FeatureVector feedbackFV = null;
@@ -128,7 +128,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             fbVector = shardsFV;
         }
 
-        FeatureVector queryFV = buildQueryFV(query);
+        FeatureVector queryFV = buildQueryFV(query, searchManager.getStopper());
         fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, fbVector);
 
         logger.info("Selected: {}\n fbDocs: {} Feature Vector:\n{}", selected != null ? Joiner.on(", ").join(selected) : "all", shardResults.scoreDocs.size(), fbVector.toString());
