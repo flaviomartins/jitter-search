@@ -29,16 +29,20 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
         if (super.isNoiseWord(term)) {
             return true;
         }
-        // no mentions
-        if (term.startsWith("@")) {
-            return true;
-        }
         // allow hashtags
         if (term.startsWith("#")) {
             return false;
         }
-        // blocks URLs (Regex.VALID_URL is not needed)
-        if (!CharMatcher.javaLetterOrDigit().matchesAllOf(term)) {
+        // no mentions
+        if (term.startsWith("@")) {
+            return true;
+        }
+        // no rt
+        if (term.equals("rt")) {
+            return true;
+        }
+        // no URLs (Regex.VALID_URL is not needed)
+        if (term.contains("/")) {
             return true;
         }
         // allow only ascii chars
