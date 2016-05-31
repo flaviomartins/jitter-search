@@ -96,6 +96,7 @@ public class Taily {
         while ((bytesRef = termEnum.next()) != null) {
             String term = bytesRef.utf8ToString();
             if (term.isEmpty()) {
+                logger.warn("Empty term was found and skipped automatically. Check your tokenizer.");
                 continue;
             }
             collectCorpusStats(termEnum, store);
@@ -169,6 +170,7 @@ public class Taily {
         while ((bytesRef = termEnum.next()) != null) {
             String term = bytesRef.utf8ToString();
             if (term.isEmpty()) {
+                logger.warn("Empty term was found and skipped automatically. Check your tokenizer.");
                 continue;
             }
 
@@ -316,6 +318,7 @@ public class Taily {
         while ((bytesRef = termEnum.next()) != null) {
             String term = bytesRef.utf8ToString();
             if (term.isEmpty()) {
+                logger.warn("Empty term was found and skipped automatically. Check your tokenizer.");
                 continue;
             }
 

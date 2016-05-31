@@ -101,10 +101,19 @@ public class ShardRanker {
         } catch (ParseException e) {
             stems = AnalyzerUtils.analyze(analyzer, query);
         }
+        int len = stems.size();
+        // remove empty stems
+        stems.removeAll(Arrays.asList("", null));
+        if (len > stems.size()) {
+            logger.warn("Empty terms were found and removed automatically. Check your tokenizer.");
+        }
         return stems;
     }
 
     public int getDF(String shardId, String stem) {
+        if (stem.isEmpty()) {
+            logger.warn("Tryed to get the DF of an empty term. Will return numDocs instead.");
+        }
         int i = Lists.newArrayList(_shardIds).indexOf(shardId.toLowerCase(Locale.ROOT)) + 1;
         if (i > 0) {
             // get term's shard df
@@ -113,7 +122,7 @@ public class ShardRanker {
             if (df > 0)
                 return (int) df;
         }
-        return 10;
+        return 1;
     }
 
     class QueryFeats {
@@ -137,6 +146,11 @@ public class ShardRanker {
         QueryFeats queryFeats = new QueryFeats(_numShards + 1);
         // calculate mean and variances for query for all shards
         for (String stem : stems) {
+            if (stem.isEmpty()) {
+                logger.warn("Got empty stem");
+                continue;
+            }
+
             // get minimum doc feature value for this stem
             String minFeat = stem + FeatureStore.MIN_FEAT_SUFFIX;
             double minVal = _stores[0].getFeature(minFeat);
