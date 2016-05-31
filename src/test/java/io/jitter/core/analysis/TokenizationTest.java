@@ -60,8 +60,11 @@ public class TokenizationTest extends TestCase {
             {"“@mention should be detected",
                     new String[] {"@mention", "should", "detect"}},
 
-            {"memories of Mr. Rogers's",
-                    new String[] {"memori", "mr", "roger"}}
+            {"Mr. Rogers's shows",
+                    new String[] {"mr", "roger", "show"}},
+
+            {"'Oz, The Great and Powerful' opens",
+                    new String[] {"oz", "great", "power", "open"}}
     };
 
     public void testTokenizer() throws Exception {
@@ -81,10 +84,8 @@ public class TokenizationTest extends TestCase {
         CharTermAttribute cattr = tokenStream.addAttribute(CharTermAttribute.class);
         tokenStream.reset();
         while (tokenStream.incrementToken()) {
-            if (cattr.toString().length() == 0) {
-                continue;
-            }
-            list.add(cattr.toString());
+            String term = cattr.toString();
+            list.add(term);
         }
         tokenStream.end();
         tokenStream.close();
