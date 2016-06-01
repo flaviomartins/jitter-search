@@ -37,7 +37,7 @@
         <twitter-text.version>1.13.4</twitter-text.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-math3.version>3.6.1</commons-math3.version>
-        <commons-io.version>2.4</commons-io.version>
+        <commons-io.version>2.5</commons-io.version>
 
         <twittertools.version>1.4.3</twittertools.version>
         <ranklib.version>2.6</ranklib.version>
@@ -594,7 +594,7 @@
                         <bundledSignature>jdk-unsafe</bundledSignature>
                         <bundledSignature>jdk-deprecated</bundledSignature>
                         <bundledSignature>jdk-system-out</bundledSignature>
-                        <bundledSignature>commons-io-unsafe-2.4</bundledSignature>
+                        <bundledSignature>commons-io-unsafe-2.5</bundledSignature>
                     </bundledSignatures>
                 </configuration>
                 <executions>
