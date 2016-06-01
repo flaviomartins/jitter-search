@@ -1,7 +1,7 @@
 package io.jitter.resources;
 
 import io.jitter.api.collectionstatistics.CollectionStats;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.TweetFeedbackRelevanceModel;
 import io.jitter.core.search.TopDocuments;
@@ -10,7 +10,6 @@ import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,10 +32,10 @@ public class AbstractFeedbackResource {
     FeatureVector buildQueryFV(String query, Stopper stopper) throws ParseException {
         Analyzer analyzer;
         if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true);
+            analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET);
         } else {
-            CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true);
+            CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
+            analyzer = new TweetAnalyzer(charArraySet);
         }
         FeatureVector queryFV = new FeatureVector();
         for (String term : AnalyzerUtils.analyze(analyzer, query)) {

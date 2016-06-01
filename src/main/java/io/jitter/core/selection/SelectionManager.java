@@ -6,7 +6,7 @@ import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
 import io.jitter.api.search.Document;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
@@ -87,10 +87,10 @@ public class SelectionManager implements Managed {
             stopper = new Stopper(stopwords);
         }
         if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true);
+            analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET);
         } else {
-            CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true);
+            CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
+            analyzer = new TweetAnalyzer(charArraySet);
         }
     }
 

@@ -1,11 +1,10 @@
 package io.jitter.core.feedback;
 
 import com.google.common.base.CharMatcher;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.util.Version;
 
 public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
 
@@ -13,10 +12,10 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
         super();
         Analyzer analyzer;
         if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true);
+            analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET);
         } else {
-            CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true);
+            CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
+            analyzer = new TweetAnalyzer(charArraySet);
         }
         setAnalyzer(analyzer);
         setMinWordLen(3);

@@ -1,13 +1,12 @@
 package io.jitter.core.taily;
 
 import io.dropwizard.lifecycle.Managed;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.selection.Selection;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,10 +42,10 @@ public class TailyManager implements Managed {
             stopper = new Stopper(stopwords);
         }
         if (stopper == null || stopper.asSet().size() == 0) {
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, CharArraySet.EMPTY_SET, true);
+            analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET);
         } else {
-            CharArraySet charArraySet = new CharArraySet(Version.LUCENE_43, stopper.asSet(), true);
-            analyzer = new StopperTweetAnalyzer(Version.LUCENE_43, charArraySet, true);
+            CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
+            analyzer = new TweetAnalyzer(charArraySet);
         }
     }
 

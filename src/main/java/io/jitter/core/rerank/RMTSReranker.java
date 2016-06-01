@@ -12,7 +12,7 @@ import com.google.common.collect.Sets;
 import com.twitter.Extractor;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.features.BM25Feature;
 import io.jitter.core.probabilitydistributions.KDE;
@@ -27,7 +27,6 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.similarities.DefaultSimilarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +38,7 @@ public class RMTSReranker extends Reranker {
 
     private static final double DAY = 60.0 * 60.0 * 24.0;
 
-    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true);
+    private static final Analyzer ANALYZER = new TweetAnalyzer();
     private static final TFIDFSimilarity SIMILARITY = new DefaultSimilarity();
 
     private final String rankerModel;

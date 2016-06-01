@@ -9,7 +9,7 @@ import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Stopper;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -21,7 +21,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nullable;
@@ -34,7 +33,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
     private static final int MAX_NUM_RESULTS = 10000;
     private static final int DEFAULT_NUM_RESULTS = 3000;
 
-    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true);
+    private static final Analyzer ANALYZER = new TweetAnalyzer();
 
     private final String host;
     private final int port;

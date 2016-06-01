@@ -2,7 +2,7 @@ package io.jitter.core.stream;
 
 import cc.twittertools.index.IndexStatuses;
 import io.dropwizard.lifecycle.Managed;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.analysis.TweetAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.FieldInfo;
@@ -25,7 +25,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
 
     private static final Logger logger = LoggerFactory.getLogger(LiveStreamIndexer.class);
 
-    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true);
+    private static final Analyzer ANALYZER = new TweetAnalyzer();
 
     private final AtomicLong counter;
     private final String indexPath;

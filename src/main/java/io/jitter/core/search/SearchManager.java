@@ -4,7 +4,7 @@ import cc.twittertools.index.IndexStatuses;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
-import io.jitter.core.analysis.StopperTweetAnalyzer;
+import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.utils.SearchUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
@@ -38,7 +38,7 @@ public class SearchManager implements Managed {
     public static final int MAX_RESULTS = 10000;
     public static final int MAX_TERMS_RESULTS = 1000;
 
-    private static final Analyzer ANALYZER = new StopperTweetAnalyzer(Version.LUCENE_43, true);
+    private static final Analyzer ANALYZER = new TweetAnalyzer();
     private static final Similarity SIMILARITY = new LMDirichletSimilarity(2500);
 
     private final String indexPath;
