@@ -10,6 +10,7 @@ import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.RMTSDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
+import io.jitter.core.filter.MaxTFFilter;
 import io.jitter.core.rerank.RMTSReranker;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
@@ -117,12 +118,12 @@ public class RMTSResource extends AbstractFeedbackResource {
 
         TopDocuments results = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);
 
-//        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
-//        langFilter.setResults(results.scoreDocs);
-//        results.scoreDocs = langFilter.getFiltered();
-
         RMTSReranker rmtsReranker = new RMTSReranker("ltr-all.model", query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get());
         results.scoreDocs = rmtsReranker.getReranked();
+
+        MaxTFFilter maxTFFilter = new MaxTFFilter(3);
+        maxTFFilter.setResults(results.scoreDocs);
+        results.scoreDocs = maxTFFilter.getFiltered();
 
         long endTime = System.currentTimeMillis();
 

@@ -105,10 +105,6 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
 
         TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
 
-//        NaiveLanguageFilter langFilter = new NaiveLanguageFilter("en");
-//        langFilter.setResults(results.scoreDocs);
-//        results.scoreDocs = langFilter.getFiltered();
-
         RMTSReranker rmtsReranker = new RMTSReranker("ltr-all.model", query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit.get(), numRerank.get());
         results.scoreDocs = rmtsReranker.getReranked();
 
