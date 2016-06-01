@@ -15,7 +15,7 @@ import org.junit.Assert;
 
 public class TokenizationTest extends TestCase {
 
-    Object[][] examples = new Object[][] {
+    private final Object[][] examples = new Object[][] {
             {"AT&T getting secret immunity from wiretapping laws for government surveillance http://vrge.co/ZP3Fx5",
                     new String[] {"att", "get", "secret", "immun", "from", "wiretap", "law", "govern", "surveil", "http://vrge.co/ZP3Fx5"}},
 
@@ -69,14 +69,14 @@ public class TokenizationTest extends TestCase {
     public void testTokenizer() throws Exception {
         Analyzer analyzer = new TweetAnalyzer();
 
-        for (int i = 0; i < examples.length; i++) {
+        for (Object[] example : examples) {
             Assert.assertEquals(
-                    Arrays.toString((String[]) examples[i][1]),
-                    Arrays.toString(analyze(analyzer, (String) examples[i][0])));
+                    Arrays.toString((String[]) example[1]),
+                    Arrays.toString(analyze(analyzer, (String) example[0])));
         }
     }
 
-    public String[] analyze(Analyzer analyzer, String text) throws IOException {
+    private static String[] analyze(Analyzer analyzer, String text) throws IOException {
         List<String> list = Lists.newArrayList();
 
         TokenStream tokenStream = analyzer.tokenStream(null, new StringReader(text));

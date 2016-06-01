@@ -27,7 +27,7 @@ public class JsatKDE implements KDE {
 
     public JsatKDE(double[] data, double[] weights, double bw, METHOD method) {
         this(data, weights, bw);
-        if (METHOD.REFLECTION.equals(method)) {
+        if (method == METHOD.REFLECTION) {
             logger.warn("KDE boundary fix is not implemented by JsatKDE. Falling back to STANDARD.");
         }
     }

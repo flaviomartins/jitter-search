@@ -114,11 +114,9 @@ public class TrecMicroblogAPIWrapper implements Managed {
                 LOG.warn("Cache file not found: " + f.getPath()
                         + ". Connecting to the server...");
                 results = client.search(query, maxId, numResultsToFetch);
-                synchronized (this) {
-                    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f));
-                    oos.writeObject(results);
-                    oos.close();
-                }
+                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f));
+                oos.writeObject(results);
+                oos.close();
                 LOG.warn("Writing " + results.size() + " results: " + f.getPath() + ".");
             }
         } else {

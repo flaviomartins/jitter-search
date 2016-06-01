@@ -70,12 +70,16 @@ public class RMTSReranker extends Reranker {
             q.extractTerms(queryTerms);
             for (Term term : queryTerms) {
                 String text = term.text();
-                if (text.isEmpty())
-                    continue;
-                qTerms.add(text);
+                if (!text.isEmpty()) {
+                    qTerms.add(text);
+                }
             }
         } catch (ParseException e) {
-            e.printStackTrace();
+            for (String term : AnalyzerUtils.analyze(ANALYZER, query)) {
+                if (!term.isEmpty()) {
+                    qTerms.add(term);
+                }
+            }
         }
 
         BM25Feature bm25Feature = new BM25Feature(1.2D, 1.0D);

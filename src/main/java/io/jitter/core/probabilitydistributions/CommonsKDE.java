@@ -39,7 +39,7 @@ public class CommonsKDE implements KDE {
     }
 
     public double density(double x) {
-        if (METHOD.REFLECTION.equals(method)) {
+        if (method == METHOD.REFLECTION) {
             return densityReflection(x);
         }
 

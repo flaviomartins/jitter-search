@@ -120,9 +120,7 @@ public class FeatureVector {
     public Map<String, Float> getMap() {
         LinkedHashMap<String, Float> map = new LinkedHashMap<>();
         List<KeyValuePair> kvpList = getOrderedFeatures();
-        Iterator<KeyValuePair> it = kvpList.iterator();
-        while (it.hasNext()) {
-            KeyValuePair pair = it.next();
+        for (KeyValuePair pair : kvpList) {
             map.put(pair.getKey(), pair.getValue());
         }
         return map;
@@ -155,7 +153,7 @@ public class FeatureVector {
         return z;
     }
 
-    private class KeyValuePair {
+    private static class KeyValuePair {
         private String key;
         private float value;
 

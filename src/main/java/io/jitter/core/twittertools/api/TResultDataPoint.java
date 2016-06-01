@@ -11,7 +11,7 @@ public class TResultDataPoint extends DenseDataPoint {
         super("0 qid:1");
         setDescription(description);
         fVals = new float[features.size() + 1];
-        float[] dfVals = ArrayUtils.toPrimitive(features.toArray(new Float[0]));
+        float[] dfVals = ArrayUtils.toPrimitive(features.toArray(new Float[features.size()]));
         System.arraycopy(dfVals, 0, fVals, 1, features.size());
     }
 }

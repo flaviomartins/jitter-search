@@ -43,9 +43,9 @@ public class RankS extends SelectionMethod {
             double r = getStepFactor(step);
             if (useScores) {
                 if (minRsv < 0) {
-                    r = r * (result.getRsv() + Math.abs(minRsv));
+                    r *= (result.getRsv() + Math.abs(minRsv));
                 } else {
-                    r = r * result.getRsv();
+                    r *= result.getRsv();
                 }
             }
 

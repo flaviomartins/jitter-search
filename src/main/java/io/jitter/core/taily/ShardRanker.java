@@ -125,7 +125,7 @@ public class ShardRanker {
         return 1;
     }
 
-    class QueryFeats {
+    static class QueryFeats {
 
         final double[] queryMean;
         final double[] queryVar;

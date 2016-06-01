@@ -1,8 +1,17 @@
 package io.jitter.core.utils;
 
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 public class Epochs {
+
+    private static final Pattern RANGE_PATTERN;
+
+    static {
+        synchronized (Epochs.class) {
+            RANGE_PATTERN = Pattern.compile("[: ]");
+        }
+    }
 
     public static long[] parseEpoch(Optional<String> epoch) {
         long[] epochs = new long[2];
@@ -14,7 +23,7 @@ public class Epochs {
 
     public static long[] parseEpochRange(String epochRange) {
         long[] epochs = new long[]{0L, Long.MAX_VALUE};
-        String[] split = epochRange.split("[: ]");
+        String[] split = RANGE_PATTERN.split(epochRange);
         try {
             if (split.length == 1) {
                 if (epochRange.endsWith(":")) {

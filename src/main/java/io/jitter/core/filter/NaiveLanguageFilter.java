@@ -33,7 +33,7 @@ public class NaiveLanguageFilter extends Filter {
                     continue;
                 }
             } else {
-                if (lang.equals("en")) {
+                if ("en".equals(lang)) {
                     // For English: Skip only if text contains non ASCII chars
                     if (!isProbablyEnglish(origResult.getText()))
                         continue;
