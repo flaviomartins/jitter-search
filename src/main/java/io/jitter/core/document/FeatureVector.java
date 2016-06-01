@@ -118,8 +118,8 @@ public class FeatureVector {
     }
 
     public Map<String, Float> getMap() {
-        LinkedHashMap<String, Float> map = new LinkedHashMap<>();
         List<KeyValuePair> kvpList = getOrderedFeatures();
+        LinkedHashMap<String, Float> map = new LinkedHashMap<>(kvpList.size());
         for (KeyValuePair pair : kvpList) {
             map.put(pair.getKey(), pair.getValue());
         }

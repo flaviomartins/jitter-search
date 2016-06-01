@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.jitter.core.selection.SelectionTopDocuments;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +46,7 @@ public class SelectionDocumentsResponse {
         this.c_sel = c_sel;
         this.numFound = numFound;
         this.start = start;
-        this.selectDocs = null;
+        this.selectDocs = new ArrayList<>(0);
     }
 
     @JsonProperty

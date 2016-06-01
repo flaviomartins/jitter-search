@@ -123,12 +123,13 @@ public class Taily {
 
     public void buildFromSources(List<String> screenNames) throws IOException {
         logger.info("build sources start");
+        int numSources = screenNames.size();
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
         IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
         FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
-        Map<String, FeatureStore> stores = new HashMap<>();
+        Map<String, FeatureStore> stores = new HashMap<>(numSources);
 
         // create FeatureStore dbs for each shard
         for (String screenName : screenNames) {
@@ -183,7 +184,7 @@ public class Taily {
             double ctf = termEnum.totalTermFreq();
 
             // track df for this term for each shard; initialize
-            Map<String, ShardData> shardDataMap = new HashMap<>();
+            Map<String, ShardData> shardDataMap = new HashMap<>(numSources);
 
             if (termEnum.seekExact(bytesRef)) {
 
@@ -266,11 +267,14 @@ public class Taily {
             }
         }
 
+        int numSources = sourceTopicMap.size();
+        int numTopics = topics.size();
+
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
 
         FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
-        Map<String, FeatureStore> sourceStores = new HashMap<>();
-        Map<String, FeatureStore> stores = new HashMap<>();
+        Map<String, FeatureStore> sourceStores = new HashMap<>(numSources);
+        Map<String, FeatureStore> stores = new HashMap<>(numTopics);
 
         // open FeatureStore dbs for each source
         for (String shardIdStr : sourceTopicMap.keySet()) {
@@ -331,7 +335,7 @@ public class Taily {
             double ctf = termEnum.totalTermFreq();
 
             // track df for this term for each shard; initialize
-            Map<String, ShardData> shardDataMap = new HashMap<>();
+            Map<String, ShardData> shardDataMap = new HashMap<>(numTopics);
 
             if (termEnum.seekExact(bytesRef)) {
 
