@@ -164,7 +164,7 @@ public final class TweetAnalyzer extends StopwordAnalyzerBase {
      *         {@link org.apache.lucene.analysis.Analyzer.TokenStreamComponents}
      *         built from an {@link CharTokenizer} filtered with
      *         {@link StandardFilter}, {@link EnglishPossessiveFilter},
-     *         {@link LowerCaseFilter}, {@link StopFilter}
+     *         {@link EntityPreservingFilter}, {@link StopFilter}
      *         , {@link SetKeywordMarkerFilter} if a stem exclusion set is
      *         provided and {@link PorterStemFilter}.
      */
