@@ -11,7 +11,7 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
     public TweetFeedbackRelevanceModel(Stopper stopper) {
         super();
         Analyzer analyzer;
-        if (stopper == null || stopper.asSet().size() == 0) {
+        if (stopper == null || stopper.asSet().isEmpty()) {
             analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET);
         } else {
             CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
@@ -37,7 +37,7 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
             return true;
         }
         // no rt
-        if (term.equals("rt")) {
+        if ("rt".equals(term)) {
             return true;
         }
         // no URLs (Regex.VALID_URL is not needed)

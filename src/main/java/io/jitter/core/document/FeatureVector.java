@@ -15,7 +15,7 @@ public class FeatureVector {
         if (!features.containsKey(term)) {
             features.put(term, weight);
         } else {
-            features.put(term, features.get(term) + weight);
+            features.put(term, features.getFloat(term) + weight);
         }
     }
 
@@ -37,7 +37,7 @@ public class FeatureVector {
     public FeatureVector scaleToUnitL2Norm() {
         double norm = computeL2Norm();
         for (String f : features.keySet()) {
-            features.put(f, (float) (features.get(f) / norm));
+            features.put(f, (float) (features.getFloat(f) / norm));
         }
 
         return this;
@@ -46,7 +46,7 @@ public class FeatureVector {
     public FeatureVector scaleToUnitL1Norm() {
         double norm = computeL1Norm();
         for (String f : features.keySet()) {
-            features.put(f, (float) (features.get(f) / norm));
+            features.put(f, (float) (features.getFloat(f) / norm));
         }
 
         return this;
@@ -57,7 +57,7 @@ public class FeatureVector {
     }
 
     public float getFeatureWeight(String feature) {
-        return features.containsKey(feature) ? features.get(feature) : 0.0f;
+        return features.containsKey(feature) ? features.getFloat(feature) : 0.0f;
     }
 
     public Iterator<String> iterator() {
@@ -71,7 +71,7 @@ public class FeatureVector {
     public double computeL2Norm() {
         double norm = 0.0;
         for (String term : features.keySet()) {
-            norm += Math.pow(features.get(term), 2.0);
+            norm += Math.pow(features.getFloat(term), 2.0);
         }
         return Math.sqrt(norm);
     }
@@ -79,7 +79,7 @@ public class FeatureVector {
     public double computeL1Norm() {
         double norm = 0.0;
         for (String term : features.keySet()) {
-            norm += Math.abs(features.get(term));
+            norm += Math.abs(features.getFloat(term));
         }
         return norm;
     }
@@ -102,7 +102,7 @@ public class FeatureVector {
     private List<KeyValuePair> getOrderedFeatures() {
         List<KeyValuePair> kvpList = new ArrayList<>(features.size());
         for (String feature : features.keySet()) {
-            float value = features.get(feature);
+            float value = features.getFloat(feature);
             KeyValuePair keyValuePair = new KeyValuePair(feature, value);
             kvpList.add(keyValuePair);
         }

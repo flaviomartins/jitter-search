@@ -40,12 +40,12 @@ public class SelectionManagerHealthCheck extends HealthCheck {
         twitterAccounts.addAll(users);
 
         Sets.SetView<String> diff1 = Sets.difference(twitterAccounts, topicAccounts);
-        if (diff1.size() > 0) {
+        if (!diff1.isEmpty()) {
             logger.warn("missing from topics: {}", Joiner.on(" ").join(diff1));
         }
 
         Sets.SetView<String> diff2 = Sets.difference(topicAccounts, twitterAccounts );
-        if (diff2.size() > 0) {
+        if (!diff2.isEmpty()) {
             String missing = Joiner.on(" ").join(diff2);
             logger.error("missing from twitter: {}", missing);
             return Result.unhealthy("missing from twitter: " + missing);

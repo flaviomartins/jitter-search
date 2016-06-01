@@ -137,7 +137,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
         }
 
         FeatureVector queryFV = buildQueryFV(query, trecMicroblogAPIWrapper.getStopper());
-        if (shardResults.scoreDocs.size() > 0) {
+        if (!shardResults.scoreDocs.isEmpty()) {
             fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, fbVector);
         } else {
             // Not terms from shards

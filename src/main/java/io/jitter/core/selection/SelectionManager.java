@@ -86,7 +86,7 @@ public class SelectionManager implements Managed {
         if (!stopwords.isEmpty()) {
             stopper = new Stopper(stopwords);
         }
-        if (stopper == null || stopper.asSet().size() == 0) {
+        if (stopper == null || stopper.asSet().isEmpty()) {
             analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET);
         } else {
             CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
