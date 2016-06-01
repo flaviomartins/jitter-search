@@ -264,9 +264,10 @@ public class ShardRanker {
                 String stemKey = stem + FeatureStore.SIZE_FEAT_SUFFIX;
                 double df = _stores[i].getFeature(stemKey);
 
-                // smooth it
-                if (df < 5)
-                    df = 5;
+                // TODO: fix this kludge
+                if (df == -1) {
+                    df = 0;
+                }
 
                 // store df for all_i calculation
                 dfs[dfCnt++] = df;
