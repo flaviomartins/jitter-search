@@ -26,16 +26,16 @@ public class TrecCollectionStats implements CollectionStats {
 
     private FeatureStore corpusStore;
 
-    private int collectionSize = DEFAULT_COLLECTION_SIZE;
+    private int numDocs = DEFAULT_COLLECTION_SIZE;
 
-    private int cumulativeDocumentFrequency;
-    private int cumulativeCollectionFrequency;
+    private long sumDocFreq;
+    private long sumTotalTermFreq;
 
     public TrecCollectionStats(String pathToStatsFile, String statsDb) {
         Path statsStorePath = Paths.get(statsDb, CORPUS_DBENV);
         if (!Files.isDirectory(statsStorePath)) {
             LOG.info("creating stats database...");
-            corpusStore = new FeatureStore(statsDb + "/" + CORPUS_DBENV, false);
+            corpusStore = new FeatureStore(statsStorePath.toString(), false);
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(new File(pathToStatsFile)))));
                 String line = reader.readLine();
@@ -47,33 +47,36 @@ public class TrecCollectionStats implements CollectionStats {
                     }
 
                     String term = toks[TERM_COLUMN];
-                    int df = Integer.parseInt(toks[DF_COLUMN]);
-                    int cf = Integer.parseInt(toks[CF_COLUMN]);
+                    long df = Integer.parseInt(toks[DF_COLUMN]);
+                    long cf = Long.parseLong(toks[CF_COLUMN]);
 
                     // if reading first line
                     if (i == 0) {
-                        cumulativeDocumentFrequency = df;
-                        cumulativeCollectionFrequency = cf;
-                        
+                        sumDocFreq = df;
+                        sumTotalTermFreq = cf;
+
+                        // store totals
                         String dfFeatKey = FeatureStore.SIZE_FEAT_SUFFIX;
-                        corpusStore.putFeature(dfFeatKey, df, cf);
+                        corpusStore.putFeature(dfFeatKey, sumDocFreq, sumTotalTermFreq);
 
                         String ctfFeatKey = FeatureStore.TERM_SIZE_FEAT_SUFFIX;
-                        corpusStore.putFeature(ctfFeatKey, df, cf);
+                        corpusStore.putFeature(ctfFeatKey, sumTotalTermFreq, sumTotalTermFreq);
 
                         line = reader.readLine();
                         continue;
                     }
 
-                    // get and store shard df feature for term
-                    String dfFeatKey = term + FeatureStore.SIZE_FEAT_SUFFIX;
-                    corpusStore.putFeature(dfFeatKey, df, cf);
+                    if (!term.isEmpty()) {
+                        // get and store shard df feature for term
+                        String dfFeatKey = term + FeatureStore.SIZE_FEAT_SUFFIX;
+                        corpusStore.putFeature(dfFeatKey, df, cf);
 
-                    // store ctf feature for term
-                    String ctfFeatKey = term + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
-                    corpusStore.putFeature(ctfFeatKey, cf, cf);
+                        // store ctf feature for term
+                        String ctfFeatKey = term + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
+                        corpusStore.putFeature(ctfFeatKey, cf, cf);
 
-                    line = reader.readLine();
+                        line = reader.readLine();
+                    }
                 }
             } catch (Exception e) {
                 LOG.error("died trying to read stats file: " + pathToStatsFile);
@@ -85,10 +88,10 @@ public class TrecCollectionStats implements CollectionStats {
         corpusStore = new FeatureStore(statsStorePath.toString(), true);
 
         String dfFeatKey = FeatureStore.SIZE_FEAT_SUFFIX;
-        cumulativeDocumentFrequency = (int) corpusStore.getFeature(dfFeatKey);
+        sumDocFreq = (long) corpusStore.getFeature(dfFeatKey);
 
         String ctfFeatKey = FeatureStore.TERM_SIZE_FEAT_SUFFIX;
-        cumulativeCollectionFrequency = (int) corpusStore.getFeature(ctfFeatKey);
+        sumTotalTermFreq = (long) corpusStore.getFeature(ctfFeatKey);
     }
 
     public int docFreq(String term) {
@@ -110,27 +113,27 @@ public class TrecCollectionStats implements CollectionStats {
     }
 
     public int numDocs() {
-        return collectionSize;
+        return numDocs;
     }
 
-    public void setCollectionSize(int collectionSize) {
-        this.collectionSize = collectionSize;
+    public void setNumDocs(int numDocs) {
+        this.numDocs = numDocs;
     }
 
     public long getSumDocFreq() {
-        return cumulativeDocumentFrequency;
+        return sumDocFreq;
     }
 
-    public void setCumulativeDocumentFrequency(int cumulativeDocumentFrequency) {
-        this.cumulativeDocumentFrequency = cumulativeDocumentFrequency;
+    public void setSumDocFreq(int sumDocFreq) {
+        this.sumDocFreq = sumDocFreq;
     }
 
     public long getSumTotalTermFreq() {
-        return cumulativeCollectionFrequency;
+        return sumTotalTermFreq;
     }
 
-    public void setCumulativeCollectionFrequency(int cumulativeCollectionFrequency) {
-        this.cumulativeCollectionFrequency = cumulativeCollectionFrequency;
+    public void setSumTotalTermFreq(int sumTotalTermFreq) {
+        this.sumTotalTermFreq = sumTotalTermFreq;
     }
 
     public int numTerms() {

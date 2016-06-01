@@ -26,8 +26,8 @@ public class FeatureStore {
     private final Database infreqDb; // db storing frequent terms; see FREQUENT_TERMS
 
     public FeatureStore(String dir, boolean readOnly) {
-        String freqPath = dir + "/" + FREQ_DB_NAME;
-        String infreqPath = dir + "/" + INFREQ_DB_NAME;
+        String freqPath = dir + File.separator + FREQ_DB_NAME;
+        String infreqPath = dir + File.separator + INFREQ_DB_NAME;
 
         try {
             // Instantiate an environment configuration object
@@ -88,7 +88,7 @@ public class FeatureStore {
         return DoubleBinding.entryToDouble(data);
     }
 
-    public void putFeature(String keyStr, double val, int frequency) {
+    public void putFeature(String keyStr, double val, long frequency) {
         // key
         DatabaseEntry key = new DatabaseEntry();
         // data
@@ -111,7 +111,7 @@ public class FeatureStore {
     }
 
     // add val to the keyStr feature if it exists already; otherwise, create the feature
-    public void addValFeature(String keyStr, double val, int frequency) {
+    public void addValFeature(String keyStr, double val, long frequency) {
         double prevVal;
 
         // key
