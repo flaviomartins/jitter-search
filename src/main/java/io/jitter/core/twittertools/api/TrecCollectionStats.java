@@ -5,7 +5,9 @@ import io.jitter.core.taily.FeatureStore;
 import org.apache.log4j.Logger;
 
 import java.io.*;
-import java.util.Locale;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
@@ -20,7 +22,7 @@ public class TrecCollectionStats implements CollectionStats {
     private static final int CF_COLUMN = 2;
 
     public static final int DEFAULT_COLLECTION_SIZE = 242432449;
-    public static final int DEFAULT_TERMS_SIZE = 131658035;
+    public static final int DEFAULT_TERMS_SIZE = 131628185;
 
     private FeatureStore corpusStore;
 
@@ -30,8 +32,8 @@ public class TrecCollectionStats implements CollectionStats {
     private int cumulativeCollectionFrequency;
 
     public TrecCollectionStats(String pathToStatsFile, String statsDb) {
-        File statsStorePath = new File(statsDb + "/" + CORPUS_DBENV);
-        if (!statsStorePath.isDirectory()) {
+        Path statsStorePath = Paths.get(statsDb, CORPUS_DBENV);
+        if (!Files.isDirectory(statsStorePath)) {
             LOG.info("creating stats database...");
             corpusStore = new FeatureStore(statsDb + "/" + CORPUS_DBENV, false);
             try {
@@ -64,11 +66,11 @@ public class TrecCollectionStats implements CollectionStats {
                     }
 
                     // get and store shard df feature for term
-                    String dfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.SIZE_FEAT_SUFFIX;
+                    String dfFeatKey = term + FeatureStore.SIZE_FEAT_SUFFIX;
                     corpusStore.putFeature(dfFeatKey, df, cf);
 
                     // store ctf feature for term
-                    String ctfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
+                    String ctfFeatKey = term + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
                     corpusStore.putFeature(ctfFeatKey, cf, cf);
 
                     line = reader.readLine();
@@ -80,7 +82,7 @@ public class TrecCollectionStats implements CollectionStats {
             corpusStore.close();
         }
 
-        corpusStore = new FeatureStore(statsDb + "/" + CORPUS_DBENV, true);
+        corpusStore = new FeatureStore(statsStorePath.toString(), true);
 
         String dfFeatKey = FeatureStore.SIZE_FEAT_SUFFIX;
         cumulativeDocumentFrequency = (int) corpusStore.getFeature(dfFeatKey);
@@ -90,7 +92,7 @@ public class TrecCollectionStats implements CollectionStats {
     }
 
     public int docFreq(String term) {
-        String dfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.SIZE_FEAT_SUFFIX;
+        String dfFeatKey = term + FeatureStore.SIZE_FEAT_SUFFIX;
         int df = (int) corpusStore.getFeature(dfFeatKey);
         if (df == -1) {
             return 1;
@@ -99,8 +101,8 @@ public class TrecCollectionStats implements CollectionStats {
     }
 
     public long totalTermFreq(String term) {
-        String ctfFeatKey = term.toLowerCase(Locale.ROOT) + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
-        int cf = (int) corpusStore.getFeature(ctfFeatKey);
+        String ctfFeatKey = term + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
+        long cf = (long) corpusStore.getFeature(ctfFeatKey);
         if (cf == -1) {
             return 1;
         }
