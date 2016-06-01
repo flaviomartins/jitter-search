@@ -368,7 +368,7 @@ public class SelectionManager implements Managed {
         long startTime = System.currentTimeMillis();
         File indexPath = new File(this.indexPath);
         Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
         try (IndexWriter writer = new IndexWriter(dir, config)) {

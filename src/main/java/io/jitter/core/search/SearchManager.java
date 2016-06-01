@@ -152,7 +152,7 @@ public class SearchManager implements Managed {
         logger.info("Indexing started!");
         File indexPath = new File(this.indexPath);
         Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();
@@ -242,7 +242,7 @@ public class SearchManager implements Managed {
         long startTime = System.currentTimeMillis();
         File indexPath = new File(this.indexPath);
         Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         
         try (IndexWriter writer = new IndexWriter(dir, config)) {
