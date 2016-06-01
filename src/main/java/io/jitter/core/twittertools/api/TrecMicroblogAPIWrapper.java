@@ -106,7 +106,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
         if (useCache) {
             if (f.exists()) {
                 LOG.info("Reading " + f.getPath() + ".");
-                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
+                ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(new FileInputStream(f)));
                 results = (List<TResult>) ois.readObject();
                 ois.close();
                 LOG.info("Read " + results.size() + " results.");
@@ -114,9 +114,11 @@ public class TrecMicroblogAPIWrapper implements Managed {
                 LOG.warn("Cache file not found: " + f.getPath()
                         + ". Connecting to the server...");
                 results = client.search(query, maxId, numResultsToFetch);
-                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f));
-                oos.writeObject(results);
-                oos.close();
+                synchronized (this) {
+                    ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(f)));
+                    oos.writeObject(results);
+                    oos.close();
+                }
                 LOG.warn("Writing " + results.size() + " results: " + f.getPath() + ".");
             }
         } else {

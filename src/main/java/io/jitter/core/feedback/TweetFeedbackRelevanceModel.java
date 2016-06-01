@@ -18,9 +18,9 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
             analyzer = new TweetAnalyzer(charArraySet);
         }
         setAnalyzer(analyzer);
-        setMinWordLen(3);
-        setMinDocFreq(10);
-        setMinTermFreq(1);
+        setMinWordLen(0);
+        setMinDocFreq(0);
+        setMinTermFreq(0);
     }
 
     @Override
