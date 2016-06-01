@@ -483,10 +483,7 @@ public class FeedbackRelevanceModel {
      */
     private boolean isUnfreqWord(String term) {
         int docFreq = collectionStats.docFreq(term);
-        if (minDocFreq > 0 && docFreq < minDocFreq) {
-            return true;
-        }
-        return false;
+        return minDocFreq > 0 && docFreq < minDocFreq;
     }
 
     public Collection<String> filterTerms(Collection<String> terms) {
