@@ -121,7 +121,7 @@ public class RMTSResource extends AbstractFeedbackResource {
         RMTSReranker rmtsReranker = new RMTSReranker("ltr-all.model", query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get());
         results.scoreDocs = rmtsReranker.getReranked();
 
-        MaxTFFilter maxTFFilter = new MaxTFFilter(3);
+        MaxTFFilter maxTFFilter = new MaxTFFilter(5);
         maxTFFilter.setResults(results.scoreDocs);
         results.scoreDocs = maxTFFilter.getFiltered();
 
