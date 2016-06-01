@@ -42,7 +42,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         this.stringField = stringField;
 
         Directory dir = FSDirectory.open(new File(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_43, ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         config.setMergePolicy(new TieredMergePolicy());
         config.setRAMBufferSizeMB(48);
