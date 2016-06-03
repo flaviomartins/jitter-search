@@ -38,6 +38,7 @@
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-math3.version>3.6.1</commons-math3.version>
         <commons-io.version>2.5</commons-io.version>
+        <httpclient.version>4.4.1</httpclient.version>
 
         <twittertools.version>1.4.4-SNAPSHOT</twittertools.version>
         <ranklib.version>2.6</ranklib.version>
@@ -357,6 +358,13 @@
                 <groupId>com.twitter</groupId>
                 <artifactId>twitter-text</artifactId>
                 <version>${twitter-text.version}</version>
+            </dependency>
+
+            <!-- HttpComponents -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
