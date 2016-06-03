@@ -24,6 +24,7 @@ import twitter4j.Status;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TwitterManager implements Managed {
 
@@ -168,25 +169,25 @@ public class TwitterManager implements Managed {
         screenNameOptions.setStored(true);
         screenNameOptions.setTokenized(true);
 
-        int cnt = 0;
-        cc.twittertools.corpus.data.Status status;
+        AtomicLong counter = new AtomicLong();
+        Status status;
+        int commitEvery = 1000;
         try (IndexWriter writer = new IndexWriter(dir, config)) {
             while ((status = stream.next()) != null) {
                 if (status.getText() == null) {
                     continue;
                 }
-
-                cnt++;
                 Document doc = new Document();
-                doc.add(new LongField(IndexStatuses.StatusField.ID.name, status.getId(), Field.Store.YES));
-                doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getEpoch(), Field.Store.YES));
-                doc.add(new Field(IndexStatuses.StatusField.SCREEN_NAME.name, status.getScreenname(), screenNameOptions));
+                long id = status.getId();
+                doc.add(new LongField(IndexStatuses.StatusField.ID.name, id, Field.Store.YES));
+                doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getCreatedAt().getTime() / 1000L, Field.Store.YES));
+                doc.add(new Field(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), screenNameOptions));
 
                 doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
 
-                doc.add(new IntField(IndexStatuses.StatusField.FRIENDS_COUNT.name, status.getFriendsCount(), Field.Store.YES));
-                doc.add(new IntField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name, status.getFollowersCount(), Field.Store.YES));
-                doc.add(new IntField(IndexStatuses.StatusField.STATUSES_COUNT.name, status.getStatusesCount(), Field.Store.YES));
+                doc.add(new IntField(IndexStatuses.StatusField.FRIENDS_COUNT.name, status.getUser().getFriendsCount(), Field.Store.YES));
+                doc.add(new IntField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name, status.getUser().getFollowersCount(), Field.Store.YES));
+                doc.add(new IntField(IndexStatuses.StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount(), Field.Store.YES));
 
                 long inReplyToStatusId = status.getInReplyToStatusId();
                 if (inReplyToStatusId > 0) {
@@ -199,24 +200,26 @@ public class TwitterManager implements Managed {
                     doc.add(new TextField(IndexStatuses.StatusField.LANG.name, status.getLang(), Field.Store.YES));
                 }
 
-                long retweetStatusId = status.getRetweetedStatusId();
-                if (retweetStatusId > 0) {
-                    doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name, retweetStatusId, Field.Store.YES));
-                    doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_USER_ID.name, status.getRetweetedUserId(), Field.Store.YES));
-                    doc.add(new IntField(IndexStatuses.StatusField.RETWEET_COUNT.name, status.getRetweetCount(), Field.Store.YES));
-                    if (status.getRetweetCount() < 0 || status.getRetweetedStatusId() < 0) {
-                        logger.warn("Error parsing retweet fields of " + status.getId());
+                Status retweetedStatus = status.getRetweetedStatus();
+                if (retweetedStatus != null) {
+                    doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name, status.getRetweetedStatus().getId(), Field.Store.YES));
+                    doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_USER_ID.name, status.getRetweetedStatus().getUser().getId(), Field.Store.YES));
+                    int retweetCount = status.getRetweetCount();
+                    doc.add(new IntField(IndexStatuses.StatusField.RETWEET_COUNT.name, retweetCount, Field.Store.YES));
+                    if (retweetCount < 0) {
+                        logger.warn("Error parsing retweet fields of {}", id);
                     }
                 }
 
                 Term delTerm = new Term(IndexStatuses.StatusField.ID.name, Long.toString(status.getId()));
                 writer.updateDocument(delTerm, doc);
-                if (cnt % 1000 == 0) {
-                    logger.debug(cnt + " statuses indexed");
+                if (counter.incrementAndGet() % commitEvery == 0) {
+                    logger.debug("{} {} statuses indexed", indexPath, counter.get());
+                    writer.commit();
                 }
             }
 
-            logger.info(String.format(Locale.ENGLISH, "Total of %s statuses added", cnt));
+            logger.info(String.format(Locale.ENGLISH, "Total of %s statuses added", counter.get()));
             logger.info("Total elapsed time: " + (System.currentTimeMillis() - startTime) + "ms");
         } catch (Exception e) {
             logger.error("{}", e.getMessage());

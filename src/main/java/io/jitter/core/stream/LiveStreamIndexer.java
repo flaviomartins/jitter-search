@@ -72,7 +72,6 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
     private void index(Status status) {
         if (writer == null) return;
         try {
-            counter.incrementAndGet();
             Document doc = new Document();
             long id = status.getId();
             doc.add(new LongField(IndexStatuses.StatusField.ID.name, id, Field.Store.YES));
@@ -112,7 +111,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
             }
 
             writer.addDocument(doc);
-            if (counter.get() % commitEvery == 0) {
+            if (counter.incrementAndGet() % commitEvery == 0) {
                 logger.debug("{} {} statuses indexed", indexPath, counter.get());
                 writer.commit();
             }
