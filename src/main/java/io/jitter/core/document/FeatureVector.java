@@ -153,6 +153,18 @@ public class FeatureVector {
         return z;
     }
 
+    public static FeatureVector add(FeatureVector x, FeatureVector y) {
+        FeatureVector z = new FeatureVector();
+        Set<String> vocab = new HashSet<>();
+        vocab.addAll(x.getFeatures());
+        vocab.addAll(y.getFeatures());
+        for (String feature : vocab) {
+            float weight = x.getFeatureWeight(feature) + y.getFeatureWeight(feature);
+            z.addFeatureWeight(feature, weight);
+        }
+        return z;
+    }
+
     private static class KeyValuePair {
         private String key;
         private float value;

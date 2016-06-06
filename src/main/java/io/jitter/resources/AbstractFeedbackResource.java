@@ -1,6 +1,7 @@
 package io.jitter.resources;
 
 import io.jitter.api.collectionstatistics.CollectionStats;
+import io.jitter.api.search.Document;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.TweetFeedbackRelevanceModel;
@@ -18,6 +19,41 @@ import java.util.*;
 
 public class AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(AbstractFeedbackResource.class);
+
+    FeatureVector buildBootstrapFeedbackFV(int fbDocs, int fbTerms, TopDocuments results, Stopper stopper, CollectionStats collectionStats) throws IOException {
+        TweetFeedbackRelevanceModel fb = new TweetFeedbackRelevanceModel(stopper);
+        fb.setCollectionStats(collectionStats);
+        fb.setMaxQueryTerms(fbTerms);
+//        logger.info(fb.describeParams());
+//        fb.setOriginalQueryFV(queryFV);
+
+        List<Document> documents = results.scoreDocs.subList(0, Math.min(fbDocs, results.scoreDocs.size()));
+        FeatureVector fbVector = null;
+        int B = 30;
+        for (int i = 0; i < B; i++) {
+            List<Document> sample = sample(fbDocs, documents);
+            FeatureVector like = fb.like(sample);
+            if (fbVector == null) {
+                fbVector = like;
+            } else {
+                fbVector = FeatureVector.add(fbVector, like);
+            }
+        }
+
+        fbVector.pruneToSize(fbTerms);
+        fbVector.scaleToUnitL1Norm();
+        return fbVector;
+    }
+
+    private List<Document> sample(int fbDocs, List<Document> relDocs) {
+        Random random = new Random();
+        List<Document> sample = new ArrayList<>();
+        for (int i = 0; i < fbDocs; i++) {
+            Document doc = relDocs.get(random.nextInt(relDocs.size()));
+            sample.add(doc);
+        }
+        return sample;
+    }
 
     FeatureVector buildFeedbackFV(int fbDocs, int fbTerms, TopDocuments results, Stopper stopper, CollectionStats collectionStats) throws IOException {
         TweetFeedbackRelevanceModel fb = new TweetFeedbackRelevanceModel(stopper);
