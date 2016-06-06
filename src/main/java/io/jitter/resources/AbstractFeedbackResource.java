@@ -8,6 +8,8 @@ import io.jitter.core.feedback.TweetFeedbackRelevanceModel;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.Stopper;
+import org.apache.commons.math3.distribution.EnumeratedDistribution;
+import org.apache.commons.math3.util.Pair;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -46,10 +48,19 @@ public class AbstractFeedbackResource {
     }
 
     private List<Document> sample(int fbDocs, List<Document> relDocs) {
-        Random random = new Random();
-        List<Document> sample = new ArrayList<>();
+        int numDocs = relDocs.size();
+        List<Pair<Integer, Double>> probabilities = new ArrayList<>(numDocs);
+        for (int i = 0; i < numDocs; i++) {
+            // TODO: Fix Lucene QL scores
+            // double prob = Math.exp(relDocs.get(i).getRsv());
+            probabilities.add(new Pair<>(i, 1.0/(i+1)));
+        }
+
+        EnumeratedDistribution<Integer> dist = new EnumeratedDistribution<>(probabilities);
+        List<Document> sample = new ArrayList<>(fbDocs);
         for (int i = 0; i < fbDocs; i++) {
-            Document doc = relDocs.get(random.nextInt(relDocs.size()));
+            int pos = dist.sample();
+            Document doc = relDocs.get(pos);
             sample.add(doc);
         }
         return sample;
