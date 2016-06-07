@@ -33,13 +33,13 @@ public class ShardRanker {
     private final int _numShards;
 
     // Taily parameter used in Eq (11)
-    private final int _n_c;
+    private final float _n_c;
 
-    public ShardRanker(List<String> _shardIds, String indexPath, Analyzer analyzer, int _n_c, String dbPath, String shardsDbPath) {
+    public ShardRanker(List<String> _shardIds, String indexPath, Analyzer analyzer, float _n_c, String dbPath, String shardsDbPath) {
         this(_shardIds.toArray(new String[_shardIds.size()]), indexPath, analyzer, _n_c, dbPath, shardsDbPath);
     }
 
-    public ShardRanker(String[] _shardIds, String indexPath, Analyzer analyzer, int _n_c, String dbPath, String shardsDbPath) {
+    public ShardRanker(String[] _shardIds, String indexPath, Analyzer analyzer, float _n_c, String dbPath, String shardsDbPath) {
         this._shardIds = _shardIds;
         this.indexPath = indexPath;
         this.analyzer = analyzer;
@@ -314,7 +314,7 @@ public class ShardRanker {
             // these var ~= 0 cases should be handled carefully; instead of n_i = 1,
             // it could be there are two or more very similarly scoring docs; We keep track
             // of the df of these shards and use that instead of n_i = 1.
-            int norm = _n_c;
+            float norm = _n_c;
             for (int i = 1; i < _numShards + 1; i++) {
                 if (hasATerm[i]) {
                     ranking.put(_shardIds[i - 1], dfTerm[i] * norm);

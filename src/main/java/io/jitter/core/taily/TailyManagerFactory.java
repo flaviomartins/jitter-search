@@ -23,7 +23,7 @@ public class TailyManagerFactory {
     private float mu;
 
     @NotNull
-    private int nc;
+    private float nc;
 
     @NotEmpty
     private List<String> users;
@@ -71,12 +71,12 @@ public class TailyManagerFactory {
     }
 
     @JsonProperty
-    public int getNc() {
+    public float getNc() {
         return nc;
     }
 
     @JsonProperty
-    public void setNc(int nc) {
+    public void setNc(float nc) {
         this.nc = nc;
     }
 
