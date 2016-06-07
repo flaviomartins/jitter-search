@@ -42,6 +42,7 @@ public class ShardsManager implements Managed {
 
     private final Analyzer analyzer;
     private final LMDirichletSimilarity similarity;
+    private final QueryLikelihoodModel qlModel;
 
     private DirectoryReader reader;
     private IndexSearcher searcher;
@@ -79,6 +80,7 @@ public class ShardsManager implements Managed {
         this.topics = treeMap;
 
         similarity = new LMDirichletSimilarity(mu);
+        qlModel = new QueryLikelihoodModel(mu);
 
         if (!stopwords.isEmpty()) {
             stopper = new Stopper(stopwords);
@@ -306,8 +308,6 @@ public class ShardsManager implements Managed {
             ids[i] = scoreDoc.doc;
             scores[i] = scoreDoc.score;
         }
-
-        QueryLikelihoodModel qlModel = new QueryLikelihoodModel(indexSearcher.getIndexReader(), mu);
 
         List<Document> docs = SearchUtils.getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT);
         if (filterRT) {

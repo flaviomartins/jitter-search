@@ -41,6 +41,7 @@ public class SearchManager implements Managed {
 
     private static final Analyzer ANALYZER = new TweetAnalyzer();
     private static final Similarity SIMILARITY = new LMDirichletSimilarity(2500);
+    private static final QueryLikelihoodModel QL_MODEL = new QueryLikelihoodModel(2500);
 
     private final String indexPath;
     private final String databasePath;
@@ -113,9 +114,7 @@ public class SearchManager implements Managed {
             scores[i] = scoreDoc.score;
         }
 
-        QueryLikelihoodModel qlModel = new QueryLikelihoodModel(indexSearcher.getIndexReader());
-
-        List<Document> docs = SearchUtils.getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT, true);
+        List<Document> docs = SearchUtils.getDocs(indexSearcher, QL_MODEL, topDocs, query, n, filterRT, true);
         if (filterRT) {
             logger.info("filter_rt count: {}", nDocsReturned - docs.size());
         }

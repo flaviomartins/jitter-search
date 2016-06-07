@@ -61,7 +61,7 @@ public class SearchUtils {
             }
 
             if (qlModel != null && weights != null) {
-                doc.rsv = qlModel.computeQLScore(weights, doc.text);
+                doc.rsv = qlModel.computeQLScore(indexReader, weights, doc.text);
             } else {
                 doc.rsv = scoreDoc.score;
             }
