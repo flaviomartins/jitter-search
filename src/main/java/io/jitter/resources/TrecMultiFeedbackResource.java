@@ -113,9 +113,9 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
         FeatureVector shardsFV = null;
         if (shardResults.totalHits > 0) {
             if (fbBootstrap.get()) {
-                shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
-            } else {
                 shardsFV = buildBootstrapFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+            } else {
+                shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
             }
         }
 
