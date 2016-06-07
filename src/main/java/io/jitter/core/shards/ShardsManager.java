@@ -1,6 +1,7 @@
 package io.jitter.core.shards;
 
 import cc.twittertools.index.IndexStatuses;
+import cc.twittertools.util.QueryLikelihoodModel;
 import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
@@ -306,7 +307,9 @@ public class ShardsManager implements Managed {
             scores[i] = scoreDoc.score;
         }
 
-        List<Document> docs = SearchUtils.getDocs(indexSearcher, topDocs, n, filterRT);
+        QueryLikelihoodModel qlModel = new QueryLikelihoodModel(indexSearcher.getIndexReader(), mu);
+
+        List<Document> docs = SearchUtils.getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT);
         if (filterRT) {
             logger.info("filter_rt count: {}", nDocsReturned - docs.size());
         }

@@ -1,6 +1,7 @@
 package io.jitter.core.search;
 
 import cc.twittertools.index.IndexStatuses;
+import cc.twittertools.util.QueryLikelihoodModel;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
@@ -112,7 +113,9 @@ public class SearchManager implements Managed {
             scores[i] = scoreDoc.score;
         }
 
-        List<Document> docs = SearchUtils.getDocs(indexSearcher, topDocs, n, filterRT, true);
+        QueryLikelihoodModel qlModel = new QueryLikelihoodModel(indexSearcher.getIndexReader());
+
+        List<Document> docs = SearchUtils.getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT, true);
         if (filterRT) {
             logger.info("filter_rt count: {}", nDocsReturned - docs.size());
         }

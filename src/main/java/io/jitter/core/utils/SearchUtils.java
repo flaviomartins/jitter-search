@@ -1,9 +1,11 @@
 package io.jitter.core.utils;
 
 import cc.twittertools.index.IndexStatuses;
+import cc.twittertools.util.QueryLikelihoodModel;
 import com.google.common.collect.Lists;
 import io.jitter.api.search.Document;
 import io.jitter.core.document.DocVector;
+import io.jitter.core.rerank.DocumentComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
@@ -15,13 +17,18 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.util.BytesRef;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 public class SearchUtils {
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, TopDocs topDocs, int n, boolean filterRT, boolean buildDocVector) throws IOException {
+    public static List<Document> getDocs(IndexSearcher indexSearcher, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT, boolean buildDocVector) throws IOException {
         IndexReader indexReader = indexSearcher.getIndexReader();
+
+
+        Map<String, Float> weights = null;
+        if (qlModel != null) {
+            weights = qlModel.parseQuery(query);
+        }
 
         int count = 0;
         List<Document> docs = Lists.newArrayList();
@@ -42,7 +49,6 @@ public class SearchUtils {
             }
 
             Document doc = new Document(hit);
-            doc.rsv = scoreDoc.score;
 
             // Throw away retweets.
             if (filterRT && StringUtils.startsWithIgnoreCase(doc.getText(), "RT ")) {
@@ -54,15 +60,26 @@ public class SearchUtils {
                 doc.setDocVector(docVector);
             }
 
+            if (qlModel != null && weights != null) {
+                doc.rsv = qlModel.computeQLScore(weights, doc.text);
+            } else {
+                doc.rsv = scoreDoc.score;
+            }
+
             docs.add(doc);
             count += 1;
+        }
+
+        if (qlModel != null) {
+            Comparator<Document> comparator = new DocumentComparator(true);
+            Collections.sort(docs, comparator);
         }
 
         return docs;
     }
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, TopDocs topDocs, int n, boolean filterRT) throws IOException {
-        return getDocs(indexSearcher, topDocs, n, filterRT, false);
+    public static List<Document> getDocs(IndexSearcher indexSearcher, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT) throws IOException {
+        return getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT, false);
     }
 
     private static LinkedHashMap<String, Integer> getTermsMap(IndexReader indexReader) throws IOException {
