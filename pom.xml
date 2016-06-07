@@ -40,7 +40,7 @@
         <commons-io.version>2.5</commons-io.version>
         <httpclient.version>4.4.1</httpclient.version>
 
-        <twittertools.version>1.4.4-SNAPSHOT</twittertools.version>
+        <twittertools.version>1.4.5-SNAPSHOT</twittertools.version>
         <ranklib.version>2.6</ranklib.version>
         <kstem.version>3.4</kstem.version>
         <sqlite-jdbc.version>3.8.11.2</sqlite-jdbc.version>

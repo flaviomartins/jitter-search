@@ -51,9 +51,14 @@ public class AbstractFeedbackResource {
         int numDocs = relDocs.size();
         List<Pair<Integer, Double>> probabilities = new ArrayList<>(numDocs);
         for (int i = 0; i < numDocs; i++) {
-            // TODO: Fix Lucene QL scores
-            // double prob = Math.exp(relDocs.get(i).getRsv());
-            probabilities.add(new Pair<>(i, 1.0/(i+1)));
+            double rsv = relDocs.get(i).getRsv();
+            double prob;
+            if (rsv >= 0) {
+                prob = 1.0;
+            } else {
+                prob = Math.exp(rsv);
+            }
+            probabilities.add(new Pair<>(i, prob));
         }
 
         EnumeratedDistribution<Integer> dist = new EnumeratedDistribution<>(probabilities);

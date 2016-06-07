@@ -501,7 +501,12 @@ public class FeedbackRelevanceModel {
 
         for (int i = 0; i < numDocVectors; i++) {
             Document hit = relDocs.get(i);
-            scores[i] = hit.getRsv();
+            double rsv = hit.getRsv();
+            if (rsv >= 0) {
+                scores[i] = rsv;
+            } else {
+                scores[i] = Math.exp(rsv);
+            }
 
             DocVector docVector = hit.getDocVector();
             // if the term vectors are unavailable generate it here

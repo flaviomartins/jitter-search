@@ -113,7 +113,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
             } else {
                 LOG.warn("Cache file not found: " + f.getPath()
                         + ". Connecting to the server...");
-                results = client.search(query, maxId, numResultsToFetch);
+                results = client.search(query, maxId, numResultsToFetch, true);
                 synchronized (this) {
                     ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(f)));
                     oos.writeObject(results);
@@ -122,7 +122,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
                 LOG.warn("Writing " + results.size() + " results: " + f.getPath() + ".");
             }
         } else {
-            results = client.search(query, maxId, numResults);
+            results = client.search(query, maxId, numResults, true);
         }
 
         // Convert to custom class
