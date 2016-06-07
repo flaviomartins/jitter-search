@@ -61,6 +61,7 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
                                  @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
                                  @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                  @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
+                                 @QueryParam("fbBootstrap") @DefaultValue("false") BooleanParam fbBootstrap,
                                  @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -84,7 +85,12 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
         FeatureVector fbVector = null;
         if (fbDocs.get() > 0 && fbTerms.get() > 0) {
             FeatureVector queryFV = buildQueryFV(query, trecMicroblogAPIWrapper.getStopper());
-            FeatureVector feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+            FeatureVector feedbackFV = null;
+            if (fbBootstrap.get()) {
+                feedbackFV = buildBootstrapFeedbackFV(fbDocs.get(), fbTerms.get(), selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+            } else {
+                feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+            }
             fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, feedbackFV);
 
             logger.info("\n fbDocs: {} Feature Vector:\n{}", selectResults.scoreDocs.size(), fbVector.toString());

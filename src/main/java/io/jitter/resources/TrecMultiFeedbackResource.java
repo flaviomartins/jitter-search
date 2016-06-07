@@ -81,6 +81,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
                                           @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                           @QueryParam("fbCols") @DefaultValue("3") IntParam fbCols,
                                           @QueryParam("fbMerge") @DefaultValue("false") BooleanParam fbMerge,
+                                          @QueryParam("fbBootstrap") @DefaultValue("false") BooleanParam fbBootstrap,
                                           @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
@@ -111,7 +112,11 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
 
         FeatureVector shardsFV = null;
         if (shardResults.totalHits > 0) {
-            shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+            if (fbBootstrap.get()) {
+                shardsFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+            } else {
+                shardsFV = buildBootstrapFeedbackFV(fbDocs.get(), fbTerms.get(), shardResults, shardsManager.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+            }
         }
 
         FeatureVector feedbackFV = null;
