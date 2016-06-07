@@ -28,9 +28,9 @@ public class Taily {
 
     private final String dbPath;
     private final String indexPath;
-    private final int mu;
+    private final float mu;
 
-    public Taily(String dbPath, String indexPath, int mu) {
+    public Taily(String dbPath, String indexPath, float mu) {
         this.dbPath = dbPath;
         this.indexPath = indexPath;
         this.mu = mu;

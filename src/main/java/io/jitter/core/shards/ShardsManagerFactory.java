@@ -20,7 +20,7 @@ public class ShardsManagerFactory {
     private String stopwords;
 
     @NotNull
-    private int mu;
+    private float mu;
 
     @NotEmpty
     private String method;
@@ -62,12 +62,12 @@ public class ShardsManagerFactory {
     }
 
     @JsonProperty
-    public int getMu() {
+    public float getMu() {
         return mu;
     }
 
     @JsonProperty
-    public void setMu(int mu) {
+    public void setMu(float mu) {
         this.mu = mu;
     }
 

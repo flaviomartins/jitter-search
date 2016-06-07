@@ -1,23 +1,23 @@
 package io.jitter.core.features;
 
 public class IndriFeature {
-    public static final int DEFAULT_MU = 2500;
+    public static final float DEFAULT_MU = 2500;
 
-    private int mu;
+    private float mu;
 
     public IndriFeature() {
         this(DEFAULT_MU);
     }
 
-    public IndriFeature(int mu) {
+    public IndriFeature(float mu) {
         this.mu = mu;
     }
 
-    public int getMu() {
+    public float getMu() {
         return mu;
     }
 
-    public void setMu(int mu) {
+    public void setMu(float mu) {
         this.mu = mu;
     }
 

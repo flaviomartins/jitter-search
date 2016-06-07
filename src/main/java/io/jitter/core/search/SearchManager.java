@@ -8,7 +8,6 @@ import io.jitter.api.collectionstatistics.IndexCollectionStats;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.utils.SearchUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
 import org.apache.lucene.misc.TermStats;
@@ -16,7 +15,6 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.LMDirichletSimilarity;
-import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
@@ -27,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.*;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -40,25 +37,29 @@ public class SearchManager implements Managed {
     public static final int MAX_TERMS_RESULTS = 1000;
 
     private static final Analyzer ANALYZER = new TweetAnalyzer();
-    private static final Similarity SIMILARITY = new LMDirichletSimilarity(2500);
-    private static final QueryLikelihoodModel QL_MODEL = new QueryLikelihoodModel(2500);
+
+    private final LMDirichletSimilarity similarity;
+    private final QueryLikelihoodModel qlModel;
 
     private final String indexPath;
-    private final String databasePath;
     private final boolean live;
     private Stopper stopper;
+    private final float mu;
 
     private DirectoryReader reader;
     private IndexSearcher searcher;
 
-    public SearchManager(String indexPath, String databasePath, boolean live) {
+    public SearchManager(String indexPath, boolean live, float mu) {
         this.indexPath = indexPath;
-        this.databasePath = databasePath;
         this.live = live;
+        this.mu = mu;
+
+        similarity = new LMDirichletSimilarity(mu);
+        qlModel = new QueryLikelihoodModel(mu);
     }
 
-    public SearchManager(String indexPath, String databasePath, boolean live, String stopwords) {
-        this(indexPath, databasePath, live);
+    public SearchManager(String indexPath, boolean live, String stopwords, float mu) {
+        this(indexPath, live, mu);
         stopper = new Stopper(stopwords);
     }
 
@@ -78,12 +79,16 @@ public class SearchManager implements Managed {
         }
     }
 
+    public String getIndexPath() {
+        return indexPath;
+    }
+
     public Stopper getStopper() {
         return stopper;
     }
 
-    public void setStopper(Stopper stopper) {
-        this.stopper = stopper;
+    public float getMu() {
+        return mu;
     }
 
     public TopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
@@ -114,7 +119,7 @@ public class SearchManager implements Managed {
             scores[i] = scoreDoc.score;
         }
 
-        List<Document> docs = SearchUtils.getDocs(indexSearcher, QL_MODEL, topDocs, query, n, filterRT, true);
+        List<Document> docs = SearchUtils.getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT, true);
         if (filterRT) {
             logger.info("filter_rt count: {}", nDocsReturned - docs.size());
         }
@@ -150,95 +155,6 @@ public class SearchManager implements Managed {
         return isearch(query, n);
     }
 
-    public void index() throws IOException {
-        logger.info("Indexing started!");
-        File indexPath = new File(this.indexPath);
-        Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, ANALYZER);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
-
-        final FieldType textOptions = new FieldType();
-        textOptions.setIndexed(true);
-        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-        textOptions.setStored(true);
-        textOptions.setTokenized(true);
-        textOptions.setStoreTermVectors(true);
-
-        Connection connection;
-        int cnt = 0;
-        try (IndexWriter writer = new IndexWriter(dir, config)) {
-            // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
-            connection.setAutoCommit(false);
-
-            try {
-                PreparedStatement statement = connection.prepareStatement(
-                        "SELECT * FROM tweets;");
-                ResultSet rs = statement.executeQuery();
-
-                while (rs.next()) {
-                    cnt++;
-                    org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
-                    long id = rs.getLong(IndexStatuses.StatusField.ID.name);
-                    doc.add(new LongField(IndexStatuses.StatusField.ID.name, id, Field.Store.YES));
-                    doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, rs.getLong(IndexStatuses.StatusField.EPOCH.name), Field.Store.YES));
-                    doc.add(new TextField(IndexStatuses.StatusField.SCREEN_NAME.name, rs.getString(IndexStatuses.StatusField.SCREEN_NAME.name), Field.Store.YES));
-
-                    doc.add(new Field(IndexStatuses.StatusField.TEXT.name, rs.getString(IndexStatuses.StatusField.TEXT.name), textOptions));
-
-//                    doc.add(new IntField(IndexStatuses.StatusField.FRIENDS_COUNT.name, rs.getInt(IndexStatuses.StatusField.FRIENDS_COUNT.name), Field.Store.YES));
-                    doc.add(new IntField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name, rs.getInt(IndexStatuses.StatusField.FOLLOWERS_COUNT.name), Field.Store.YES));
-                    doc.add(new IntField(IndexStatuses.StatusField.STATUSES_COUNT.name, rs.getInt(IndexStatuses.StatusField.STATUSES_COUNT.name), Field.Store.YES));
-
-                    long inReplyToStatusId = rs.getLong(IndexStatuses.StatusField.IN_REPLY_TO_STATUS_ID.name);
-                    if (inReplyToStatusId > 0) {
-                        doc.add(new LongField(IndexStatuses.StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId, Field.Store.YES));
-                        doc.add(new LongField(IndexStatuses.StatusField.IN_REPLY_TO_USER_ID.name, rs.getLong(IndexStatuses.StatusField.IN_REPLY_TO_USER_ID.name), Field.Store.YES));
-                    }
-
-                    String lang = rs.getString(IndexStatuses.StatusField.LANG.name);
-                    if (lang != null && !"unknown".equals(lang)) {
-                        doc.add(new TextField(IndexStatuses.StatusField.LANG.name, lang, Field.Store.YES));
-                    }
-
-                    long retweetStatusId = rs.getLong(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name);
-                    if (retweetStatusId > 0) {
-                        doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name, retweetStatusId, Field.Store.YES));
-                        doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_USER_ID.name, rs.getLong(IndexStatuses.StatusField.RETWEETED_USER_ID.name), Field.Store.YES));
-                        int retweetCount = rs.getInt(IndexStatuses.StatusField.RETWEET_COUNT.name);
-                        doc.add(new IntField(IndexStatuses.StatusField.RETWEET_COUNT.name, retweetCount, Field.Store.YES));
-                        if (retweetCount < 0 || retweetStatusId < 0) {
-                            logger.warn("Error parsing retweet fields of {}", id);
-                        }
-                    }
-
-                    Term delTerm = new Term(IndexStatuses.StatusField.ID.name, Long.toString(id));
-                    writer.updateDocument(delTerm, doc);
-                    if (cnt % 10000 == 0) {
-                        logger.info("{} statuses indexed", cnt);
-                    }
-                }
-
-            } catch (SQLException e) {
-                // if the error message is "out of memory",
-                // it probably means no database file is found
-                logger.error(e.getMessage());
-            } finally {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    // connection close failed.
-                    logger.error(e.getMessage());
-                }
-            }
-            logger.info("Total of {} statuses added", cnt);
-        } catch (Exception e) {
-            logger.error("{}", e.getMessage());
-        } finally {
-            dir.close();
-        }
-    }
-
     public void forceMerge() throws IOException {
         logger.info("Merging started!");
         long startTime = System.currentTimeMillis();
@@ -259,14 +175,6 @@ public class SearchManager implements Managed {
         }
     }
 
-    public String getIndexPath() {
-        return indexPath;
-    }
-
-    public String getDatabasePath() {
-        return databasePath;
-    }
-
     public TermStats[] getHighFreqTerms(int n) throws Exception {
         int numResults = n > MAX_TERMS_RESULTS ? MAX_TERMS_RESULTS : n;
         return HighFreqTerms.getHighFreqTerms(reader, numResults, IndexStatuses.StatusField.TEXT.name, new HighFreqTerms.DocFreqComparator());
@@ -277,14 +185,14 @@ public class SearchManager implements Managed {
             if (reader == null) {
                 reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
                 searcher = new IndexSearcher(reader);
-                searcher.setSimilarity(SIMILARITY);
+                searcher.setSimilarity(similarity);
             } else if (live && !reader.isCurrent()) {
                 DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
                 if (newReader != null) {
                     reader.close();
                     reader = newReader;
                     searcher = new IndexSearcher(reader);
-                    searcher.setSimilarity(SIMILARITY);
+                    searcher.setSimilarity(similarity);
                 }
             }
         } catch (IndexNotFoundException e) {

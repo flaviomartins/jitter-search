@@ -17,6 +17,6 @@ public class SearchManagerIndexTask extends Task {
 
     @Override
     public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
-        searchManager.index();
+        // not implemented
     }
 }

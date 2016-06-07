@@ -22,7 +22,7 @@ public class TailyManager implements Managed {
 
     private final String dbPath;
     private final String index;
-    private final int mu;
+    private final float mu;
     private final int nc;
     private final List<String> users;
     private Map<String, List<String>> topics;
@@ -30,7 +30,7 @@ public class TailyManager implements Managed {
     private ShardRanker ranker;
     private ShardRanker topicsRanker;
 
-    public TailyManager(String dbPath, String index, String stopwords, int mu, int nc, List<String> users) {
+    public TailyManager(String dbPath, String index, String stopwords, float mu, int nc, List<String> users) {
         this.dbPath = dbPath;
         this.index = index;
         this.mu = mu;
@@ -49,7 +49,7 @@ public class TailyManager implements Managed {
         }
     }
 
-    public TailyManager(String dbPath, String index, String stopwords, int mu, int nc, List<String> users, Map<String, List<String>> topics) {
+    public TailyManager(String dbPath, String index, String stopwords, float mu, int nc, List<String> users, Map<String, List<String>> topics) {
         this(dbPath, index, stopwords, mu, nc, users);
         this.topics = topics;
     }

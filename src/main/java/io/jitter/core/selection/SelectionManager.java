@@ -54,7 +54,7 @@ public class SelectionManager implements Managed {
     private final String collection;
     private final String indexPath;
     private Stopper stopper;
-    private final int mu;
+    private final float mu;
     private final String method;
     private final boolean removeDuplicates;
     private final boolean live;
@@ -69,7 +69,7 @@ public class SelectionManager implements Managed {
     private ShardsManager shardsManager;
     private TwitterManager twitterManager;
 
-    public SelectionManager(String collection, String indexPath, String stopwords, int mu, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
+    public SelectionManager(String collection, String indexPath, String stopwords, float mu, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
         this.collection = collection;
         this.indexPath = indexPath;
         this.mu = mu;
@@ -134,7 +134,7 @@ public class SelectionManager implements Managed {
         return stopper;
     }
 
-    public int getMu() {
+    public float getMu() {
         return mu;
     }
 

@@ -4,49 +4,51 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.constraints.NotNull;
+
 public class SearchManagerFactory {
 
     @NotEmpty
-    private String indexPath;
-
-    @NotEmpty
-    private String databasePath;
+    private String index;
 
     @NotEmpty
     private String stopwords;
 
-    @JsonProperty("index")
-    public String getIndexPath() {
-        return indexPath;
+    @NotNull
+    private float mu;
+
+    @JsonProperty
+    public String getIndex() {
+        return index;
     }
 
-    @JsonProperty("index")
-    public void setIndexPath(String indexPath) {
-        this.indexPath = indexPath;
+    @JsonProperty
+    public void setIndex(String index) {
+        this.index = index;
     }
 
-    @JsonProperty("database")
-    public String getDatabasePath() {
-        return databasePath;
-    }
-
-    @JsonProperty("database")
-    public void setDatabasePath(String databasePath) {
-        this.databasePath = databasePath;
-    }
-
-    @JsonProperty("stopwords")
+    @JsonProperty
     public String getStopwords() {
         return stopwords;
     }
 
-    @JsonProperty("stopwords")
+    @JsonProperty
     public void setStopwords(String stopwords) {
         this.stopwords = stopwords;
     }
 
+    @JsonProperty
+    public float getMu() {
+        return mu;
+    }
+
+    @JsonProperty
+    public void setMu(float mu) {
+        this.mu = mu;
+    }
+
     public SearchManager build(Environment environment, boolean live) {
-        final SearchManager searchManager = new SearchManager(indexPath, databasePath, live, stopwords);
+        final SearchManager searchManager = new SearchManager(index, live, stopwords, mu);
         environment.lifecycle().manage(searchManager);
         return searchManager;
     }
