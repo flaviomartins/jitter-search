@@ -316,7 +316,7 @@ public class ShardRanker {
                 if (hasATerm[i]) {
                     ranking.put(_shardIds[i - 1], dfTerm[i]);
                 } else {
-                    ranking.put(_shardIds[i - 1], 1.0);
+                    ranking.put(_shardIds[i - 1], 0.0);
                 }
             }
             return sortAndNormalization(ranking);
