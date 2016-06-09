@@ -262,9 +262,9 @@ public class ShardRanker {
                 String stemKey = stem + FeatureStore.SIZE_FEAT_SUFFIX;
                 double df = _stores[i].getFeature(stemKey);
 
-                // TODO: fix this kludge
-                if (df == -1) {
-                    df = 0;
+                // smooth it
+                if (df < 10) {
+                    df = 10;
                 }
 
                 // store df for all_i calculation
@@ -308,7 +308,7 @@ public class ShardRanker {
         } else if (queryVar[0] < 1e-10) {
             // case 2: there is only 1 document in entire collection that matches any query term
             // return the shard with the document with n_i = 1
-            
+
             // these var ~= 0 cases should be handled carefully; instead of n_i = 1,
             // it could be there are two or more very similarly scoring docs; We keep track
             // of the df of these shards and use that instead of n_i = 1.
@@ -346,10 +346,10 @@ public class ShardRanker {
 
         // if n_c > all[0], set probability to 1
         if (p_c >= 1.0)
-            p_c = 1.0 - 1e-10; // ZOMG
+            p_c = 1.0 - 1e-16; // ZOMG
 
         GammaDistribution collectionGamma = new GammaDistribution(k[0], theta[0]);
-        double s_c = collectionGamma.inverseCumulativeProbability(p_c);
+        double s_c = collectionGamma.inverseCumulativeProbability(1.0 - p_c);
 
         // calculate n_i for all shards and store it in ranking vector so we can sort (not normalized)
         for (int i = 1; i < _numShards + 1; i++) {
@@ -370,7 +370,7 @@ public class ShardRanker {
             } else {
                 // do normal Taily stuff pre-normalized Eq (12)
                 GammaDistribution shardGamma = new GammaDistribution(k[i], theta[i]);
-                double p_i = 1.0 - shardGamma.cumulativeProbability(s_c);
+                double p_i = shardGamma.cumulativeProbability(1.0 - s_c);
                 ranking.put(_shardIds[i - 1], all[i] * p_i);
             }
         }
