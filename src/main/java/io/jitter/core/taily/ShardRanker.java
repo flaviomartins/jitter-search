@@ -246,7 +246,6 @@ public class ShardRanker {
         // calculate Any_i & all_i
         double[] all = new double[_numShards + 1];
         double[] any = new double[_numShards + 1];
-        String sizeKey = FeatureStore.SIZE_FEAT_SUFFIX;
 
         for (int i = 0; i < _numShards + 1; i++) {
             // initialize Any_i & all_i
@@ -254,8 +253,7 @@ public class ShardRanker {
             all[i] = 0.0;
 
             // get size of current shard
-            double shardSize;
-            shardSize = _stores[i].getFeature(sizeKey);
+            double shardSize = _stores[i].getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
 
             // for each query term, calculate inner bracket of any_i equation
             double[] dfs = new double[stems.size()];
@@ -314,10 +312,11 @@ public class ShardRanker {
             // these var ~= 0 cases should be handled carefully; instead of n_i = 1,
             // it could be there are two or more very similarly scoring docs; We keep track
             // of the df of these shards and use that instead of n_i = 1.
-            float norm = _n_c;
             for (int i = 1; i < _numShards + 1; i++) {
                 if (hasATerm[i]) {
-                    ranking.put(_shardIds[i - 1], dfTerm[i] * norm);
+                    ranking.put(_shardIds[i - 1], dfTerm[i]);
+                } else {
+                    ranking.put(_shardIds[i - 1], 1.0);
                 }
             }
             return sortAndNormalization(ranking);
@@ -355,14 +354,18 @@ public class ShardRanker {
         // calculate n_i for all shards and store it in ranking vector so we can sort (not normalized)
         for (int i = 1; i < _numShards + 1; i++) {
             // if there are no query terms in shard, skip
-            if (!hasATerm[i])
+            if (!hasATerm[i]) {
+                ranking.put(_shardIds[i - 1], 0.0);
                 continue;
+            }
 
             // if var is ~= 0, then don't build a distribution.
             // based on the mean of the shard (which is the score of the single doc), n_i is either 0 or 1
             if (queryVar[i] < 1e-10 && hasATerm[i]) {
                 if (queryMean[i] >= s_c) {
                     ranking.put(_shardIds[i - 1], 1.0);
+                } else {
+                    ranking.put(_shardIds[i - 1], 0.0);
                 }
             } else {
                 // do normal Taily stuff pre-normalized Eq (12)
@@ -381,16 +384,23 @@ public class ShardRanker {
         TreeMap<String, Double> sortedMap = new TreeMap<>(comparator);
         sortedMap.putAll(ranking);
 
-        // get normalization factor (top 5 shards sufficient)
-        double sum = 0.0;
-        int i = 0;
-        int limit = Math.min(5, ranking.size());
+        double sum = 0;
         for (Map.Entry<String, Double> entry : sortedMap.entrySet()) {
             sum += entry.getValue();
-            if (i > limit)
-                break;
         }
-        double norm = _n_c / sum;
+
+        double norm;
+        // if sum is 0 we use the size of the shard
+        if (sum == 0) {
+            norm = 1;
+            for (Map.Entry<String, Double> entry : sortedMap.entrySet()) {
+                int i = Lists.newArrayList(_shardIds).indexOf(entry.getKey().toLowerCase(Locale.ROOT)) + 1;
+                double shardSize = _stores[i].getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
+                entry.setValue(shardSize);
+            }
+        } else {
+            norm = _n_c / sum;
+        }
 
         // normalize shard scores Eq (12)
         TreeMap<String, Double> normedMap = new TreeMap<>(comparator);
