@@ -346,7 +346,7 @@ public class ShardRanker {
 
         // if n_c > all[0], set probability to 1
         if (p_c >= 1.0)
-            p_c = 1.0 - 1e-16; // ZOMG
+            p_c = 1.0 - GammaDistribution.DEFAULT_INVERSE_ABSOLUTE_ACCURACY; // ZOMG
 
         GammaDistribution collectionGamma = new GammaDistribution(k[0], theta[0]);
         double s_c = collectionGamma.inverseCumulativeProbability(1.0 - p_c);
@@ -370,7 +370,7 @@ public class ShardRanker {
             } else {
                 // do normal Taily stuff pre-normalized Eq (12)
                 GammaDistribution shardGamma = new GammaDistribution(k[i], theta[i]);
-                double p_i = shardGamma.cumulativeProbability(1.0 - s_c);
+                double p_i = 1.0 - shardGamma.cumulativeProbability(s_c);
                 ranking.put(_shardIds[i - 1], all[i] * p_i);
             }
         }
@@ -389,18 +389,12 @@ public class ShardRanker {
             sum += entry.getValue();
         }
 
-        double norm;
-        // if sum is 0 we use the size of the shard
+        // if sum is 0 no shard will be selected
         if (sum == 0) {
-            norm = 1;
-            for (Map.Entry<String, Double> entry : sortedMap.entrySet()) {
-                int i = Lists.newArrayList(_shardIds).indexOf(entry.getKey().toLowerCase(Locale.ROOT)) + 1;
-                double shardSize = _stores[i].getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
-                entry.setValue(shardSize);
-            }
-        } else {
-            norm = _n_c / sum;
+            logger.error("BAD sum");
         }
+
+        double norm = _n_c / sum;
 
         // normalize shard scores Eq (12)
         TreeMap<String, Double> normedMap = new TreeMap<>(comparator);
