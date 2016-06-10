@@ -204,7 +204,7 @@ public class Taily {
                         double tf = docsEnum.freq();
 
                         // calculate Indri score feature and sum it up
-                        double feat = indriFeature.value(tf, ctf, totalTermCount, length);
+                        double feat = indriFeature.value(1.0, ctf, totalTermCount, length);
 
                         ShardData currShard = shardDataMap.get(currShardId);
                         if (currShard == null) {
@@ -355,7 +355,7 @@ public class Taily {
                         double tf = docsEnum.freq();
 
                         // calculate Indri score feature and sum it up
-                        double feat = indriFeature.value(tf, ctf, totalTermCount, length);
+                        double feat = indriFeature.value(1.0, ctf, totalTermCount, length);
 
                         ShardData currShard = shardDataMap.get(currShardId);
                         if (currShard == null) {
