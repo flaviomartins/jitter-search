@@ -63,8 +63,8 @@ public class SelectionManager implements Managed {
 
     private ShardStatsBuilder shardStatsBuilder;
     private Map<String, String> reverseTopicMap;
-    private ShardStats collectionsShardStats;
-    private ShardStats topicsShardStats;
+    private ShardStats csiStats;
+    private ShardStats shardStats;
 
     private ShardsManager shardsManager;
     private TwitterManager twitterManager;
@@ -111,8 +111,8 @@ public class SelectionManager implements Managed {
 
     public void collectStats() throws IOException {
         shardStatsBuilder.collectStats();
-        collectionsShardStats = shardStatsBuilder.getCollectionsShardStats();
-        topicsShardStats = shardStatsBuilder.getTopicsShardStats();
+        csiStats = shardStatsBuilder.getCollectionsShardStats();
+        shardStats = shardStatsBuilder.getTopicsShardStats();
     }
 
     @Override
@@ -150,12 +150,12 @@ public class SelectionManager implements Managed {
         return removeDuplicates;
     }
 
-    public ShardStats getCollectionsShardStats() {
-        return collectionsShardStats;
+    public ShardStats getCsiStats() {
+        return csiStats;
     }
 
-    public ShardStats getTopicsShardStats() {
-        return topicsShardStats;
+    public ShardStats getShardStats() {
+        return shardStats;
     }
 
     public ShardsManager getShardsManager() {
@@ -166,12 +166,12 @@ public class SelectionManager implements Managed {
         return twitterManager;
     }
 
-    public void setCollectionsShardStats(ShardStats collectionsShardStats) {
-        this.collectionsShardStats = collectionsShardStats;
+    public void setCsiStats(ShardStats csiStats) {
+        this.csiStats = csiStats;
     }
 
-    public void setTopicsShardStats(ShardStats topicsShardStats) {
-        this.topicsShardStats = topicsShardStats;
+    public void setShardStats(ShardStats shardStats) {
+        this.shardStats = shardStats;
     }
 
     public void setShardsManager(ShardsManager shardsManager) {
@@ -184,10 +184,10 @@ public class SelectionManager implements Managed {
 
     public Map<String, Double> select(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
         List<Document> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
-        Map<String, Double> rankedCollections = selectionMethod.rank(topDocs);
+        Map<String, Double> rankedCollections = selectionMethod.rank(topDocs, csiStats);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getCollectionsShardStats() != null) {
-            Map<String, Double> map = selectionMethod.normalize(rankedCollections, collectionsShardStats, shardsManager.getCollectionsShardStats());
+            Map<String, Double> map = selectionMethod.normalize(rankedCollections, csiStats, shardsManager.getCollectionsShardStats());
             ranking = getSortedMap(map);
         } else {
             ranking = getSortedMap(rankedCollections);
@@ -198,29 +198,10 @@ public class SelectionManager implements Managed {
 
     public Map<String, Double> selectTopics(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
         List<Document> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
-        Map<String, Double> rankedCollections = selectionMethod.rank(topDocs);
-        Map<String, Double> rankedTopics = new HashMap<>();
-
-        for (String col : rankedCollections.keySet()) {
-            if (reverseTopicMap.containsKey(col.toLowerCase(Locale.ROOT))) {
-                String topic = reverseTopicMap.get(col.toLowerCase(Locale.ROOT)).toLowerCase(Locale.ROOT);
-                double cur = 0;
-
-                if (rankedTopics.containsKey(topic))
-                    cur = rankedTopics.get(topic);
-                else
-                    rankedTopics.put(topic, 0d);
-
-                double sum = cur + rankedCollections.get(col);
-                rankedTopics.put(topic, sum);
-            } else {
-                logger.warn("{} not mapped to a topic!", col);
-            }
-        }
-
+        Map<String, Double> rankedTopics = selectionMethod.rankTopics(topDocs, csiStats, shardStats, reverseTopicMap);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getTopicsShardStats() != null) {
-            Map<String, Double> map = selectionMethod.normalize(rankedTopics, topicsShardStats, shardsManager.getTopicsShardStats());
+            Map<String, Double> map = selectionMethod.normalize(rankedTopics, shardStats, shardsManager.getTopicsShardStats());
             ranking = getSortedMap(map);
         } else {
             ranking = getSortedMap(rankedTopics);

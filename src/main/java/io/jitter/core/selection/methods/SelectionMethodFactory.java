@@ -5,8 +5,8 @@ public class SelectionMethodFactory {
     public static SelectionMethod getMethod(String method) {
         if ("Votes".equalsIgnoreCase(method)) {
             return new Votes();
-        } else if ("ReDDE".equalsIgnoreCase(method)) {
-            return new ReDDE();
+        } else if ("Sizes".equalsIgnoreCase(method)) {
+            return new Sizes();
         } else if ("CRCSLIN".equalsIgnoreCase(method)) {
             return new CRCSLIN();
         } else if ("CRCSEXP".equalsIgnoreCase(method)) {

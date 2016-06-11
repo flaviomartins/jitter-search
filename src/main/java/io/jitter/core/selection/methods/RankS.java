@@ -23,7 +23,7 @@ public class RankS extends SelectionMethod {
     }
 
     @Override
-    public Map<String, Double> rank(List<Document> results) {
+    public Map<String, Double> rank(List<Document> results, ShardStats csiStats) {
         Map<String, Double> counts = getCounts(results);
 
         double minRsv = 0;

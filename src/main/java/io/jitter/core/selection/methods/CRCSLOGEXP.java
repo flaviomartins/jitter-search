@@ -1,6 +1,7 @@
 package io.jitter.core.selection.methods;
 
 import io.jitter.api.search.Document;
+import io.jitter.core.shards.ShardStats;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +13,7 @@ public class CRCSLOGEXP extends CRCSEXP {
     }
 
     @Override
-    public Map<String, Double> rank(List<Document> results) {
+    public Map<String, Double> rank(List<Document> results, ShardStats csiStats) {
         HashMap<String, Double> scores = getScores(results);
         Map<String, Double> counts = getCounts(results);
 

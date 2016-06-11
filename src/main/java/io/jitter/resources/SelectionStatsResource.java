@@ -41,15 +41,15 @@ public class SelectionStatsResource {
 
         long startTime = System.currentTimeMillis();
 
-        ShardStats collectionsShardStats = selectionManager.getCollectionsShardStats();
-        ShardStats topicsShardStats = selectionManager.getTopicsShardStats();
+        ShardStats csiStats = selectionManager.getCsiStats();
+        ShardStats shardStats = selectionManager.getShardStats();
 
         long endTime = System.currentTimeMillis();
 
         logger.info(String.format(Locale.ENGLISH, "%4dms selection manager stats", (endTime - startTime)));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        ShardStatsResponse shardStatsResponse = new ShardStatsResponse(collectionsShardStats, topicsShardStats);
+        ShardStatsResponse shardStatsResponse = new ShardStatsResponse(csiStats, shardStats);
         return new SelectionManagerStatsResponse(responseHeader, shardStatsResponse);
     }
 }
