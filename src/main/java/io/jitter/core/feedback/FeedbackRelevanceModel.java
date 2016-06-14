@@ -486,12 +486,6 @@ public class FeedbackRelevanceModel {
         return minDocFreq > 0 && docFreq < minDocFreq;
     }
 
-    public Collection<String> filterTerms(Collection<String> terms) {
-        terms.removeIf(this::isNoiseWord);
-        terms.removeIf(this::isUnfreqWord);
-        return terms;
-    }
-
     public FeatureVector like(List<Document> relDocs) throws IOException {
         int numDocVectors = relDocs.size();
         FeatureVector f = new FeatureVector();
@@ -525,9 +519,7 @@ public class FeedbackRelevanceModel {
                 docVector = aDocVector;
             }
 
-            Collection<String> terms = filterTerms(docVector.vector.keySet());
-            // TODO: minTermFreq filtering
-            vocab.addAll(terms);
+            vocab.addAll(docVector.vector.keySet());
             docVectors[i] = docVector;
         }
 
@@ -538,6 +530,10 @@ public class FeedbackRelevanceModel {
         }
 
         for (String term : vocab) {
+            // TODO: minTermFreq filtering
+            if (isNoiseWord(term) || isUnfreqWord(term))
+                continue;
+
             float fbWeight = 0.0f;
             for (int i = 0; i < docVectors.length; i++) {
                 int termFreq = docVectors[i].getTermFreq(term);
