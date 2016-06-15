@@ -12,10 +12,10 @@ public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
         super();
         Analyzer analyzer;
         if (stopper == null || stopper.asSet().isEmpty()) {
-            analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET);
+            analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET, false);
         } else {
             CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
-            analyzer = new TweetAnalyzer(charArraySet);
+            analyzer = new TweetAnalyzer(charArraySet, false);
         }
         setAnalyzer(analyzer);
         setMinWordLen(0);

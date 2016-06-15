@@ -132,6 +132,17 @@ public final class TweetAnalyzer extends StopwordAnalyzerBase {
     }
 
     /**
+     * Builds an analyzer with the given stop words.
+     *
+     * @param stopwords a stopword set
+     * @param stemming to optionally disable stemming
+     */
+    public TweetAnalyzer(CharArraySet stopwords, boolean stemming) {
+        this(stopwords, CharArraySet.EMPTY_SET);
+        this.stemming = stemming;
+    }
+
+    /**
      * Builds an analyzer with the given stop words. If a non-empty stem exclusion set is
      * provided this analyzer will add a {@link SetKeywordMarkerFilter} before
      * stemming.

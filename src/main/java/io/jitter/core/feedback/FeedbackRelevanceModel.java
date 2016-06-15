@@ -1,17 +1,21 @@
 package io.jitter.core.feedback;
 
+import cc.twittertools.index.TweetAnalyzer;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.utils.AnalyzerUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.similarities.DefaultSimilarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.*;
 
 
@@ -543,7 +547,8 @@ public class FeedbackRelevanceModel {
             }
 
             // Don Metzler's idf fix
-            float idf = similarity.idf(collectionStats.totalTermFreq(term), collectionStats.getSumTotalTermFreq());
+            String stem = stemTerm(term);
+            float idf = similarity.idf(collectionStats.totalTermFreq(stem), collectionStats.getSumTotalTermFreq());
             fbWeight *= idf;
 
             f.addFeatureWeight(term, fbWeight);
@@ -553,5 +558,16 @@ public class FeedbackRelevanceModel {
         f.scaleToUnitL1Norm();
 
         return f;
+    }
+
+    private String stemTerm(String term) throws IOException {
+        TokenStream stream = new TweetAnalyzer(true).tokenStream(null, new StringReader(term));
+
+        CharTermAttribute charTermAttribute = stream.addAttribute(CharTermAttribute.class);
+        stream.reset();
+        stream.incrementToken();
+        String stemTerm = charTermAttribute.toString();
+        stream.close();
+        return stemTerm;
     }
 }

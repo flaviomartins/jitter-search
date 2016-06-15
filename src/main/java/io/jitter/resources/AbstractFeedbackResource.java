@@ -84,10 +84,10 @@ public class AbstractFeedbackResource {
     FeatureVector buildQueryFV(String query, Stopper stopper) throws ParseException {
         Analyzer analyzer;
         if (stopper == null || stopper.asSet().isEmpty()) {
-            analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET);
+            analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET, false);
         } else {
             CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
-            analyzer = new TweetAnalyzer(charArraySet);
+            analyzer = new TweetAnalyzer(charArraySet, false);
         }
         FeatureVector queryFV = new FeatureVector();
         for (String term : AnalyzerUtils.analyze(analyzer, query)) {
