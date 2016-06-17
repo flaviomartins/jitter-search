@@ -200,11 +200,12 @@ public class Taily {
                         // find the shard id, if this doc belongs to any
                         String currShardId = doc.get(IndexStatuses.StatusField.SCREEN_NAME.name).toLowerCase(Locale.ROOT);
 
-                        double length = doc.getValues(IndexStatuses.StatusField.TEXT.name).length;
+                        Terms termVector = indexReader.getTermVector(docId, IndexStatuses.StatusField.TEXT.name);
+                        double length = termVector.size();
                         double tf = docsEnum.freq();
 
                         // calculate Indri score feature and sum it up
-                        double feat = indriFeature.value(1.0, ctf, totalTermCount, length);
+                        double feat = indriFeature.value(tf, ctf, totalTermCount, length);
 
                         ShardData currShard = shardDataMap.get(currShardId);
                         if (currShard == null) {
@@ -351,11 +352,12 @@ public class Taily {
                         // find the shard id, if this doc belongs to any
                         String currShardId = sourceTopicMap.get(doc.get(IndexStatuses.StatusField.SCREEN_NAME.name).toLowerCase(Locale.ROOT));
 
-                        double length = doc.getValues(IndexStatuses.StatusField.TEXT.name).length;
+                        Terms termVector = indexReader.getTermVector(docId, IndexStatuses.StatusField.TEXT.name);
+                        double length = termVector.size();
                         double tf = docsEnum.freq();
 
                         // calculate Indri score feature and sum it up
-                        double feat = indriFeature.value(1.0, ctf, totalTermCount, length);
+                        double feat = indriFeature.value(tf, ctf, totalTermCount, length);
 
                         ShardData currShard = shardDataMap.get(currShardId);
                         if (currShard == null) {
