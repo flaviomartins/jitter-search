@@ -2,6 +2,7 @@ package io.jitter.core.taily;
 
 import cc.twittertools.index.IndexStatuses;
 import io.jitter.core.features.IndriFeature;
+import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
@@ -65,7 +66,7 @@ public class Taily {
         double ctf = termsEnum.totalTermFreq();
         double df = termsEnum.docFreq();
 
-        logger.debug(String.format(Locale.ENGLISH, "term: %s ctf: %d df: %d", term, (int) ctf, (int) df));
+        logger.debug(String.format(Locale.ENGLISH, "%s ctf: %4d df: %4d in corpus", StringUtils.leftPad(term, 30), (int) ctf, (int) df));
 
         // store ctf feature for term
         String ctfFeatKey = term + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
@@ -83,7 +84,7 @@ public class Taily {
         FeatureStore store = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
 
         // go through all indexes and collect ctf and df statistics.
-        int totalTermCount = 0;
+        long totalTermCount = 0;
         int totalDocCount = 0;
 
         // TODO: read terms list
@@ -91,7 +92,7 @@ public class Taily {
         Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
         TermsEnum termEnum = terms.iterator(null);
 
-        int termCnt = 0;
+        long termCnt = 0;
         BytesRef bytesRef;
         while ((bytesRef = termEnum.next()) != null) {
             String term = bytesRef.utf8ToString();
@@ -100,11 +101,15 @@ public class Taily {
                 continue;
             }
             collectCorpusStats(termEnum, store);
-            termCnt++;
+            termCnt += termEnum.totalTermFreq();
         }
 
         // add the total term length of shard
-        totalTermCount += termCnt;
+        totalTermCount = indexReader.getSumTotalTermFreq(IndexStatuses.StatusField.TEXT.name);
+        if (totalTermCount != termCnt) {
+            logger.warn("totalTermCount mismatch with loop count");
+        }
+
         // add the shard size (# of docs)
         totalDocCount += indexReader.numDocs();
 
@@ -229,9 +234,9 @@ public class Taily {
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
                     if (shardDataMap.get(shardIdStr).df != 0) {
-                        logger.debug(String.format(Locale.ENGLISH, "shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, term, (int) ctf, shardDataMap.get(shardIdStr).min,
+                        logger.debug(String.format(Locale.ENGLISH, "%s ctf: %4d min: %.2f shardDf: %4d f: %.2f f2: %.2f in shard: %s", StringUtils.leftPad(term, 30), (int) ctf, shardDataMap.get(shardIdStr).min,
                                 (long) shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
-                                shardDataMap.get(shardIdStr).f2));
+                                shardDataMap.get(shardIdStr).f2, StringUtils.leftPad(shardIdStr, 15)));
                         storeTermStats(stores.get(shardIdStr), term, (int) ctf, shardDataMap.get(shardIdStr).min,
                                 shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2);
@@ -381,9 +386,9 @@ public class Taily {
                 // don't store empty terms
                 if (shardDataMap.get(shardIdStr) != null) {
                     if (shardDataMap.get(shardIdStr).df != 0) {
-                        logger.debug(String.format(Locale.ENGLISH, "shard: %s term: %s ctf: %d min: %.2f shardDf: %d f: %.2f f2: %.2f", shardIdStr, term, (int) ctf, shardDataMap.get(shardIdStr).min,
+                        logger.debug(String.format(Locale.ENGLISH, "%s ctf: %4d min: %.2f shardDf: %4d f: %.2f f2: %.2f in shard: %s", StringUtils.leftPad(term, 30), (int) ctf, shardDataMap.get(shardIdStr).min,
                                 (long) shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
-                                shardDataMap.get(shardIdStr).f2));
+                                shardDataMap.get(shardIdStr).f2, StringUtils.leftPad(shardIdStr, 15)));
                         storeTermStats(stores.get(shardIdStr), term, (int) ctf, shardDataMap.get(shardIdStr).min,
                                 shardDataMap.get(shardIdStr).df, shardDataMap.get(shardIdStr).f,
                                 shardDataMap.get(shardIdStr).f2);
