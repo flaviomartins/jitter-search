@@ -93,7 +93,7 @@ public class ShardRanker {
         List<String> stems = Lists.newArrayList();
         try {
             Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
-            Set<Term> queryTerms = new TreeSet<>();
+            Set<Term> queryTerms = new LinkedHashSet<>();
             q.extractTerms(queryTerms);
             for (Term term : queryTerms) {
                 stems.add(term.text());
@@ -190,6 +190,7 @@ public class ShardRanker {
 
                 queryFeats.hasATerm[i] = true;
                 queryFeats.dfTerm[i] += df;
+                queryFeats.dfTerm[0] += df;
 
                 // add current term's mean to shard; also shift by min feat value Eq (5)
                 String meanFeat = stem + FeatureStore.FEAT_SUFFIX;
@@ -207,10 +208,8 @@ public class ShardRanker {
                 if (f2Sum < 0) {
                     logger.error("BAD f2Sum");
                 }
-                queryFeats.queryVar[i] += (float) (f2Sum / df) - (float) Math.pow(fSum / df, 2);
-                if (queryFeats.queryVar[i] < 0) {
-                    logger.error("BAD var");
-                }
+
+                queryFeats.queryVar[i] += (f2Sum / df) - Math.pow(fSum / df, 2);
                 globalF2Sum += f2Sum;
 
                 // if there is no global min stored, figure out the minimum from shards
@@ -234,6 +233,7 @@ public class ShardRanker {
             // adjust shard mean by minimum value
             for (int i = 0; i < _numShards + 1; i++) {
                 if (dfCache[i] > 0) {
+                    // FIXME: removes shard corresponding to minVal?
                     queryFeats.queryMean[i] -= minVal;
                 }
             }
@@ -263,8 +263,8 @@ public class ShardRanker {
                 double df = _stores[i].getFeature(stemKey);
 
                 // smooth it
-                if (df < 10) {
-                    df = 10;
+                if (df < 1) {
+                    df = 1;
                 }
 
                 // store df for all_i calculation
