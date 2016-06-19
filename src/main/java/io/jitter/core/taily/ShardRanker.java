@@ -358,12 +358,8 @@ public class ShardRanker {
             // if var is ~= 0, then don't build a distribution.
             // based on the mean of the shard (which is the score of the single doc), n_i is either 0 or 1
             if (queryVar[i] < 1e-10 && hasATerm[i]) {
-                // if var is = 0 n_i is 0
-                if (queryVar[i] > 0 && queryMean[i] >= s_c) {
-                    ranking.put(_shardIds[i - 1], 1.0);
-                } else {
-                    ranking.put(_shardIds[i - 1], 0.0);
-                }
+                // actually use mean of the shard as score
+                ranking.put(_shardIds[i - 1], queryMean[i]);
             } else {
                 // do normal Taily stuff pre-normalized Eq (12)
                 GammaDistribution shardGamma = new GammaDistribution(k[i], theta[i]);
