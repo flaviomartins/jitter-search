@@ -177,16 +177,12 @@ public class ShardRanker {
                 double df = _stores[i].getFeature(dfFeat);
 
                 // TODO: fix this kludge
-                if (df == -1) {
-                    df = 0;
-                }
+                // if this shard doesn't have this term, skip; otherwise you get nan everywhere
+                if (df == -1)
+                    continue;
 
                 dfCache[i] = df;
                 globalDf += df;
-
-                // if this shard doesn't have this term, skip; otherwise you get nan everywhere
-                if (df == 0)
-                    continue;
 
                 queryFeats.hasATerm[i] = true;
                 queryFeats.dfTerm[i] += df;
