@@ -342,7 +342,7 @@ public class ShardRanker {
 
         // if n_c > all[0], set probability to 1
         if (p_c >= 1.0)
-            p_c = 1.0 - GammaDistribution.DEFAULT_INVERSE_ABSOLUTE_ACCURACY; // ZOMG
+            p_c = 1.0;
 
         GammaDistribution collectionGamma = new GammaDistribution(k[0], theta[0]);
         double s_c = collectionGamma.inverseCumulativeProbability(1.0 - p_c);
