@@ -258,9 +258,9 @@ public class ShardRanker {
                 String stemKey = stem + FeatureStore.SIZE_FEAT_SUFFIX;
                 double df = _stores[i].getFeature(stemKey);
 
-                // smooth it
-                if (df < 1) {
-                    df = 1;
+                // no smoothing
+                if (df == -1) {
+                    df = 0;
                 }
 
                 // store df for all_i calculation
