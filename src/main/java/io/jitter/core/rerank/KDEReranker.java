@@ -81,13 +81,12 @@ public class KDEReranker extends Reranker {
         while (resultIt.hasNext()) {
             Document origResult = resultIt.next();
             double scaledEpoch = epochIt.next();
-            double density = -100.0;
+            double density = 0;
 
             if (kde != null) {
                 density = kde.density(scaledEpoch);
-                density = Math.log(1 + density);
                 if (Double.isInfinite(density) || Double.isNaN(density))
-                    density = -100.0;
+                    density = 0;
             }
 
             Document updatedResult = new Document(origResult);
