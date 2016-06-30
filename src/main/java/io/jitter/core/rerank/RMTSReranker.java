@@ -175,7 +175,7 @@ public class RMTSReranker extends Reranker {
 
         for (Document result : results) {
             double averageDocumentLength = 28;
-            double docLength = 0;
+            double docLength;
             double idf = 0;
             double bm25 = 0;
             double coord = 0;
@@ -198,7 +198,7 @@ public class RMTSReranker extends Reranker {
                 docVector = aDocVector;
             }
 
-            docLength += docVector.getLength();
+            docLength = docVector.getLength();
 
             int numDocs = collectionStats.numDocs();
             for (Map.Entry<String, Integer> tf : docVector.vector.entrySet()) {
