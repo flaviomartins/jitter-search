@@ -122,7 +122,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
                 LOG.warn("Writing " + results.size() + " results: " + f.getPath() + ".");
             }
         } else {
-            results = client.search(query, maxId, numResults, true);
+            results = client.search(query, maxId, numResultsToFetch, true);
         }
 
         // Convert to custom class
