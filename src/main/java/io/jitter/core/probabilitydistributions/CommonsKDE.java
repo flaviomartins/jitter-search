@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 public class CommonsKDE implements KDE {
 
-    private static final Logger logger = LoggerFactory.getLogger(JsatKDE.class);
+    private static final Logger logger = LoggerFactory.getLogger(CommonsKDE.class);
 
     private final double[] data;
     private final double[] weights;

@@ -46,7 +46,7 @@
         <sqlite-jdbc.version>3.8.11.2</sqlite-jdbc.version>
         <je.version>6.4.25</je.version>
         <ssj.version>3.1.1</ssj.version>
-        <jsat.version>0.0.4</jsat.version>
+        <jsat.version>0.0.5</jsat.version>
         <!--
            It is recommended to set the compiler version globally,
            as the compiler plugin and the forbidden API checker both
