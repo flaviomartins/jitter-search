@@ -45,12 +45,12 @@ public class NaiveLanguageFilter extends Filter {
         results = updatedResults;
     }
 
-    private boolean isProbablyEnglish(String text) {
+    private static boolean isProbablyEnglish(String text) {
         // Replace invisible characters
-        text = CharMatcher.invisible().replaceFrom(text, " ");
+        String normalized = CharMatcher.invisible().replaceFrom(text, " ");
         // Replace unicode whitespace
-        text = CharMatcher.whitespace().replaceFrom(text, " ");
-        return CharMatcher.ascii().matchesAllOf(text);
+        normalized = CharMatcher.whitespace().replaceFrom(normalized, " ");
+        return CharMatcher.ascii().matchesAllOf(normalized);
     }
 
 }

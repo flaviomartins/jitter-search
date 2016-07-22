@@ -12,7 +12,6 @@ import org.apache.commons.math3.distribution.EnumeratedDistribution;
 import org.apache.commons.math3.util.Pair;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +80,7 @@ public class AbstractFeedbackResource {
         return fb.like(results.scoreDocs.subList(0, Math.min(fbDocs, results.scoreDocs.size())));
     }
 
-    FeatureVector buildQueryFV(String query, Stopper stopper) throws ParseException {
+    FeatureVector buildQueryFV(String query, Stopper stopper) {
         Analyzer analyzer;
         if (stopper == null || stopper.asSet().isEmpty()) {
             analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET, false);

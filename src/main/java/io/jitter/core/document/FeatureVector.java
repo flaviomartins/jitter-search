@@ -166,8 +166,8 @@ public class FeatureVector {
     }
 
     private static class KeyValuePair {
-        private String key;
-        private float value;
+        private final String key;
+        private final float value;
 
         public KeyValuePair(String key, float value) {
             this.key = key;

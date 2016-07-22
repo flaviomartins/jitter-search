@@ -124,20 +124,21 @@ public class FeatureStore {
 
         OperationStatus status = freqDb.get(null, key, data, LockMode.DEFAULT);
 
+        long freq = frequency;
         if (status == OperationStatus.NOTFOUND) {
             status = infreqDb.get(null, key, data, LockMode.DEFAULT);
             if (status == OperationStatus.NOTFOUND) {
                 prevVal = 0.0;
             } else {
                 prevVal = DoubleBinding.entryToDouble(data);
-                frequency = FREQUENT_TERMS - 1;
+                freq = FREQUENT_TERMS - 1;
             }
         } else {
             prevVal = DoubleBinding.entryToDouble(data);
-            frequency = FREQUENT_TERMS + 1;
+            freq = FREQUENT_TERMS + 1;
         }
 
-        putFeature(keyStr, val + prevVal, frequency);
+        putFeature(keyStr, val + prevVal, freq);
     }
 
     private Database openDb(String path, boolean readOnly) {

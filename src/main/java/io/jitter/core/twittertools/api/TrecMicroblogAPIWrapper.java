@@ -99,7 +99,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
         int numResultsToFetch = Math.min(MAX_NUM_RESULTS, Math.max(DEFAULT_NUM_RESULTS, numResults));
 
-        String cacheFileName = DigestUtils.shaHex(host + port + query + maxId + numResultsToFetch);
+        String cacheFileName = DigestUtils.sha1Hex(host + port + query + maxId + numResultsToFetch);
         File f = new File(cacheDir + cacheFileName);
         List<TResult> results;
 

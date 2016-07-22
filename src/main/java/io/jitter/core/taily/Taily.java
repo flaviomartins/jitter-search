@@ -84,7 +84,7 @@ public class Taily {
         FeatureStore store = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
 
         // go through all indexes and collect ctf and df statistics.
-        long totalTermCount = 0;
+        long totalTermCount;
         int totalDocCount = 0;
 
         // TODO: read terms list

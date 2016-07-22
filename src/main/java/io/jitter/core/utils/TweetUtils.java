@@ -67,26 +67,26 @@ public class TweetUtils {
     }
 
     public static String removePatterns(String text) {
-        text = removeMicrosyntax(text);
-        text = removeRT(text);
-        text = removeVia(text);
-        return text;
+        String out = removeMicrosyntax(text);
+        out = removeRT(out);
+        out = removeVia(out);
+        return out;
     }
 
     public static String removeAll(String text) {
-        text = removeEntities(text);
-        text = removePatterns(text);
-        return text;
+        String out = removeEntities(text);
+        out = removePatterns(out);
+        return out;
     }
 
     public static String clean(String text) {
 //        text = removeAll(text);
-        text = removeMentionsOrLists(text);
-        text = removeURLs(text);
-        text = removePatterns(text);
-        text = unescapeHtml(text);
-        text = stripNumbers(text);
-        return text;
+        String out = removeMentionsOrLists(text);
+        out = removeURLs(out);
+        out = removePatterns(out);
+        out = unescapeHtml(out);
+        out = stripNumbers(out);
+        return out;
     }
 
     public static String replaceEntities(String text, List<Extractor.Entity> entities) {

@@ -19,7 +19,6 @@ import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.*;
-import twitter4j.Status;
 
 import java.io.File;
 import java.io.IOException;
