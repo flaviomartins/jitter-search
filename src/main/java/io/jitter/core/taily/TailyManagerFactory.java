@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +21,11 @@ public class TailyManagerFactory {
     @NotEmpty
     private String stopwords;
 
-    @NotNull
+    @Min(1)
+    @Max(5000)
     private float mu;
 
-    @NotNull
+    @Min(1)
     private float nc;
 
     @NotEmpty

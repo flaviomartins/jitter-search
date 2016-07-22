@@ -5,6 +5,8 @@ import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +21,8 @@ public class ShardsManagerFactory {
     @NotEmpty
     private String stopwords;
 
-    @NotNull
+    @Min(1)
+    @Max(5000)
     private float mu;
 
     @NotEmpty

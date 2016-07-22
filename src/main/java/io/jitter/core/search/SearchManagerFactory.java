@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 public class SearchManagerFactory {
@@ -14,7 +16,8 @@ public class SearchManagerFactory {
     @NotEmpty
     private String stopwords;
 
-    @NotNull
+    @Min(1)
+    @Max(5000)
     private float mu;
 
     @JsonProperty
