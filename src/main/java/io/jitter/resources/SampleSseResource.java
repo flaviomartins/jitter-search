@@ -70,6 +70,10 @@ public class SampleSseResource implements StatusListener, RawStreamListener {
             String json;
             try {
                 json = objectWriter.writeValueAsString(status);
+                StringBuilder sb = new StringBuilder();
+                sb.append(json.substring(0, json.length()-2)).append(",\n");
+                sb.append("  \"id_str\" : \"").append(String.valueOf(status.getId())).append("\"\n}");
+                json = sb.toString();
                 broadcastMessage("status", json);
             } catch (JsonProcessingException e) {
                 logger.error(e.getMessage());
