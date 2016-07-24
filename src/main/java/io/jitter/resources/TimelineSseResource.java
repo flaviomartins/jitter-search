@@ -1,8 +1,5 @@
 package io.jitter.resources;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.twitter.hbc.twitter4j.handler.UserstreamHandler;
 import com.twitter.hbc.twitter4j.message.DisconnectMessage;
 import com.twitter.hbc.twitter4j.message.StallWarningMessage;
@@ -30,12 +27,10 @@ public class TimelineSseResource implements UserstreamHandler, RawStreamListener
 
     private final AtomicLong counter;
     private final SseBroadcaster broadcaster;
-    private final ObjectWriter objectWriter;
 
     public TimelineSseResource() {
         counter = new AtomicLong();
         broadcaster = new SseBroadcaster();
-        objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
     }
 
 //    @Produces(MediaType.TEXT_PLAIN)
@@ -59,7 +54,7 @@ public class TimelineSseResource implements UserstreamHandler, RawStreamListener
 
     @Override
     public void onMessage(String rawString) {
-
+        broadcastMessage("status", rawString);
     }
 
     @Override
@@ -199,13 +194,7 @@ public class TimelineSseResource implements UserstreamHandler, RawStreamListener
 
     @Override
     public void onStatus(Status status) {
-        String json;
-        try {
-            json = objectWriter.writeValueAsString(status);
-            broadcastMessage("status", json);
-        } catch (JsonProcessingException e) {
-            logger.error(e.getMessage());
-        }
+
     }
 
     @Override
