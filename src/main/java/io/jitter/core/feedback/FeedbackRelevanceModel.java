@@ -486,8 +486,12 @@ public class FeedbackRelevanceModel {
      * @return true if should be ignored, false if should be used in further analysis
      */
     private boolean isUnfreqWord(String term) {
+        // fast fall-through for if not enabled
+        if (minDocFreq <= 0)
+            return false;
+        // fetching docFreq() should be avoided
         int docFreq = collectionStats.docFreq(term);
-        return minDocFreq > 0 && docFreq < minDocFreq;
+        return docFreq < minDocFreq;
     }
 
     public FeatureVector like(List<Document> relDocs) throws IOException {
