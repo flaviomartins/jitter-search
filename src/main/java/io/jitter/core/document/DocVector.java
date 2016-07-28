@@ -25,16 +25,16 @@ public class DocVector {
 
     public double computeL2Norm() {
         double norm = 0.0;
-        for (String term : vector.keySet()) {
-            norm += Math.pow(vector.get(term), 2.0);
+        for (Integer i : vector.values()) {
+            norm += Math.pow(i, 2.0);
         }
         return Math.sqrt(norm);
     }
 
     public double computeL1Norm() {
         double norm = 0.0;
-        for (String term : vector.keySet()) {
-            norm += Math.abs(vector.get(term));
+        for (Integer i : vector.values()) {
+            norm += Math.abs(i);
         }
         return norm;
     }
