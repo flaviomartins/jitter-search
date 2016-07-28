@@ -510,21 +510,14 @@ public class FeedbackRelevanceModel {
                 scores[i] = Math.exp(rsv);
             }
 
-            DocVector docVector = hit.getDocVector();
-            // if the term vectors are unavailable generate it here
-            if (docVector == null) {
-                DocVector aDocVector = new DocVector();
-                List<String> docTerms = AnalyzerUtils.analyze(analyzer, hit.getText());
-
-                for (String t : docTerms) {
-                    if (!t.isEmpty()) {
-                        Integer n = aDocVector.vector.get(t);
-                        n = (n == null) ? 1 : ++n;
-                        aDocVector.vector.put(t, n);
-                    }
+            DocVector docVector = new DocVector();
+            List<String> docTerms = AnalyzerUtils.analyze(analyzer, hit.getText());
+            for (String t : docTerms) {
+                if (!t.isEmpty()) {
+                    Integer n = docVector.vector.get(t);
+                    n = (n == null) ? 1 : ++n;
+                    docVector.vector.put(t, n);
                 }
-
-                docVector = aDocVector;
             }
 
             vocab.addAll(docVector.vector.keySet());
