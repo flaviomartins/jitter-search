@@ -8,10 +8,7 @@ import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.MultiFields;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
@@ -27,8 +24,17 @@ public class SearchUtils {
 
 
         Map<String, Float> weights = null;
+        HashMap<String, Long> ctfs = null;
+        long sumTotalTermFreq = -1;
         if (computeQLScores && qlModel != null) {
             weights = qlModel.parseQuery(IndexStatuses.ANALYZER, query);
+            ctfs = new HashMap<>();
+            for(String queryTerm: weights.keySet()) {
+                Term term = new Term(IndexStatuses.StatusField.TEXT.name, queryTerm);
+                long ctf = indexReader.totalTermFreq(term);
+                ctfs.put(queryTerm, ctf);
+            }
+            sumTotalTermFreq = indexReader.getSumTotalTermFreq(IndexStatuses.StatusField.TEXT.name);
         }
 
         int count = 0;
@@ -67,7 +73,7 @@ public class SearchUtils {
             }
 
             if (computeQLScores && qlModel != null && weights != null && docVector != null) {
-                doc.rsv = qlModel.computeQLScore(indexReader, IndexStatuses.StatusField.TEXT.name, weights, docVector.vector);
+                doc.rsv = qlModel.computeQLScore(weights, ctfs, docVector.vector, sumTotalTermFreq);
             } else {
                 doc.rsv = scoreDoc.score;
             }
