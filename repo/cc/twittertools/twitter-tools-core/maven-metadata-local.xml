@@ -4,9 +4,8 @@
   <artifactId>twitter-tools-core</artifactId>
   <versioning>
     <versions>
-      <version>1.4.4-SNAPSHOT</version>
       <version>1.4.5-SNAPSHOT</version>
     </versions>
-    <lastUpdated>20160620145435</lastUpdated>
+    <lastUpdated>20160728022815</lastUpdated>
   </versioning>
 </metadata>
