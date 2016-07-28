@@ -7,6 +7,7 @@ import io.jitter.api.search.Document;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
 import org.apache.commons.lang.StringUtils;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
@@ -27,7 +28,7 @@ public class SearchUtils {
 
         Map<String, Float> weights = null;
         if (qlModel != null) {
-            weights = qlModel.parseQuery(query);
+            weights = qlModel.parseQuery(IndexStatuses.ANALYZER, query);
         }
 
         int count = 0;
@@ -55,13 +56,18 @@ public class SearchUtils {
                 continue;
             }
 
+            DocVector docVector = null;
             if (buildDocVector) {
-                DocVector docVector = buildDocVector(indexReader, scoreDoc.doc);
+                try {
+                    docVector = buildDocVector(indexReader, scoreDoc.doc);
+                } catch (IOException e) {
+                    docVector = buildDocVector(IndexStatuses.ANALYZER, doc.getText());
+                }
                 doc.setDocVector(docVector);
             }
 
-            if (qlModel != null && weights != null) {
-                doc.rsv = qlModel.computeQLScore(indexReader, weights, doc.text);
+            if (qlModel != null && weights != null && docVector != null) {
+                doc.rsv = qlModel.computeQLScore(indexReader, IndexStatuses.StatusField.TEXT.name, weights, docVector.vector);
             } else {
                 doc.rsv = scoreDoc.score;
             }
@@ -79,7 +85,7 @@ public class SearchUtils {
     }
 
     public static List<Document> getDocs(IndexSearcher indexSearcher, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT) throws IOException {
-        return getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT, false);
+        return getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT, true);
     }
 
     private static LinkedHashMap<String, Integer> getTermsMap(IndexReader indexReader) throws IOException {
@@ -98,15 +104,27 @@ public class SearchUtils {
     }
 
     private static DocVector buildDocVector(IndexReader indexReader, int doc) throws IOException {
+        DocVector docVector = new DocVector();
         Terms termVector = indexReader.getTermVector(doc, IndexStatuses.StatusField.TEXT.name);
         TermsEnum termsEnum = termVector.iterator(null);
-
         BytesRef bytesRef;
-        DocVector docVector = new DocVector();
         while ((bytesRef = termsEnum.next()) != null) {
             String term = bytesRef.utf8ToString();
             int freq = (int) termsEnum.totalTermFreq();
             docVector.setTermFreq(term, freq);
+        }
+        return docVector;
+    }
+
+    private static DocVector buildDocVector(Analyzer analyzer, String text) throws IOException {
+        DocVector docVector = new DocVector();
+        List<String> docTerms = AnalyzerUtils.analyze(analyzer, text);
+        for (String t : docTerms) {
+            if (!t.isEmpty()) {
+                Integer n = docVector.vector.get(t);
+                n = (n == null) ? 1 : ++n;
+                docVector.vector.put(t, n);
+            }
         }
         return docVector;
     }
