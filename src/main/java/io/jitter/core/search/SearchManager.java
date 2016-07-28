@@ -119,7 +119,8 @@ public class SearchManager implements Managed {
             scores[i] = scoreDoc.score;
         }
 
-        List<Document> docs = SearchUtils.getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT, true);
+        // Do not compute real QL scores when live
+        List<Document> docs = SearchUtils.getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT, !live);
         if (filterRT) {
             logger.info("filter_rt count: {}", nDocsReturned - docs.size());
         }

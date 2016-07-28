@@ -22,12 +22,12 @@ import java.util.*;
 
 public class SearchUtils {
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT, boolean buildDocVector) throws IOException {
+    public static List<Document> getDocs(IndexSearcher indexSearcher, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT, boolean computeQLScores) throws IOException {
         IndexReader indexReader = indexSearcher.getIndexReader();
 
 
         Map<String, Float> weights = null;
-        if (qlModel != null) {
+        if (computeQLScores && qlModel != null) {
             weights = qlModel.parseQuery(IndexStatuses.ANALYZER, query);
         }
 
@@ -57,7 +57,7 @@ public class SearchUtils {
             }
 
             DocVector docVector = null;
-            if (buildDocVector) {
+            if (computeQLScores) {
                 try {
                     docVector = buildDocVector(indexReader, scoreDoc.doc);
                 } catch (IOException e) {
@@ -66,7 +66,7 @@ public class SearchUtils {
                 doc.setDocVector(docVector);
             }
 
-            if (qlModel != null && weights != null && docVector != null) {
+            if (computeQLScores && qlModel != null && weights != null && docVector != null) {
                 doc.rsv = qlModel.computeQLScore(indexReader, IndexStatuses.StatusField.TEXT.name, weights, docVector.vector);
             } else {
                 doc.rsv = scoreDoc.score;
@@ -76,7 +76,7 @@ public class SearchUtils {
             count += 1;
         }
 
-        if (qlModel != null) {
+        if (computeQLScores) {
             Comparator<Document> comparator = new DocumentComparator(true);
             Collections.sort(docs, comparator);
         }
