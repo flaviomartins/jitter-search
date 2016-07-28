@@ -530,6 +530,8 @@ public class FeedbackRelevanceModel {
             norms[i] = (float) docVectors[i].computeL1Norm();
         }
 
+        long sumTotalTermFreq = collectionStats.getSumTotalTermFreq();
+
         for (String term : vocab) {
             // TODO: minTermFreq filtering
             if (isNoiseWord(term) || isUnfreqWord(term))
@@ -545,7 +547,7 @@ public class FeedbackRelevanceModel {
 
             // Don Metzler's idf fix
             String stem = stemTerm(term);
-            float idf = similarity.idf(collectionStats.totalTermFreq(stem), collectionStats.getSumTotalTermFreq());
+            float idf = similarity.idf(collectionStats.totalTermFreq(stem), sumTotalTermFreq);
             fbWeight *= idf;
 
             f.addFeatureWeight(term, fbWeight);

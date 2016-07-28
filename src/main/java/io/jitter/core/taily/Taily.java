@@ -61,7 +61,7 @@ public class Taily {
     }
 
     // innards of buildCorpus
-    private void collectCorpusStats(TermsEnum termsEnum, FeatureStore store) throws IOException {
+    private long collectCorpusStats(TermsEnum termsEnum, FeatureStore store) throws IOException {
         String term = termsEnum.term().utf8ToString();
         double ctf = termsEnum.totalTermFreq();
         double df = termsEnum.docFreq();
@@ -75,6 +75,8 @@ public class Taily {
         // store df feature for term
         String dfFeatKey = term + FeatureStore.SIZE_FEAT_SUFFIX;
         store.addValFeature(dfFeatKey, df, (int) ctf);
+
+        return (long)ctf;
     }
 
     public void buildCorpus() throws IOException {
@@ -100,8 +102,7 @@ public class Taily {
                 logger.warn("Empty term was found and skipped automatically. Check your tokenizer.");
                 continue;
             }
-            collectCorpusStats(termEnum, store);
-            termCnt += termEnum.totalTermFreq();
+            termCnt += collectCorpusStats(termEnum, store);
         }
 
         // add the total term length of shard
