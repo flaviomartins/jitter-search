@@ -173,6 +173,13 @@ public class RMTSReranker extends Reranker {
         }
         results = KDERerank(newsOracle, newsWeights, results, queryEpoch, method, 1.0);
 
+        int numDocs = collectionStats.numDocs();
+        HashMap<String, Integer> dfs = new HashMap<>();
+        for (String term : qTerms) {
+            int docFreq = collectionStats.docFreq(term);
+            dfs.put(term, docFreq);
+        }
+
         for (Document result : results) {
             double averageDocumentLength = 28;
             double docLength;
@@ -200,13 +207,12 @@ public class RMTSReranker extends Reranker {
 
             docLength = docVector.getLength();
 
-            int numDocs = collectionStats.numDocs();
             for (Map.Entry<String, Integer> tf : docVector.vector.entrySet()) {
                 String term = tf.getKey();
                 if (qTerms.contains(term)) {
                     double tfValue = tf.getValue();
-                    int docFreq = collectionStats.docFreq(term);
                     if (tfValue > 0) {
+                        int docFreq = dfs.get(term);
                         idf += SIMILARITY.idf(docFreq, numDocs);
                         bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, docFreq, numDocs);
                         coord += 1;
