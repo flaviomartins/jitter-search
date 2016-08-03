@@ -195,7 +195,7 @@ public class TwitterManager implements Managed {
                 }
 
                 String lang = status.getLang();
-                if (!"unknown".equals(lang)) {
+                if (lang != null && !"unknown".equals(lang)) {
                     doc.add(new TextField(IndexStatuses.StatusField.LANG.name, status.getLang(), Field.Store.YES));
                 }
 
