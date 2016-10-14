@@ -1,9 +1,9 @@
 package io.jitter.core.utils;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
-import java.io.FileInputStream;
+import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,7 +25,7 @@ public class Stopper {
             stopwords = new HashSet<>();
 
             // assume our stoplist has one stopword per line
-            List<String> lines = IOUtils.readLines(new FileInputStream(pathToStoplist), "UTF-8");
+            List<String> lines = FileUtils.readLines(new File(pathToStoplist), "UTF-8");
             stopwords.addAll(lines);
         } catch (Exception e) {
             LOG.error(e.getMessage());
