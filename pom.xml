@@ -24,30 +24,28 @@
         <dropwizard.version>1.0.2</dropwizard.version>
         <guava.version>19.0</guava.version>
         <jsr305.version>3.0.1</jsr305.version>
-        <fastutil.version>7.0.12</fastutil.version>
+        <fastutil.version>7.0.13</fastutil.version>
         <jersey.version>2.23.1</jersey.version>
-        <jackson.api.version>2.7.6</jackson.api.version>
-        <jackson.version>2.7.6</jackson.version>
+        <jackson.api.version>2.7.8</jackson.api.version>
+        <jackson.version>2.7.8</jackson.version>
         <jetty.version>9.3.9.v20160517</jetty.version>
         <slf4j.version>1.7.21</slf4j.version>
         <logback.version>1.1.7</logback.version>
         <lucene.version>4.10.4</lucene.version>
         <twitter4j.version>4.0.4</twitter4j.version>
         <hbc.version>2.2.0</hbc.version>
-        <twitter-text.version>1.13.4</twitter-text.version>
+        <twitter-text.version>1.14.0</twitter-text.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-math3.version>3.6.1</commons-math3.version>
-        <commons-io.version>2.5</commons-io.version>
         <httpclient.version>4.5.2</httpclient.version>
         <httpcore.version>4.4.4</httpcore.version>
 
         <twittertools.version>1.4.5-SNAPSHOT</twittertools.version>
         <ranklib.version>2.6</ranklib.version>
         <kstem.version>3.4</kstem.version>
-        <sqlite-jdbc.version>3.8.11.2</sqlite-jdbc.version>
-        <je.version>6.4.25</je.version>
-        <ssj.version>3.1.1</ssj.version>
-        <jsat.version>0.0.5</jsat.version>
+        <sqlite-jdbc.version>3.14.2.1</sqlite-jdbc.version>
+        <je.version>7.0.6</je.version>
+        <jsat.version>0.0.6</jsat.version>
         <!--
            It is recommended to set the compiler version globally,
            as the compiler plugin and the forbidden API checker both
@@ -145,11 +143,6 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-math3</artifactId>
                 <version>${commons-math3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${commons-io.version}</version>
             </dependency>
 
             <!-- Jetty -->
@@ -389,11 +382,6 @@
 
         <!-- Maths -->
         <dependency>
-            <groupId>ca.umontreal.iro.simul</groupId>
-            <artifactId>ssj</artifactId>
-            <version>${ssj.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.edwardraff</groupId>
             <artifactId>JSAT</artifactId>
             <version>${jsat.version}</version>
@@ -404,11 +392,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
             <version>${commons-math3.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>${commons-io.version}</version>
         </dependency>
 
         <!-- Jersey Server-Sent Events -->

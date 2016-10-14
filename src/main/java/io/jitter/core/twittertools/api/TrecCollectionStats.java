@@ -5,7 +5,6 @@ import io.jitter.core.taily.FeatureStore;
 import org.apache.log4j.Logger;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;

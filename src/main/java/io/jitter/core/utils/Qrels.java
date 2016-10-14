@@ -1,9 +1,10 @@
 package io.jitter.core.utils;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
-import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ public class Qrels {
 
             rel = new HashMap<>();
 
-            List<String> lines = FileUtils.readLines(new File(pathToQrelsFile), "UTF-8");
+            List<String> lines = Files.readAllLines(Paths.get(pathToQrelsFile), StandardCharsets.UTF_8);
             for (String line : lines) {
                 String[] toks = SPACE_PATTERN.split(line);
                 if (toks == null || toks.length != 4) {
