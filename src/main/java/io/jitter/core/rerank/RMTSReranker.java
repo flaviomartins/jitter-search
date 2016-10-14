@@ -61,6 +61,7 @@ public class RMTSReranker extends Reranker {
         this.score();
     }
 
+    @Override
     public void score() {
         Query q;
         Set<String> qTerms = new HashSet<>();

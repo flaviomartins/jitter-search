@@ -56,19 +56,4 @@ public class FeedbackDocumentsResponse extends DocumentsResponse {
         return fbVector;
     }
 
-    @JsonProperty
-    public int getNumFound() {
-        return numFound;
-    }
-
-    @JsonProperty
-    public int getStart() {
-        return start;
-    }
-
-    @JsonProperty
-    public List<?> getDocs() {
-        return docs;
-    }
-
 }

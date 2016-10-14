@@ -19,6 +19,7 @@ public class CRCSEXP extends CRCS {
         return getScores(results);
     }
 
+    @Override
     double weight(int j, int size) {
         return alpha * Math.exp(-beta * j);
     }

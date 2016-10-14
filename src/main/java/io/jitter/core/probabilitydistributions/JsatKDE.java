@@ -32,10 +32,12 @@ public class JsatKDE implements KDE {
         }
     }
 
+    @Override
     public double density(double x) {
         return kernelDensityEstimator.pdf(x);
     }
 
+    @Override
     public double getBandwidth() {
         return bw;
     }

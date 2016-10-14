@@ -4,7 +4,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +28,7 @@ public class Qrels {
 
             rel = new HashMap<>();
 
-            List<String> lines = IOUtils.readLines(new FileReader(new File(pathToQrelsFile)));
+            List<String> lines = IOUtils.readLines(new FileInputStream(new File(pathToQrelsFile)), "UTF-8");
             for (String line : lines) {
                 String[] toks = SPACE_PATTERN.split(line);
                 if (toks == null || toks.length != 4) {

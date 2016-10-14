@@ -13,6 +13,7 @@ public class DocumentComparator implements Comparator<Document> {
         this.decreasing = decreasing;
     }
 
+    @Override
     public int compare(Document x, Document y) {
         double xVal = x.getRsv();
         double yVal = y.getRsv();

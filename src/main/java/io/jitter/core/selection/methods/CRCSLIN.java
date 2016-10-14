@@ -16,6 +16,7 @@ public class CRCSLIN extends CRCS {
         return getScores(results);
     }
 
+    @Override
     double weight(int j, int size) {
         return size - j;
     }

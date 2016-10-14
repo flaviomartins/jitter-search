@@ -14,6 +14,7 @@ public class IndexCollectionStats implements CollectionStats {
         this.field = field;
     }
 
+    @Override
     public int docFreq(String term) {
         try {
             return indexReader.docFreq(new Term(field, term));
@@ -22,6 +23,7 @@ public class IndexCollectionStats implements CollectionStats {
         }
     }
 
+    @Override
     public long totalTermFreq(String term) {
         try {
             return indexReader.totalTermFreq(new Term(field, term));
@@ -30,10 +32,12 @@ public class IndexCollectionStats implements CollectionStats {
         }
     }
 
+    @Override
     public int numDocs() {
         return indexReader.numDocs();
     }
 
+    @Override
     public long getSumDocFreq() {
         try {
             return indexReader.getSumDocFreq(field);
@@ -42,6 +46,7 @@ public class IndexCollectionStats implements CollectionStats {
         }
     }
 
+    @Override
     public long getSumTotalTermFreq() {
         try {
             return indexReader.getSumTotalTermFreq(field);
@@ -50,6 +55,7 @@ public class IndexCollectionStats implements CollectionStats {
         }
     }
 
+    @Override
     public int numTerms() throws IOException {
         Terms terms = MultiFields.getTerms(indexReader, field);
         TermsEnum termEnum = terms.iterator(null);

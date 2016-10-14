@@ -5,6 +5,7 @@ import io.jitter.core.taily.FeatureStore;
 import org.apache.log4j.Logger;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,7 +38,7 @@ public class TrecCollectionStats implements CollectionStats {
             LOG.info("creating stats database...");
             corpusStore = new FeatureStore(statsStorePath.toString(), false);
             try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(new File(pathToStatsFile)))));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(new File(pathToStatsFile))), "UTF-8"));
                 String line = reader.readLine();
                 for (int i = 0; line != null; i++) {
                     String[] toks = TAB_PATTERN.split(line);
@@ -94,6 +95,7 @@ public class TrecCollectionStats implements CollectionStats {
         sumTotalTermFreq = (long) corpusStore.getFeature(ctfFeatKey);
     }
 
+    @Override
     public int docFreq(String term) {
         String dfFeatKey = term + FeatureStore.SIZE_FEAT_SUFFIX;
         int df = (int) corpusStore.getFeature(dfFeatKey);
@@ -103,6 +105,7 @@ public class TrecCollectionStats implements CollectionStats {
         return df;
     }
 
+    @Override
     public long totalTermFreq(String term) {
         String ctfFeatKey = term + FeatureStore.TERM_SIZE_FEAT_SUFFIX;
         long cf = (long) corpusStore.getFeature(ctfFeatKey);
@@ -112,6 +115,7 @@ public class TrecCollectionStats implements CollectionStats {
         return cf;
     }
 
+    @Override
     public int numDocs() {
         return numDocs;
     }
@@ -120,6 +124,7 @@ public class TrecCollectionStats implements CollectionStats {
         this.numDocs = numDocs;
     }
 
+    @Override
     public long getSumDocFreq() {
         return sumDocFreq;
     }
@@ -128,6 +133,7 @@ public class TrecCollectionStats implements CollectionStats {
         this.sumDocFreq = sumDocFreq;
     }
 
+    @Override
     public long getSumTotalTermFreq() {
         return sumTotalTermFreq;
     }
@@ -136,6 +142,7 @@ public class TrecCollectionStats implements CollectionStats {
         this.sumTotalTermFreq = sumTotalTermFreq;
     }
 
+    @Override
     public int numTerms() {
         return DEFAULT_TERMS_SIZE;
     }

@@ -73,6 +73,7 @@ public class KDEReranker extends Reranker {
         this.score();
     }
 
+    @Override
     protected void score() {
         Iterator<Document> resultIt = results.iterator();
         Iterator<Double> epochIt = scaledEpochs.iterator();

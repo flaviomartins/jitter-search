@@ -38,6 +38,7 @@ public class CommonsKDE implements KDE {
         this.method = method;
     }
 
+    @Override
     public double density(double x) {
         if (method == METHOD.REFLECTION) {
             return densityReflection(x);
@@ -71,6 +72,7 @@ public class CommonsKDE implements KDE {
         return f;
     }
 
+    @Override
     public double getBandwidth() {
         return bw;
     }

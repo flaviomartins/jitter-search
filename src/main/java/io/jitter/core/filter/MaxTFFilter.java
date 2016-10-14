@@ -17,6 +17,7 @@ public class MaxTFFilter extends Filter {
         this.filter();
     }
 
+    @Override
     protected void filter() {
         Iterator<Document> resultIt = results.iterator();
 

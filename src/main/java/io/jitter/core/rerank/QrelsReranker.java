@@ -19,6 +19,7 @@ public class QrelsReranker extends Reranker {
         this.score();
     }
 
+    @Override
     protected void score() {
         Iterator<Document> resultIt = results.iterator();
 

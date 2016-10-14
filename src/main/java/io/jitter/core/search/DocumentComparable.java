@@ -1,6 +1,9 @@
 package io.jitter.core.search;
 
+import com.google.common.hash.HashCode;
 import io.jitter.api.search.Document;
+
+import java.util.Objects;
 
 public class DocumentComparable implements Comparable<DocumentComparable> {
 
@@ -14,7 +17,8 @@ public class DocumentComparable implements Comparable<DocumentComparable> {
         return document;
     }
 
-    public int compareTo(@SuppressWarnings("NullableProblems") DocumentComparable other) {
+    @Override
+    public int compareTo(DocumentComparable other) {
         if (document.rsv > other.document.rsv) {
             return -1;
         } else if (document.rsv < other.document.rsv) {
@@ -30,7 +34,13 @@ public class DocumentComparable implements Comparable<DocumentComparable> {
         }
     }
 
+    @Override
     public boolean equals(Object other) {
         return other != null && other.getClass() == this.getClass() && ((DocumentComparable) other).document.id == this.document.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return HashCode.fromLong(document.id).hashCode();
     }
 }

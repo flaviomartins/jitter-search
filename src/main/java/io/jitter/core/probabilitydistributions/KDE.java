@@ -6,6 +6,7 @@ public interface KDE extends ContinuousDistribution {
 
     enum METHOD {STANDARD, REFLECTION}
 
+    @Override
     double density(double x);
 
     double getBandwidth();

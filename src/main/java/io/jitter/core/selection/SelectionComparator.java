@@ -11,6 +11,7 @@ public class SelectionComparator implements Comparator<String> {
     }
 
     // Note: this comparator imposes orderings that are inconsistent with equals.
+    @Override
     public int compare(String a, String b) {
         if (map.get(a) >= map.get(b)) {
             return -1;

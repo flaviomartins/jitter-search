@@ -9,6 +9,7 @@ public class LocalExponentialDistribution implements ContinuousDistribution {
         this.lambda = lambda;
     }
 
+    @Override
     public double density(double x) {
         return lambda * FastMath.exp(-1.0 * lambda * x);
     }
