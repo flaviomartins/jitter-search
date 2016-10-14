@@ -1,6 +1,5 @@
 package io.jitter.core.search;
 
-import com.google.common.hash.HashCode;
 import io.jitter.api.search.Document;
 
 import java.util.Objects;
@@ -41,6 +40,6 @@ public class DocumentComparable implements Comparable<DocumentComparable> {
 
     @Override
     public int hashCode() {
-        return HashCode.fromLong(document.id).hashCode();
+        return Objects.hash(this.document.id);
     }
 }
