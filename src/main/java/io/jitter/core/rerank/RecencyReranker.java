@@ -1,24 +1,32 @@
 package io.jitter.core.rerank;
 
 import io.jitter.api.search.Document;
-import io.jitter.core.probabilitydistributions.ContinuousDistribution;
+import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
+import io.jitter.core.utils.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class RecencyReranker implements Reranker {
-    private final ContinuousDistribution distribution;
-    private final List<Double> scaledEpochs;
+    public static final double DAY = 60.0 * 60.0 * 24.0;
 
-    public RecencyReranker(ContinuousDistribution distribution,
-                           List<Double> scaledEpochs) {
-        this.scaledEpochs = scaledEpochs;
-        this.distribution = distribution;
+    private final double lambda;
+
+    public RecencyReranker(double lambda) {
+        this.lambda = lambda;
     }
 
     @Override
     public List<Document> rerank(List<Document> docs, RerankerContext context) {
+        double queryEpoch = context.getQueryEpoch();
+        // extract raw epochs from results
+        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(docs);
+        // groom our hit times wrt to query time
+        List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
+
+        LocalExponentialDistribution distribution = new LocalExponentialDistribution(lambda);
+
         Iterator<Document> resultIt = docs.iterator();
         Iterator<Double> epochIt = scaledEpochs.iterator();
 

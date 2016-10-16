@@ -16,7 +16,6 @@ import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.features.BM25Feature;
 import io.jitter.core.probabilitydistributions.KDE;
-import io.jitter.core.probabilitydistributions.LocalExponentialDistribution;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.ListUtils;
 import io.jitter.core.utils.TimeUtils;
@@ -88,13 +87,8 @@ public class RMTSReranker implements Reranker {
             result.getFeatures().add((float) result.getRsv());
         }
 
-        // extract raw epochs from results
-        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(results);
-        // groom our hit times wrt to query time
-        List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
-
         double lambda = 0.01;
-        RecencyReranker reranker = new RecencyReranker(new LocalExponentialDistribution(lambda), scaledEpochs);
+        RecencyReranker reranker = new RecencyReranker(lambda);
         results = reranker.rerank(results, context);
 
         KDE.METHOD method = KDE.METHOD.STANDARD;

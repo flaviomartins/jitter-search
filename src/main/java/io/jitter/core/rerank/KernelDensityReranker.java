@@ -26,6 +26,7 @@ public class KernelDensityReranker implements Reranker {
 
     public List<Document> rerank(List<Document> docs, RerankerContext context) {
         double queryEpoch = context.getQueryEpoch();
+        // extract raw epochs from results
         List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(docs);
         // groom our hit times wrt to query time
         List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
