@@ -2,22 +2,11 @@ package io.jitter.core.rerank;
 
 import io.jitter.api.search.Document;
 
-import java.util.Collections;
 import java.util.List;
 
 
-public abstract class Reranker {
-    List<Document> results;
+public interface Reranker {
 
-    protected abstract void score();
+    List<Document> rerank(List<Document> docs, RerankerContext context);
 
-    public List<Document> getReranked() {
-        DocumentComparator comparator = new DocumentComparator(true);
-        Collections.sort(results, comparator);
-        return results;
-    }
-
-    public List<Document> getResults() {
-        return results;
-    }
 }

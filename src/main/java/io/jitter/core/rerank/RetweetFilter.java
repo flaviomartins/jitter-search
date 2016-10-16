@@ -1,4 +1,4 @@
-package io.jitter.core.filter;
+package io.jitter.core.rerank;
 
 import io.jitter.api.search.Document;
 import org.apache.commons.lang.StringUtils;
@@ -7,16 +7,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class RetweetFilter extends Filter {
+public class RetweetFilter implements Reranker {
 
-    public RetweetFilter(List<Document> results) {
-        this.results = results;
-        this.filter();
+    public RetweetFilter() {
     }
 
     @Override
-    protected void filter() {
-        Iterator<Document> resultIt = results.iterator();
+    public List<Document> rerank(List<Document> docs, RerankerContext context) {
+        Iterator<Document> resultIt = docs.iterator();
 
         List<Document> updatedResults = new ArrayList<>();
         while (resultIt.hasNext()) {
@@ -30,7 +28,7 @@ public class RetweetFilter extends Filter {
 
             updatedResults.add(origResult);
         }
-        results = updatedResults;
+        return updatedResults;
     }
 
 }

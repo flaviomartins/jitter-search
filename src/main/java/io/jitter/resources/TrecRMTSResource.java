@@ -1,13 +1,17 @@
 package io.jitter.resources;
 
+import cc.twittertools.index.IndexStatuses;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import io.dropwizard.jersey.params.BooleanParam;
 import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.RMTSDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.rerank.RMTSReranker;
+import io.jitter.core.rerank.RerankerCascade;
+import io.jitter.core.rerank.RerankerContext;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.Selection;
 import io.jitter.core.selection.SelectionManager;
@@ -105,8 +109,12 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
 
         TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
 
-        RMTSReranker rmtsReranker = new RMTSReranker("ltr-all.model", query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit.get(), numRerank.get());
-        results.scoreDocs = rmtsReranker.getReranked();
+        RerankerCascade cascade = new RerankerCascade();
+        cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit.get(), numRerank.get()));
+
+        RerankerContext context = new RerankerContext(null, null, "MB000", query,
+                queryEpoch, Lists.newArrayList(), IndexStatuses.StatusField.TEXT.name, null);
+        results.scoreDocs = cascade.run(results.scoreDocs, context);
 
         long endTime = System.currentTimeMillis();
 

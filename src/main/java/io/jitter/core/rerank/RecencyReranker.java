@@ -7,24 +7,22 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class RecencyReranker extends Reranker {
+public class RecencyReranker implements Reranker {
     private final ContinuousDistribution distribution;
     private final List<Double> scaledEpochs;
 
-    public RecencyReranker(List<Document> results, ContinuousDistribution distribution,
+    public RecencyReranker(ContinuousDistribution distribution,
                            List<Double> scaledEpochs) {
-        this.results = results;
         this.scaledEpochs = scaledEpochs;
         this.distribution = distribution;
-        this.score();
     }
 
     @Override
-    protected void score() {
-        Iterator<Document> resultIt = results.iterator();
+    public List<Document> rerank(List<Document> docs, RerankerContext context) {
+        Iterator<Document> resultIt = docs.iterator();
         Iterator<Double> epochIt = scaledEpochs.iterator();
 
-        List<Document> updatedResults = new ArrayList<>(results.size());
+        List<Document> updatedResults = new ArrayList<>(docs.size());
         while (resultIt.hasNext()) {
             Document origResult = resultIt.next();
             double scaledEpoch = epochIt.next();
@@ -37,7 +35,7 @@ public class RecencyReranker extends Reranker {
             updatedResult.setRsv(origResult.getRsv() + recency);
             updatedResults.add(updatedResult);
         }
-        results = updatedResults;
+        return updatedResults;
     }
 
 }

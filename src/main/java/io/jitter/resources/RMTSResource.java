@@ -1,8 +1,10 @@
 package io.jitter.resources;
 
+import cc.twittertools.index.IndexStatuses;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.dropwizard.jersey.caching.CacheControl;
 import io.dropwizard.jersey.params.BooleanParam;
@@ -10,8 +12,10 @@ import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.RMTSDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
-import io.jitter.core.filter.MaxTFFilter;
+import io.jitter.core.rerank.MaxTFFilter;
 import io.jitter.core.rerank.RMTSReranker;
+import io.jitter.core.rerank.RerankerCascade;
+import io.jitter.core.rerank.RerankerContext;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.Selection;
@@ -118,12 +122,13 @@ public class RMTSResource extends AbstractFeedbackResource {
 
         TopDocuments results = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);
 
-        RMTSReranker rmtsReranker = new RMTSReranker("ltr-all.model", query, queryEpoch, results.scoreDocs, shardResults.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get());
-        results.scoreDocs = rmtsReranker.getReranked();
+        RerankerCascade cascade = new RerankerCascade();
+        cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, shardResults.scoreDocs, searchManager.getCollectionStats(), limit.get(), numRerank.get()));
+        cascade.add(new MaxTFFilter(5));
 
-        MaxTFFilter maxTFFilter = new MaxTFFilter(5);
-        maxTFFilter.setResults(results.scoreDocs);
-        results.scoreDocs = maxTFFilter.getFiltered();
+        RerankerContext context = new RerankerContext(null, null, "MB000", query,
+                queryEpoch, Lists.newArrayList(), IndexStatuses.StatusField.TEXT.name, null);
+        results.scoreDocs = cascade.run(results.scoreDocs, context);
 
         long endTime = System.currentTimeMillis();
 

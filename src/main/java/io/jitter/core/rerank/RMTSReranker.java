@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class RMTSReranker extends Reranker {
+public class RMTSReranker implements Reranker {
 
     private static final Logger logger = LoggerFactory.getLogger(RMTSReranker.class);
 
@@ -49,20 +49,18 @@ public class RMTSReranker extends Reranker {
     private final int numResults;
     private final int numRerank;
 
-    public RMTSReranker(String rankerModel, String query, double queryEpoch, List<Document> results, List<Document> shardResults, CollectionStats collectionStats, int numResults, int numRerank) {
+    public RMTSReranker(String rankerModel, String query, double queryEpoch, List<Document> shardResults, CollectionStats collectionStats, int numResults, int numRerank) {
         this.rankerModel = rankerModel;
         this.query = query;
         this.queryEpoch = queryEpoch;
-        this.results = results;
         this.shardResults = shardResults;
         this.collectionStats = collectionStats;
         this.numResults = numResults;
         this.numRerank = numRerank;
-        this.score();
     }
 
     @Override
-    public void score() {
+    public List<Document> rerank(List<Document> results, RerankerContext context) {
         Query q;
         Set<String> qTerms = new HashSet<>();
         try {
@@ -96,8 +94,8 @@ public class RMTSReranker extends Reranker {
         List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
 
         double lambda = 0.01;
-        RecencyReranker reranker = new RecencyReranker(results, new LocalExponentialDistribution(lambda), scaledEpochs);
-        results = reranker.getReranked();
+        RecencyReranker reranker = new RecencyReranker(new LocalExponentialDistribution(lambda), scaledEpochs);
+        results = reranker.rerank(results, context);
 
         KDE.METHOD method = KDE.METHOD.STANDARD;
 //        if (kdeMethod != null) {
@@ -109,8 +107,8 @@ public class RMTSReranker extends Reranker {
         }
 //        KDEReranker kdeReranker = new KDEReranker(results, queryEpoch, method, KDEReranker.WEIGHT.UNIFORM, 1.0);
 //        results = kdeReranker.getReranked();
-        KDEReranker kdeReranker1 = new KDEReranker(results, queryEpoch, method, KDEReranker.WEIGHT.SCORE, 1.0);
-        results = kdeReranker1.getReranked();
+        KDEReranker kdeReranker1 = new KDEReranker(method, KDEReranker.WEIGHT.SCORE, 1.0);
+        results = kdeReranker1.rerank(results, context);
 
 //        KDERerank(retrievalOracle, query, method, bRet); // USE KDE RERANKER
         for (Document result : results) {
@@ -172,7 +170,7 @@ public class RMTSReranker extends Reranker {
             newsOracle.add((double)shardResult.getEpoch());
             newsWeights.add(jaccardSimilarity);
         }
-        results = KDERerank(newsOracle, newsWeights, results, queryEpoch, method, 1.0);
+        results = KDERerank(newsOracle, newsWeights, results, queryEpoch, method, 1.0, context);
 
         int numDocs = collectionStats.numDocs();
         HashMap<String, Integer> dfs = new HashMap<>();
@@ -295,22 +293,18 @@ public class RMTSReranker extends Reranker {
         } catch (SecurityException e) {
             logger.warn("RankLib caught calling System.exit(int).");
         }
+        return results;
     }
 
-    private List<Document> KDERerank(List<Double> oracleRawEpochs, List<Double> oracleWeights, List<Document> results, double queryEpoch, KDE.METHOD method, double weight) {
-        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(results);
-        // groom our hit times wrt to query time
-        List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
-
+    private List<Document> KDERerank(List<Double> oracleRawEpochs, List<Double> oracleWeights, List<Document> results, double queryEpoch, KDE.METHOD method, double weight, RerankerContext context) {
         // if we're using our oracle, we need the right training data
         List<Double> oracleScaledEpochs = TimeUtils.adjustEpochsToLandmark(oracleRawEpochs, queryEpoch, DAY);
         double[] densityTrainingData = ListUtils.listToArray(oracleScaledEpochs);
         double[] densityWeights = ListUtils.listToArray(oracleWeights);
 //        Arrays.fill(densityWeights, 1.0 / (double) densityWeights.length);
 
-        KernelDensityReranker kernelDensityReranker = new KernelDensityReranker(results, scaledEpochs,
-                densityTrainingData, densityWeights, method, weight);
-        return kernelDensityReranker.getReranked();
+        KernelDensityReranker kernelDensityReranker = new KernelDensityReranker(densityTrainingData, densityWeights, method, weight);
+        return kernelDensityReranker.rerank(results, context);
     }
 
     @SuppressWarnings("UnusedAssignment")

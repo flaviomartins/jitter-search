@@ -13,30 +13,34 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public class KDEReranker extends Reranker {
+public class KDEReranker implements Reranker {
     public static final double DAY = 60.0 * 60.0 * 24.0;
-    public static final double HOUR = 60.0 * 60.0;
 
     public enum WEIGHT {UNIFORM, SCORE, RANK}
 
-    private final List<Double> scaledEpochs;
-    private final KDE kde;
+    private final KDE.METHOD method;
+    private final WEIGHT scheme;
     private double beta = 1.0;
 
-    public KDEReranker(List<Document> results, double queryEpoch, KDE.METHOD method, WEIGHT scheme, double beta) {
-        this.results = results;
+    public KDEReranker(KDE.METHOD method, WEIGHT scheme, double beta) {
+        this.method = method;
+        this.scheme = scheme;
         this.beta = beta;
+    }
 
-        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(results);
+    @Override
+    public List<Document> rerank(List<Document> docs, RerankerContext context) {
+        double queryEpoch = context.getQueryEpoch();
+        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(docs);
         // groom our hit times wrt to query time
-        scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
+        List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
 
         double[] densityTrainingData = Doubles.toArray(scaledEpochs);
         double[] densityWeights = new double[densityTrainingData.length];
 
         switch (scheme) {
             case SCORE:
-                Iterator<Document> resultIt = results.iterator();
+                Iterator<Document> resultIt = docs.iterator();
                 int j = 0;
                 double maxRsv = Double.NEGATIVE_INFINITY;
                 while (resultIt.hasNext()) {
@@ -51,7 +55,7 @@ public class KDEReranker extends Reranker {
                 }
                 break;
             case RANK:
-                Iterator<Document> resultIt1 = results.iterator();
+                Iterator<Document> resultIt1 = docs.iterator();
                 int jj = 0;
 //                (n/2)(n+1)
 //                double lambda = 1.0 / (results.size()/2.0)*(results.size()+1);
@@ -69,16 +73,12 @@ public class KDEReranker extends Reranker {
                 Arrays.fill(densityWeights, 1.0 / (double) densityWeights.length);
         }
 
-        kde = new JsatKDE(densityTrainingData, densityWeights, -1.0, method);
-        this.score();
-    }
+        KDE kde = new JsatKDE(densityTrainingData, densityWeights, -1.0, method);
 
-    @Override
-    protected void score() {
-        Iterator<Document> resultIt = results.iterator();
+        Iterator<Document> resultIt = docs.iterator();
         Iterator<Double> epochIt = scaledEpochs.iterator();
 
-        List<Document> updatedResults = new ArrayList<>(results.size());
+        List<Document> updatedResults = new ArrayList<>(docs.size());
         while (resultIt.hasNext()) {
             Document origResult = resultIt.next();
             double scaledEpoch = epochIt.next();
@@ -95,11 +95,7 @@ public class KDEReranker extends Reranker {
             updatedResult.setRsv(origResult.getRsv() + beta * density);
             updatedResults.add(updatedResult);
         }
-        results = updatedResults;
-    }
-
-    public double getBandwidth() {
-        return kde.getBandwidth();
+        return updatedResults;
     }
 
 }
