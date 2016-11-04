@@ -28,6 +28,10 @@ public class JitterSearchConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private ApiDocsFactory apiDocsFactory = new ApiDocsFactory();
+
+    @Valid
+    @NotNull
     private SearchManagerFactory searchManagerFactory = new SearchManagerFactory();
 
     @Valid
@@ -49,6 +53,16 @@ public class JitterSearchConfiguration extends Configuration {
     @Valid
     @NotNull
     private TrecMicroblogAPIWrapperFactory trecMicroblogAPIWrapperFactory = new TrecMicroblogAPIWrapperFactory();
+
+    @JsonProperty("apidocs")
+    public ApiDocsFactory getApiDocsFactory() {
+        return apiDocsFactory;
+    }
+
+    @JsonProperty("apidocs")
+    public void setApiDocsFactory(ApiDocsFactory apiDocsFactory) {
+        this.apiDocsFactory = apiDocsFactory;
+    }
 
     @JsonProperty("search")
     public SearchManagerFactory getSearchManagerFactory() {
