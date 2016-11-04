@@ -11,6 +11,7 @@ import io.jitter.api.search.SearchResponse;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Epochs;
+import io.swagger.annotations.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/search")
+@Api(value = "/search", description = "Search endpoint")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class SearchResource {
     private static final Logger logger = LoggerFactory.getLogger(SearchResource.class);
@@ -45,13 +47,22 @@ public class SearchResource {
     @GET
     @Timed
     @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
-    public SearchResponse search(@QueryParam("q") Optional<String> q,
-                                 @QueryParam("fq") Optional<String> fq,
-                                 @QueryParam("limit") @DefaultValue("1000") IntParam limit,
-                                 @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
-                                 @QueryParam("maxId") Optional<Long> maxId,
-                                 @QueryParam("epoch") Optional<String> epoch,
-                                 @Context UriInfo uriInfo)
+    @ApiOperation(
+            value = "Searches documents by keyword query",
+            notes = "Returns a search response",
+            response = SearchResponse.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Invalid query supplied"),
+            @ApiResponse(code = 404, message = "No results found")
+    })
+    public SearchResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") Optional<String> q,
+                                 @ApiParam(hidden = true) @QueryParam("fq") Optional<String> fq,
+                                 @ApiParam(value = "Results limit") @QueryParam("limit") @DefaultValue("1000") IntParam limit,
+                                 @ApiParam(hidden = true) @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
+                                 @ApiParam(hidden = true) @QueryParam("maxId") Optional<Long> maxId,
+                                 @ApiParam(hidden = true) @QueryParam("epoch") Optional<String> epoch,
+                                 @ApiParam(hidden = true) @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
         String query = URLDecoder.decode(q.orElse(""), "UTF-8");
