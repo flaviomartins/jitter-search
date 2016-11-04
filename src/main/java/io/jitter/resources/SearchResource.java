@@ -3,8 +3,6 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.caching.CacheControl;
-import io.dropwizard.jersey.params.BooleanParam;
-import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.DocumentsResponse;
 import io.jitter.api.search.SearchResponse;
@@ -17,10 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Locale;
@@ -53,32 +48,44 @@ public class SearchResource {
             response = SearchResponse.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Invalid query supplied"),
-            @ApiResponse(code = 404, message = "No results found")
+            @ApiResponse(code = 400, message = "Invalid query"),
+            @ApiResponse(code = 404, message = "No results found"),
+            @ApiResponse(code = 500, message = "Internal Server Error")
     })
     public SearchResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") Optional<String> q,
                                  @ApiParam(hidden = true) @QueryParam("fq") Optional<String> fq,
-                                 @ApiParam(value = "Results limit") @QueryParam("limit") @DefaultValue("1000") IntParam limit,
-                                 @ApiParam(hidden = true) @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
-                                 @ApiParam(hidden = true) @QueryParam("maxId") Optional<Long> maxId,
-                                 @ApiParam(hidden = true) @QueryParam("epoch") Optional<String> epoch,
-                                 @ApiParam(hidden = true) @Context UriInfo uriInfo)
-            throws IOException, ParseException {
+                                 @ApiParam(value = "Limit results", allowableValues="range[1, 10000]") @QueryParam("limit") @DefaultValue("1000") Integer limit,
+                                 @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
+                                 @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
+                                 @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
+                                 @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        String query = URLDecoder.decode(q.orElse(""), "UTF-8");
-        long[] epochs = Epochs.parseEpoch(epoch);
 
-        long startTime = System.currentTimeMillis();
+        if (!q.isPresent()) {
+            throw new BadRequestException();
+        }
 
-        TopDocuments results = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);
+        try {
+            long startTime = System.currentTimeMillis();
+            String query = URLDecoder.decode(q.orElse(""), "UTF-8");
+            long[] epochs = Epochs.parseEpoch(epoch);
 
-        long endTime = System.currentTimeMillis();
+            TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
+            int totalHits = results != null ? results.totalHits : 0;
+            if (totalHits == 0) {
+                throw new NotFoundException("No results found");
+            }
 
-        int totalHits = results != null ? results.totalHits : 0;
-        logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
+            long endTime = System.currentTimeMillis();
+            logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
-        ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        DocumentsResponse documentsResponse = new DocumentsResponse(totalHits, 0, results);
-        return new SearchResponse(responseHeader, documentsResponse);
+            ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
+            DocumentsResponse documentsResponse = new DocumentsResponse(totalHits, 0, results);
+            return new SearchResponse(responseHeader, documentsResponse);
+        } catch (ParseException pe) {
+            throw new BadRequestException(pe.getClass().getSimpleName());
+        } catch (IOException ioe) {
+            throw new ServerErrorException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 }
