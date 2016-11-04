@@ -24,6 +24,7 @@ public class KernelDensityReranker implements Reranker {
         this.beta = beta;
     }
 
+    @Override
     public List<Document> rerank(List<Document> docs, RerankerContext context) {
         double queryEpoch = context.getQueryEpoch();
         // extract raw epochs from results
