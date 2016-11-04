@@ -73,13 +73,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         }
 
         // Swagger API listing
-        BeanConfig beanConfig = new BeanConfig();
-        beanConfig.setTitle("Jitter Search");
-        beanConfig.setDescription("Jitter is a RESTful web application that does search on Twitter.");
-        beanConfig.setVersion("1.0.0");
-        beanConfig.setSchemes(new String[]{"http"});
-        beanConfig.setHost("localhost:8080");
-        beanConfig.setBasePath("/");
+        BeanConfig beanConfig = configuration.getApiDocsFactory().build();
         beanConfig.setResourcePackage("io.jitter.resources");
         beanConfig.setScan(true);
 
