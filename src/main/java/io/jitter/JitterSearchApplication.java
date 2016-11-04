@@ -2,6 +2,7 @@ package io.jitter;
 
 import com.google.common.collect.Lists;
 import io.dropwizard.Application;
+import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.jitter.core.search.SearchManager;
@@ -15,6 +16,9 @@ import io.jitter.core.utils.NoExitSecurityManager;
 import io.jitter.health.*;
 import io.jitter.resources.*;
 import io.jitter.tasks.*;
+import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.jaxrs.listing.ApiListingResource;
+import io.swagger.jaxrs.listing.SwaggerSerializers;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import io.jitter.core.selection.SelectionManager;
@@ -45,7 +49,9 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
     @Override
     public void initialize(Bootstrap<JitterSearchConfiguration> bootstrap) {
-        // nothing to do yet
+        // API documentation bundles
+        bootstrap.addBundle(new AssetsBundle("/swagger-ui", "/apidocs", "index.html", "swagger-ui"));
+        bootstrap.addBundle(new AssetsBundle("/redoc", "/redoc", "index.html", "redoc"));
     }
 
     @Override
@@ -65,6 +71,20 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             // Add URL mapping
             cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         }
+
+        // Swagger API listing
+        BeanConfig beanConfig = new BeanConfig();
+        beanConfig.setTitle("Jitter Search");
+        beanConfig.setDescription("Jitter is a RESTful web application that does search on Twitter.");
+        beanConfig.setVersion("1.0.0");
+        beanConfig.setSchemes(new String[]{"http"});
+        beanConfig.setHost("localhost:8080");
+        beanConfig.setBasePath("/");
+        beanConfig.setResourcePackage("io.jitter.resources");
+        beanConfig.setScan(true);
+
+        environment.jersey().register(SwaggerSerializers.class);
+        environment.jersey().register(new ApiListingResource());
 
         final TwitterManager twitterManager = configuration.getTwitterManagerFactory().build(environment);
         final TwitterManagerHealthCheck twitterManagerHealthCheck =
