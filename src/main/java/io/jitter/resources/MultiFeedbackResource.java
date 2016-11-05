@@ -2,7 +2,6 @@ package io.jitter.resources;
 
 import cc.twittertools.index.IndexStatuses;
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -143,16 +142,13 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
 
             FeatureVector queryFV = buildQueryFV(query, searchManager.getStopper());
             fbVector = interpruneFV(fbTerms, fbWeight.floatValue(), queryFV, fbVector);
-
-            logger.info("Selected: {}\n fbDocs: {} Feature Vector:\n{}", selected != null ? Joiner.on(", ").join(selected) : "all", shardResults.scoreDocs.size(), fbVector.toString());
-
-            query = buildQuery(fbVector);
+            String finalQuery = buildQuery(fbVector);
 
             // get the query epoch
             double currentEpoch = System.currentTimeMillis() / 1000L;
             double queryEpoch = epoch.isPresent() ? epochs[1] : currentEpoch;
 
-            TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
+            TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, finalQuery, epochs);
 
             RerankerCascade cascade = new RerankerCascade();
             cascade.add(new MaxTFFilter(5));
