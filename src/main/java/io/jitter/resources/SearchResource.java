@@ -61,7 +61,7 @@ public class SearchResource {
                                  @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
-        if (!q.isPresent()) {
+        if (!q.isPresent() || q.get().isEmpty()) {
             throw new BadRequestException();
         }
 
