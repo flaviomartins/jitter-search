@@ -100,11 +100,8 @@ public class AbstractFeedbackResource {
 
     String buildQuery(FeatureVector fbVector) {
         StringBuilder builder = new StringBuilder();
-        Iterator<String> terms = fbVector.iterator();
-        while (terms.hasNext()) {
-            String term = terms.next();
-            double prob = fbVector.getFeatureWeight(term);
-            builder.append(term).append("^").append(Math.abs(prob)).append(" ");
+        for (Map.Entry<String, Float> entry : fbVector.getMap().entrySet()) {
+            builder.append(entry.getKey()).append("^").append(Math.abs(entry.getValue())).append(" ");
         }
         return builder.toString().trim();
     }

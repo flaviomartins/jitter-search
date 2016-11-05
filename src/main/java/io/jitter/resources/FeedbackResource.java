@@ -3,8 +3,6 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.caching.CacheControl;
-import io.dropwizard.jersey.params.BooleanParam;
-import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.FeedbackDocumentsResponse;
 import io.jitter.api.search.SearchResponse;
@@ -12,16 +10,13 @@ import io.jitter.core.document.FeatureVector;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Epochs;
+import io.swagger.annotations.*;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Locale;
@@ -30,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/fb")
+@Api(value = "/fb", description = "Feedback search endpoint")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class FeedbackResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(FeedbackResource.class);
@@ -47,54 +43,70 @@ public class FeedbackResource extends AbstractFeedbackResource {
     @GET
     @Timed
     @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
-    public SearchResponse search(@QueryParam("q") Optional<String> q,
-                                 @QueryParam("fq") Optional<String> fq,
-                                 @QueryParam("limit") @DefaultValue("1000") IntParam limit,
-                                 @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
-                                 @QueryParam("maxId") Optional<Long> maxId,
-                                 @QueryParam("epoch") Optional<String> epoch,
-                                 @QueryParam("sLimit") @DefaultValue("1000") IntParam sLimit,
-                                 @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
-                                 @QueryParam("sFuture") @DefaultValue("false") BooleanParam sFuture,
-                                 @QueryParam("method") @DefaultValue("crcsexp") String method,
-                                 @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
-                                 @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
-                                 @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
-                                 @QueryParam("fbDocs") @DefaultValue("50") IntParam fbDocs,
-                                 @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
-                                 @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
-                                 @Context UriInfo uriInfo)
-            throws IOException, ParseException, TException, ClassNotFoundException {
+    @ApiOperation(
+            value = "Searches documents by keyword query using feedback",
+            notes = "Returns a search response",
+            response = SearchResponse.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Invalid query"),
+            @ApiResponse(code = 404, message = "No results found"),
+            @ApiResponse(code = 500, message = "Internal Server Error")
+    })
+    public SearchResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") Optional<String> q,
+                                 @ApiParam(hidden = true) @QueryParam("fq") Optional<String> fq,
+                                 @ApiParam(value = "Limit results", allowableValues="range[1, 10000]") @QueryParam("limit") @DefaultValue("1000") Integer limit,
+                                 @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
+                                 @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
+                                 @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
+                                 @ApiParam(value = "Limit feedback results", allowableValues="range[1, 10000]") @QueryParam("sLimit") @DefaultValue("1000") Integer sLimit,
+                                 @ApiParam(value = "Include retweets for feedback") @QueryParam("sRetweets") @DefaultValue("true") Boolean sRetweets,
+                                 @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean sFuture,
+                                 @ApiParam(value = "Number of feedback documents", allowableValues="range[1, 1000]") @QueryParam("fbDocs") @DefaultValue("50") Integer fbDocs,
+                                 @ApiParam(value = "Number of feedback terms", allowableValues="range[1, 1000]") @QueryParam("fbTerms") @DefaultValue("20") Integer fbTerms,
+                                 @ApiParam(value = "Original query weight", allowableValues="range[0, 1]") @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
+                                 @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        String query = URLDecoder.decode(q.orElse(""), "UTF-8");
-        long[] epochs = Epochs.parseEpoch(epoch);
-        
-        long startTime = System.currentTimeMillis();
 
-        TopDocuments selectResults = searchManager.search(sLimit.get(), sRetweets.get(), sFuture.get(), maxId, epoch, query, epochs);
-        selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
-
-        FeatureVector fbVector = null;
-        if (fbDocs.get() > 0 && fbTerms.get() > 0) {
-            FeatureVector queryFV = buildQueryFV(query, searchManager.getStopper());
-            FeatureVector feedbackFV = buildFeedbackFV(fbDocs.get(), fbTerms.get(), selectResults, searchManager.getStopper(), searchManager.getCollectionStats());
-            fbVector = interpruneFV(fbTerms.get(), fbWeight.floatValue(), queryFV, feedbackFV);
-
-            logger.info("\n fbDocs: {} Feature Vector:\n{}", selectResults.scoreDocs.size(), fbVector.toString());
-
-            query = buildQuery(fbVector);
+        if (!q.isPresent() || q.get().isEmpty()) {
+            throw new BadRequestException();
         }
 
-        TopDocuments results = searchManager.search(limit.get(), retweets.get(), maxId, epoch, query, epochs);
+        try {
+            long startTime = System.currentTimeMillis();
+            String query = URLDecoder.decode(q.orElse(""), "UTF-8");
+            long[] epochs = Epochs.parseEpoch(epoch);
 
-        long endTime = System.currentTimeMillis();
+            TopDocuments selectResults = searchManager.search(sLimit, sRetweets, sFuture, maxId, epoch, query, epochs);
+            selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs, selectResults.scoreDocs.size()));
 
-        int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
-        int totalHits = results != null ? results.totalHits : 0;
-        logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
+            String finalQuery = query;
+            FeatureVector fbVector = null;
+            if (fbDocs > 0 && fbTerms > 0) {
+                FeatureVector queryFV = buildQueryFV(query, searchManager.getStopper());
+                FeatureVector feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults, searchManager.getStopper(), searchManager.getCollectionStats());
+                fbVector = interpruneFV(fbTerms, fbWeight.floatValue(), queryFV, feedbackFV);
+                finalQuery = buildQuery(fbVector);
+            }
 
-        ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(totalFbDocs, fbTerms.get(), fbVector.getMap(), 0, results);
-        return new SearchResponse(responseHeader, documentsResponse);
+            TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, finalQuery, epochs);
+
+            int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
+            int totalHits = results != null ? results.totalHits : 0;
+            if (totalHits == 0) {
+                throw new NotFoundException("No results found");
+            }
+
+            long endTime = System.currentTimeMillis();
+            logger.info(String.format(Locale.ENGLISH, "%4dms %4dfbDocs %4dhits %s", (endTime - startTime), totalFbDocs, totalHits, query));
+
+            ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
+            FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(totalFbDocs, fbTerms, fbVector.getMap(), 0, results);
+            return new SearchResponse(responseHeader, documentsResponse);
+        } catch (ParseException pe) {
+            throw new BadRequestException(pe.getClass().getSimpleName());
+        } catch (IOException ioe) {
+            throw new ServerErrorException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 }
