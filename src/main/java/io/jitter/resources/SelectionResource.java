@@ -62,7 +62,7 @@ public class SelectionResource {
                                     @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("true") Boolean retweets,
                                     @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
                                     @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
-                                    @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("true") Boolean future,
+                                    @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean future,
                                     @ApiParam(value = "Resource selection method", allowableValues="taily,ranks,crcsexp,crcslin,votes,sizes") @QueryParam("method") @DefaultValue("crcsexp") String method,
                                     @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
                                     @ApiParam(value = "Maximum number of collections", allowableValues="range[0, 100]") @QueryParam("maxCol") @DefaultValue("3") Integer maxCol,
