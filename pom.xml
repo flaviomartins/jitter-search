@@ -21,15 +21,14 @@
         <jitter.url>http://www.jitter.io</jitter.url>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <dropwizard.version>1.0.3</dropwizard.version>
+        <dropwizard.version>1.0.4</dropwizard.version>
         <swagger.version>1.5.10</swagger.version>
-        <guava.version>19.0</guava.version>
+        <guava.version>20.0</guava.version>
         <jsr305.version>3.0.1</jsr305.version>
         <fastutil.version>7.0.13</fastutil.version>
-        <jersey.version>2.23.2</jersey.version>
-        <jackson.api.version>2.7.8</jackson.api.version>
-        <jackson.version>2.7.8</jackson.version>
-        <jetty.version>9.3.12.v20160915</jetty.version>
+        <jersey.version>2.24</jersey.version>
+        <jackson.version>2.8.4</jackson.version>
+        <jetty.version>9.3.14.v20161028</jetty.version>
         <slf4j.version>1.7.21</slf4j.version>
         <logback.version>1.1.7</logback.version>
         <lucene.version>4.10.4</lucene.version>
@@ -244,9 +243,16 @@
 
             <!-- Jackson -->
             <dependency>
+                <groupId>com.github.joschi.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.api.version}</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
