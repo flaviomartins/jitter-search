@@ -161,10 +161,18 @@ public class RMTSReranker implements Reranker {
 //            double n = (double) Sets.intersection(kstemQTerms, kstemNTerms).size();
 //            double jaccardSimilarity = n / (kstemQTerms.size() + kstemNTerms.size() - n);
 
-            newsOracle.add((double)shardResult.getEpoch());
+            newsOracle.add((double) shardResult.getEpoch());
             newsWeights.add(jaccardSimilarity);
         }
-        results = KDERerank(newsOracle, newsWeights, results, queryEpoch, method, 1.0, context);
+
+        if (newsOracle.size() > 1 && newsWeights.size() > 1) {
+            results = KDERerank(newsOracle, newsWeights, results, queryEpoch, method, 1.0, context);
+        } else {
+            // set feature to 0f for all documents
+            for (Document result : results) {
+                result.getFeatures().add(0f);
+            }
+        }
 
         int numDocs = collectionStats.numDocs();
         HashMap<String, Integer> dfs = new HashMap<>();
