@@ -318,6 +318,25 @@ public class ShardRanker {
             return sortAndNormalization(ranking);
         }
 
+        // all from Eq (10)
+        double[] all = _getAll(stems);
+
+        // fast fall-through for for 1 degenerate case
+        if (all[0] < 1e-10) {
+            // if all[0] is ~= 0, then all[i] is ~= 0 because no shard contains all of the query terms
+            // these all[0] ~= 0 cases should be handled carefully; instead of just using queryMean,
+            // it could be more effective calculating *all* again for the maximum number of query terms
+            for (int i = 1; i < _numShards + 1; i++) {
+                if (hasATerm[i]) {
+                    // actually use mean of the shard as score
+                    ranking.put(_shardIds[i - 1], queryMean[i]);
+                } else {
+                    ranking.put(_shardIds[i - 1], 0.0);
+                }
+            }
+            return sortAndNormalization(ranking);
+        }
+
         // calculate k and theta from mean/vars Eq (7) (8)
         double[] k = new double[_numShards + 1];
         double[] theta = new double[_numShards + 1];
@@ -333,9 +352,6 @@ public class ShardRanker {
             k[i] = Math.pow(queryMean[i], 2) / queryVar[i];
             theta[i] = queryVar[i] / queryMean[i];
         }
-
-        // all from Eq (10)
-        double[] all = _getAll(stems);
 
         // calculate s_c from inline equation after Eq (11)
         double p_c = _n_c / all[0];
@@ -357,7 +373,7 @@ public class ShardRanker {
 
             // if var is ~= 0, then don't build a distribution.
             // based on the mean of the shard (which is the score of the single doc), n_i is either 0 or 1
-            if (queryVar[i] < 1e-10 && hasATerm[i]) {
+            if (queryVar[i] < 1e-10) {
                 // actually use mean of the shard as score
                 ranking.put(_shardIds[i - 1], queryMean[i]);
             } else {
