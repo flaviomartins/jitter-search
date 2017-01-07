@@ -100,6 +100,7 @@ public class SearchManager implements Managed {
         float[] scores;
 
         IndexSearcher indexSearcher = getIndexSearcher();
+        CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, ANALYZER).parse(query);
 
         final TopDocsCollector topCollector = TopScoreDocCollector.create(len, true);
@@ -120,7 +121,7 @@ public class SearchManager implements Managed {
         }
 
         // Compute real QL scores even when live to build termVectors
-        List<Document> docs = SearchUtils.getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT, true);
+        List<Document> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT, true);
         if (filterRT) {
             logger.info("filter_rt count: {}", nDocsReturned - docs.size());
         }

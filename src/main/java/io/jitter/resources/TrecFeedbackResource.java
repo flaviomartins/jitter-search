@@ -1,5 +1,6 @@
 package io.jitter.resources;
 
+import cc.twittertools.util.QueryLikelihoodModel;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.params.BooleanParam;
@@ -9,6 +10,7 @@ import io.jitter.api.search.*;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
+import io.jitter.core.utils.SearchUtils;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -21,6 +23,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -62,6 +65,7 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
                                  @QueryParam("fbTerms") @DefaultValue("20") IntParam fbTerms,
                                  @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                  @QueryParam("fbBootstrap") @DefaultValue("false") BooleanParam fbBootstrap,
+                                 @QueryParam("fbRerankOnly") @DefaultValue("false") Boolean fbRerankOnly,
                                  @Context UriInfo uriInfo)
             throws IOException, ParseException, TException, ClassNotFoundException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -69,8 +73,8 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
 
         long startTime = System.currentTimeMillis();
 
-        TopDocuments selectResults = trecMicroblogAPIWrapper.search(sLimit, maxId, sRetweets, sFuture.get(), query);
-        selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
+        TopDocuments selectResults = trecMicroblogAPIWrapper.search(limit, maxId, sRetweets, sFuture.get(), query);
+//        selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs.get(), selectResults.scoreDocs.size()));
 
 
 //        if (qid.isPresent()) {
@@ -98,7 +102,14 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
             query = buildQuery(fbVector);
         }
 
-        TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
+        TopDocuments results = null;
+        if (fbRerankOnly) {
+            QueryLikelihoodModel qlModel = new QueryLikelihoodModel(2500.0f);
+            List<Document> docs = SearchUtils.computeQLScores(trecMicroblogAPIWrapper.getCollectionStats(), qlModel, selectResults.scoreDocs, query, limit.get(), !retweets.get(), true);
+            results = new TopDocuments(docs);
+        } else {
+            results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
+        }
 
         long endTime = System.currentTimeMillis();
 

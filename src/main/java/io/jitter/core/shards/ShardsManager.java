@@ -285,6 +285,7 @@ public class ShardsManager implements Managed {
         float[] scores;
 
         IndexSearcher indexSearcher = getIndexSearcher();
+        CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
 
         final TopDocsCollector topCollector = TopScoreDocCollector.create(len, true);
@@ -309,7 +310,7 @@ public class ShardsManager implements Managed {
             scores[i] = scoreDoc.score;
         }
 
-        List<Document> docs = SearchUtils.getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT);
+        List<Document> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT);
         if (filterRT) {
             logger.info("filter_rt count: {}", nDocsReturned - docs.size());
         }
