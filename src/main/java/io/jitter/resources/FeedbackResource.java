@@ -1,15 +1,19 @@
 package io.jitter.resources;
 
+import cc.twittertools.util.QueryLikelihoodModel;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.caching.CacheControl;
+import io.dropwizard.jersey.params.BooleanParam;
 import io.jitter.api.ResponseHeader;
+import io.jitter.api.search.Document;
 import io.jitter.api.search.FeedbackDocumentsResponse;
 import io.jitter.api.search.SearchResponse;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Epochs;
+import io.jitter.core.utils.SearchUtils;
 import io.swagger.annotations.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
@@ -19,6 +23,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -65,6 +70,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
                                  @ApiParam(value = "Number of feedback documents", allowableValues="range[1, 1000]") @QueryParam("fbDocs") @DefaultValue("50") Integer fbDocs,
                                  @ApiParam(value = "Number of feedback terms", allowableValues="range[1, 1000]") @QueryParam("fbTerms") @DefaultValue("20") Integer fbTerms,
                                  @ApiParam(value = "Original query weight", allowableValues="range[0, 1]") @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
+                                 @ApiParam(hidden = true) @QueryParam("fbRerankOnly") @DefaultValue("false") BooleanParam fbRerankOnly,
                                  @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -89,7 +95,14 @@ public class FeedbackResource extends AbstractFeedbackResource {
                 finalQuery = buildQuery(fbVector);
             }
 
-            TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, finalQuery, epochs);
+            TopDocuments results = null;
+            if (fbRerankOnly.get()) {
+                QueryLikelihoodModel qlModel = new QueryLikelihoodModel(2500.0f);
+                List<Document> docs = SearchUtils.computeQLScores(searchManager.getCollectionStats(), qlModel, selectResults.scoreDocs, query, limit, !retweets, true);
+                results = new TopDocuments(docs);
+            } else {
+                results = searchManager.search(limit, retweets, maxId, epoch, finalQuery, epochs);
+            }
 
             int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
             int totalHits = results != null ? results.totalHits : 0;
