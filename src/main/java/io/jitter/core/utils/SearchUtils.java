@@ -3,6 +3,7 @@ package io.jitter.core.utils;
 import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.util.QueryLikelihoodModel;
 import com.google.common.collect.Lists;
+import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
@@ -19,26 +20,11 @@ import java.util.*;
 
 public class SearchUtils {
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT, boolean computeQLScores) throws IOException {
+    public static List<Document> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT, boolean computeQLScores) throws IOException {
         IndexReader indexReader = indexSearcher.getIndexReader();
 
-
-        Map<String, Float> weights = null;
-        HashMap<String, Long> ctfs = null;
-        long sumTotalTermFreq = -1;
-        if (computeQLScores && qlModel != null) {
-            weights = qlModel.parseQuery(IndexStatuses.ANALYZER, query);
-            ctfs = new HashMap<>();
-            for(String queryTerm: weights.keySet()) {
-                Term term = new Term(IndexStatuses.StatusField.TEXT.name, queryTerm);
-                long ctf = indexReader.totalTermFreq(term);
-                ctfs.put(queryTerm, ctf);
-            }
-            sumTotalTermFreq = indexReader.getSumTotalTermFreq(IndexStatuses.StatusField.TEXT.name);
-        }
-
         int count = 0;
-        List<Document> docs = Lists.newArrayList();
+        List<Document> topDocuments = Lists.newArrayList();
         for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
             if (count >= n)
                 break;
@@ -62,36 +48,73 @@ public class SearchUtils {
                 continue;
             }
 
-            DocVector docVector = null;
-            if (computeQLScores) {
+            DocVector docVector = doc.getDocVector();
+            if (computeQLScores && docVector == null) {
+                DocVector newDocVector = null;
                 try {
-                    docVector = buildDocVector(indexReader, scoreDoc.doc);
+                    newDocVector = buildDocVector(indexReader, scoreDoc.doc);
                 } catch (IOException e) {
-                    docVector = buildDocVector(IndexStatuses.ANALYZER, doc.getText());
+                    newDocVector = buildDocVector(IndexStatuses.ANALYZER, doc.getText());
                 }
-                doc.setDocVector(docVector);
+                doc.setDocVector(newDocVector);
+            }
+
+            topDocuments.add(doc);
+            count += 1;
+        }
+
+        if (computeQLScores) {
+            return computeQLScores(collectionStats, qlModel, topDocuments, query, n, filterRT, computeQLScores);
+        } else {
+            return topDocuments;
+        }
+    }
+
+    public static List<Document> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT) throws IOException {
+        return getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT, true);
+    }
+
+    public static List<Document> computeQLScores(CollectionStats collectionStats, QueryLikelihoodModel qlModel, List<Document> topDocuments, String query, int n, boolean filterRT, boolean computeQLScores) throws IOException {
+        Map<String, Float> weights = null;
+        HashMap<String, Long> ctfs = null;
+        long sumTotalTermFreq = -1;
+        if (computeQLScores && qlModel != null) {
+            weights = qlModel.parseQuery(IndexStatuses.ANALYZER, query);
+            ctfs = new HashMap<>();
+            for(String queryTerm: weights.keySet()) {
+                long ctf = collectionStats.totalTermFreq(queryTerm);
+                ctfs.put(queryTerm, ctf);
+            }
+            sumTotalTermFreq = collectionStats.getSumTotalTermFreq();
+        }
+
+        int count = 0;
+        for (Document doc : topDocuments) {
+            if (count >= n)
+                break;
+
+            DocVector docVector = doc.getDocVector();
+            if (computeQLScores && docVector == null) {
+                DocVector newDocVector = buildDocVector(IndexStatuses.ANALYZER, doc.getText());
+                docVector = newDocVector;
+                doc.setDocVector(newDocVector);
             }
 
             if (computeQLScores && qlModel != null && weights != null && docVector != null) {
                 doc.rsv = qlModel.computeQLScore(weights, ctfs, docVector.vector, sumTotalTermFreq);
             } else {
-                doc.rsv = scoreDoc.score;
+//                doc.rsv = doc.rsv;
             }
 
-            docs.add(doc);
             count += 1;
         }
 
         if (computeQLScores) {
             Comparator<Document> comparator = new DocumentComparator(true);
-            Collections.sort(docs, comparator);
+            Collections.sort(topDocuments, comparator);
         }
 
-        return docs;
-    }
-
-    public static List<Document> getDocs(IndexSearcher indexSearcher, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT) throws IOException {
-        return getDocs(indexSearcher, qlModel, topDocs, query, n, filterRT, true);
+        return topDocuments;
     }
 
     private static LinkedHashMap<String, Integer> getTermsMap(IndexReader indexReader) throws IOException {
