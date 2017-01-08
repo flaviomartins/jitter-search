@@ -20,13 +20,13 @@ import java.util.*;
 
 public class SearchUtils {
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT, boolean computeQLScores) throws IOException {
+    public static List<Document> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean filterRT, boolean computeQLScores) throws IOException {
         IndexReader indexReader = indexSearcher.getIndexReader();
 
         int count = 0;
         List<Document> topDocuments = Lists.newArrayList();
         for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
-            if (count >= n)
+            if (count >= limit)
                 break;
 
             org.apache.lucene.document.Document hit = indexSearcher.doc(scoreDoc.doc);
@@ -50,7 +50,7 @@ public class SearchUtils {
 
             DocVector docVector = doc.getDocVector();
             if (computeQLScores && docVector == null) {
-                DocVector newDocVector = null;
+                DocVector newDocVector;
                 try {
                     newDocVector = buildDocVector(indexReader, scoreDoc.doc);
                 } catch (IOException e) {
@@ -64,21 +64,21 @@ public class SearchUtils {
         }
 
         if (computeQLScores) {
-            return computeQLScores(collectionStats, qlModel, topDocuments, query, n, filterRT, computeQLScores);
+            return computeQLScores(collectionStats, qlModel, topDocuments, query, limit);
         } else {
             return topDocuments;
         }
     }
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int n, boolean filterRT) throws IOException {
-        return getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT, true);
+    public static List<Document> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean filterRT) throws IOException {
+        return getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, limit, filterRT, true);
     }
 
-    public static List<Document> computeQLScores(CollectionStats collectionStats, QueryLikelihoodModel qlModel, List<Document> topDocuments, String query, int n, boolean filterRT, boolean computeQLScores) throws IOException {
+    public static List<Document> computeQLScores(CollectionStats collectionStats, QueryLikelihoodModel qlModel, List<Document> topDocuments, String query, int limit) throws IOException {
         Map<String, Float> weights = null;
         HashMap<String, Long> ctfs = null;
         long sumTotalTermFreq = -1;
-        if (computeQLScores && qlModel != null) {
+        if (qlModel != null) {
             weights = qlModel.parseQuery(IndexStatuses.ANALYZER, query);
             ctfs = new HashMap<>();
             for(String queryTerm: weights.keySet()) {
@@ -88,33 +88,23 @@ public class SearchUtils {
             sumTotalTermFreq = collectionStats.getSumTotalTermFreq();
         }
 
-        int count = 0;
         for (Document doc : topDocuments) {
-            if (count >= n)
-                break;
-
             DocVector docVector = doc.getDocVector();
-            if (computeQLScores && docVector == null) {
+            if (docVector == null) {
                 DocVector newDocVector = buildDocVector(IndexStatuses.ANALYZER, doc.getText());
                 docVector = newDocVector;
                 doc.setDocVector(newDocVector);
             }
 
-            if (computeQLScores && qlModel != null && weights != null && docVector != null) {
+            if (qlModel != null && weights != null && docVector != null) {
                 doc.rsv = qlModel.computeQLScore(weights, ctfs, docVector.vector, sumTotalTermFreq);
-            } else {
-//                doc.rsv = doc.rsv;
             }
-
-            count += 1;
         }
 
-        if (computeQLScores) {
-            Comparator<Document> comparator = new DocumentComparator(true);
-            Collections.sort(topDocuments, comparator);
-        }
+        Comparator<Document> comparator = new DocumentComparator(true);
+        topDocuments.sort(comparator);
 
-        return topDocuments;
+        return topDocuments.subList(0, Math.min(limit, topDocuments.size()));
     }
 
     private static LinkedHashMap<String, Integer> getTermsMap(IndexReader indexReader) throws IOException {

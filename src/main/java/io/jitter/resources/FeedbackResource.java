@@ -4,7 +4,6 @@ import cc.twittertools.util.QueryLikelihoodModel;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.caching.CacheControl;
-import io.dropwizard.jersey.params.BooleanParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.Document;
 import io.jitter.api.search.FeedbackDocumentsResponse;
@@ -70,7 +69,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
                                  @ApiParam(value = "Number of feedback documents", allowableValues="range[1, 1000]") @QueryParam("fbDocs") @DefaultValue("50") Integer fbDocs,
                                  @ApiParam(value = "Number of feedback terms", allowableValues="range[1, 1000]") @QueryParam("fbTerms") @DefaultValue("20") Integer fbTerms,
                                  @ApiParam(value = "Original query weight", allowableValues="range[0, 1]") @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
-                                 @ApiParam(hidden = true) @QueryParam("fbRerankOnly") @DefaultValue("false") BooleanParam fbRerankOnly,
+                                 @ApiParam(hidden = true) @QueryParam("fbRerankOnly") @DefaultValue("false") Boolean fbRerankOnly,
                                  @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -83,8 +82,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
             String query = URLDecoder.decode(q.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
-            TopDocuments selectResults = searchManager.search(sLimit, sRetweets, sFuture, maxId, epoch, query, epochs);
-            selectResults.scoreDocs = selectResults.scoreDocs.subList(0, Math.min(fbDocs, selectResults.scoreDocs.size()));
+            TopDocuments selectResults = searchManager.search(query, maxId, limit, sRetweets, epochs, sFuture);
 
             String finalQuery = query;
             FeatureVector fbVector = null;
@@ -95,13 +93,13 @@ public class FeedbackResource extends AbstractFeedbackResource {
                 finalQuery = buildQuery(fbVector);
             }
 
-            TopDocuments results = null;
-            if (fbRerankOnly.get()) {
-                QueryLikelihoodModel qlModel = new QueryLikelihoodModel(2500.0f);
-                List<Document> docs = SearchUtils.computeQLScores(searchManager.getCollectionStats(), qlModel, selectResults.scoreDocs, query, limit, !retweets, true);
+            TopDocuments results;
+            if (fbRerankOnly) {
+                QueryLikelihoodModel qlModel = new QueryLikelihoodModel(searchManager.getMu());
+                List<Document> docs = SearchUtils.computeQLScores(searchManager.getCollectionStats(), qlModel, selectResults.scoreDocs, finalQuery, limit);
                 results = new TopDocuments(docs);
             } else {
-                results = searchManager.search(limit, retweets, maxId, epoch, finalQuery, epochs);
+                results = searchManager.search(finalQuery, maxId, limit, retweets, epochs);
             }
 
             int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
@@ -111,7 +109,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
             }
 
             long endTime = System.currentTimeMillis();
-            logger.info(String.format(Locale.ENGLISH, "%4dms %4dfbDocs %4dhits %s", (endTime - startTime), totalFbDocs, totalHits, query));
+            logger.info(String.format(Locale.ENGLISH, "%4dms %4dfbDocs %4dhits %s", (endTime - startTime), totalFbDocs, totalHits, finalQuery));
 
             ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
             FeedbackDocumentsResponse documentsResponse = new FeedbackDocumentsResponse(totalFbDocs, fbTerms, fbVector.getMap(), 0, results);

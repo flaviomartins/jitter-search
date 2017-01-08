@@ -4,8 +4,6 @@ import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.search.api.TrecSearchThriftClient;
 import cc.twittertools.thrift.gen.TResult;
 import com.google.common.base.Preconditions;
-import io.dropwizard.jersey.params.BooleanParam;
-import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
@@ -29,6 +27,8 @@ import java.util.*;
 
 public class TrecMicroblogAPIWrapper implements Managed {
     private static final Logger LOG = Logger.getLogger(TrecMicroblogAPIWrapper.class);
+
+    public static final float DEFAULT_MU = 2500.0f;
 
     private static final int MAX_NUM_RESULTS = 10000;
     private static final int DEFAULT_NUM_RESULTS = 3000;
@@ -169,21 +169,21 @@ public class TrecMicroblogAPIWrapper implements Managed {
         return new TopDocuments(totalHits, documents);
     }
 
-    public TopDocuments search(IntParam limit, Optional<Long> maxId, BooleanParam sRetweets, boolean sFuture, String query) throws ClassNotFoundException, TException, ParseException, IOException {
+    public TopDocuments search(String query, Optional<Long> maxId, int limit, boolean retweets, boolean future) throws ClassNotFoundException, TException, ParseException, IOException {
         TopDocuments selectResults;
-        if (!sFuture) {
+        if (!future) {
             if (maxId.isPresent()) {
-                selectResults = search(query, maxId.get(), limit.get(), !sRetweets.get());
+                selectResults = search(query, maxId.get(), limit, !retweets);
             } else {
-                selectResults = search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
+                selectResults = search(query, Long.MAX_VALUE, limit, !retweets);
             }
         } else {
-            selectResults = search(query, Long.MAX_VALUE, limit.get(), !sRetweets.get());
+            selectResults = search(query, Long.MAX_VALUE, limit, !retweets);
         }
         return selectResults;
     }
 
-    public TopDocuments search(IntParam limit, BooleanParam retweets, Optional<Long> maxId, String query) throws TException, IOException, ClassNotFoundException, ParseException {
-        return search(limit, maxId, retweets, false, query);
+    public TopDocuments search(String query, Optional<Long> maxId, int limit, boolean retweets) throws TException, IOException, ClassNotFoundException, ParseException {
+        return search(query, maxId, limit, retweets, false);
     }
 }

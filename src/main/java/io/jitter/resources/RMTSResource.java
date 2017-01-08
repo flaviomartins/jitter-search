@@ -130,7 +130,7 @@ public class RMTSResource extends AbstractFeedbackResource {
             double currentEpoch = System.currentTimeMillis() / 1000L;
             double queryEpoch = epoch.isPresent() ? epochs[1] : currentEpoch;
 
-            TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
+            TopDocuments results = searchManager.search(query, maxId, limit, retweets, epochs);
 
             RerankerCascade cascade = new RerankerCascade();
             cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, shardResults.scoreDocs, searchManager.getCollectionStats(), limit, numRerank));

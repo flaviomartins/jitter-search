@@ -70,7 +70,7 @@ public class SearchResource {
             String query = URLDecoder.decode(q.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
-            TopDocuments results = searchManager.search(limit, retweets, maxId, epoch, query, epochs);
+            TopDocuments results = searchManager.search(query, maxId, limit, retweets, epochs);
             int totalHits = results != null ? results.totalHits : 0;
             if (totalHits == 0) {
                 throw new NotFoundException("No results found");
