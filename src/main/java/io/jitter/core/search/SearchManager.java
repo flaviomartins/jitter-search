@@ -207,12 +207,12 @@ public class SearchManager implements Managed {
         return new IndexCollectionStats(reader, IndexStatuses.StatusField.TEXT.name);
     }
 
-    public TopDocuments search(int limit, boolean retweets, boolean future, Optional<Long> maxId, Optional<String> epoch, String query, long[] epochs) throws IOException, ParseException {
+    public TopDocuments search(String query, Optional<Long> maxId, int limit, boolean retweets, long[] epochs, boolean future) throws IOException, ParseException {
         TopDocuments results;
         if (!future) {
             if (maxId.isPresent()) {
                 results = search(query, limit, !retweets, maxId.get());
-            } else if (epoch.isPresent()) {
+            } else if (epochs[0] > 0 || epochs[1] > 0) {
                 results = search(query, limit, !retweets, epochs[0], epochs[1]);
             } else {
                 results = search(query, limit, !retweets);
@@ -223,7 +223,7 @@ public class SearchManager implements Managed {
         return results;
     }
 
-    public TopDocuments search(int limit, boolean retweets, Optional<Long> maxId, Optional<String> epoch, String query, long[] epochs) throws IOException, ParseException {
-        return search(limit, retweets, false, maxId, epoch, query, epochs);
+    public TopDocuments search(String query, Optional<Long> maxId, int limit, boolean retweets, long[] epochs) throws IOException, ParseException {
+        return search(query, maxId, limit, retweets, epochs, false);
     }
 }

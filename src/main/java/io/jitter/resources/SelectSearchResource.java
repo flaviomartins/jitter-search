@@ -3,8 +3,6 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.caching.CacheControl;
-import io.dropwizard.jersey.params.BooleanParam;
-import io.dropwizard.jersey.params.IntParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.SelectionSearchDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
@@ -55,19 +53,19 @@ public class SelectSearchResource extends AbstractFeedbackResource {
     @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
     public SelectionSearchResponse search(@QueryParam("q") Optional<String> q,
                                           @QueryParam("fq") Optional<String> fq,
-                                          @QueryParam("limit") @DefaultValue("1000") IntParam limit,
-                                          @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
+                                          @QueryParam("limit") @DefaultValue("1000") Integer limit,
+                                          @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
                                           @QueryParam("maxId") Optional<Long> maxId,
                                           @QueryParam("epoch") Optional<String> epoch,
-                                          @QueryParam("sLimit") @DefaultValue("50") IntParam sLimit,
-                                          @QueryParam("sRetweets") @DefaultValue("true") BooleanParam sRetweets,
-                                          @QueryParam("sFuture") @DefaultValue("false") BooleanParam sFuture,
+                                          @QueryParam("sLimit") @DefaultValue("50") Integer sLimit,
+                                          @QueryParam("sRetweets") @DefaultValue("true") Boolean sRetweets,
+                                          @QueryParam("sFuture") @DefaultValue("false") Boolean sFuture,
                                           @QueryParam("method") @DefaultValue("crcsexp") String method,
-                                          @QueryParam("topics") @DefaultValue("true") BooleanParam topics,
-                                          @QueryParam("maxCol") @DefaultValue("3") IntParam maxCol,
+                                          @QueryParam("topics") @DefaultValue("true") Boolean topics,
+                                          @QueryParam("maxCol") @DefaultValue("3") Integer maxCol,
                                           @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
-                                          @QueryParam("normalize") @DefaultValue("true") BooleanParam normalize,
-                                          @QueryParam("v") @DefaultValue("10") IntParam v,
+                                          @QueryParam("normalize") @DefaultValue("true") Boolean normalize,
+                                          @QueryParam("v") @DefaultValue("10") Integer v,
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -78,14 +76,14 @@ public class SelectSearchResource extends AbstractFeedbackResource {
 
         Selection selection;
         if ("taily".equalsIgnoreCase(method)) {
-            selection = tailyManager.selection(query, v.get());
+            selection = tailyManager.selection(query, v);
         } else {
-            selection = selectionManager.selection(maxId, epoch, sLimit.get(), sRetweets.get(), sFuture.get(), method, maxCol.get(), minRanks, normalize.get(), query, epochs);
+            selection = selectionManager.selection(maxId, epoch, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query, epochs);
         }
 
-        Set<String> selected = topics.get() ? selection.getTopics().keySet() : selection.getSources().keySet();
+        Set<String> selected = topics ? selection.getTopics().keySet() : selection.getSources().keySet();
 
-        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, retweets.get(), sFuture.get(), limit.get(), topics.get(), query, epochs, selected);
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, retweets, sFuture, limit, topics, query, epochs, selected);
 
         long endTime = System.currentTimeMillis();
 
