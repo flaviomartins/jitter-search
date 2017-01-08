@@ -107,7 +107,7 @@ public class FeatureVector {
             kvpList.add(keyValuePair);
         }
 
-        Collections.sort(kvpList, (x, y) -> {
+        kvpList.sort((x, y) -> {
             double xVal = x.getValue();
             double yVal = y.getValue();
 

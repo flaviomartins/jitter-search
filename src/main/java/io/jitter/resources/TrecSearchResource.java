@@ -2,30 +2,29 @@ package io.jitter.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
-import io.dropwizard.jersey.params.BooleanParam;
-import io.dropwizard.jersey.params.IntParam;
+import io.dropwizard.jersey.caching.CacheControl;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.DocumentsResponse;
 import io.jitter.api.search.SearchResponse;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
+import io.swagger.annotations.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/trec/search")
+@Api(value = "/trec/search", description = "TREC Search endpoint")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class TrecSearchResource {
     private static final Logger logger = LoggerFactory.getLogger(TrecSearchResource.class);
@@ -42,28 +41,49 @@ public class TrecSearchResource {
 
     @GET
     @Timed
-    public SearchResponse search(@QueryParam("q") Optional<String> q,
-                                 @QueryParam("fq") Optional<String> fq,
-                                 @QueryParam("limit") @DefaultValue("1000") IntParam limit,
-                                 @QueryParam("retweets") @DefaultValue("false") BooleanParam retweets,
-                                 @QueryParam("maxId") Optional<Long> maxId,
-                                 @QueryParam("epoch") Optional<String> epoch,
-                                 @Context UriInfo uriInfo)
-            throws IOException, ParseException, TException, ClassNotFoundException {
+    @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
+    @ApiOperation(
+            value = "Searches documents by keyword query",
+            notes = "Returns a search response",
+            response = SearchResponse.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Invalid query"),
+            @ApiResponse(code = 404, message = "No results found"),
+            @ApiResponse(code = 500, message = "Internal Server Error")
+    })
+    public SearchResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") Optional<String> q,
+                                 @ApiParam(hidden = true) @QueryParam("fq") Optional<String> fq,
+                                 @ApiParam(value = "Limit results", allowableValues="range[1, 10000]") @QueryParam("limit") @DefaultValue("1000") Integer limit,
+                                 @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
+                                 @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
+                                 @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        String query = URLDecoder.decode(q.orElse(""), "UTF-8");
 
-        long startTime = System.currentTimeMillis();
+        if (!q.isPresent() || q.get().isEmpty()) {
+            throw new BadRequestException();
+        }
 
-        TopDocuments results = trecMicroblogAPIWrapper.search(limit, retweets, maxId, query);
+        try {
+            long startTime = System.currentTimeMillis();
+            String query = URLDecoder.decode(q.orElse(""), "UTF-8");
 
-        long endTime = System.currentTimeMillis();
+            TopDocuments results = trecMicroblogAPIWrapper.search(query, maxId, limit, retweets);
+            int totalHits = results != null ? results.totalHits : 0;
+            if (totalHits == 0) {
+                throw new NotFoundException("No results found");
+            }
 
-        int totalHits = results != null ? results.totalHits : 0;
-        logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
+            long endTime = System.currentTimeMillis();
+            logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
-        ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        DocumentsResponse documentsResponse = new DocumentsResponse(totalHits, 0, results);
-        return new SearchResponse(responseHeader, documentsResponse);
+            ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
+            DocumentsResponse documentsResponse = new DocumentsResponse(totalHits, 0, results);
+            return new SearchResponse(responseHeader, documentsResponse);
+        } catch (ParseException pe) {
+            throw new BadRequestException(pe.getClass().getSimpleName());
+        } catch (IOException | TException | ClassNotFoundException ioe) {
+            throw new ServerErrorException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 }
