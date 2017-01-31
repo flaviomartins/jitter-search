@@ -57,6 +57,11 @@ public class FeatureStore {
             logger.error(dbe.getMessage());
         }
 
+        if (!readOnly) {
+            truncateDb(freqPath);
+            truncateDb(infreqPath);
+        }
+
         freqDb = openDb(freqPath, readOnly);
         infreqDb = openDb(infreqPath, readOnly);
     }
@@ -150,11 +155,24 @@ public class FeatureStore {
         if (!readOnly) {
             dbConfig.setDeferredWrite(true);
         }
+        // Use a more space-efficient representation
+        dbConfig.setKeyPrefixing(true);
         return dbEnv.openDatabase(null, path, dbConfig);
     }
 
     private void closeDb(Database db) {
         db.close();
+    }
+
+    private void truncateDb(String path) {
+        try {
+            long returnCount = dbEnv.truncateDatabase(null, path, true);
+            dbEnv.removeDatabase(null, path);
+            logger.info("Database {} removed. Discarded {} records.", path, returnCount);
+
+        } catch (DatabaseNotFoundException ex) {
+            logger.warn("Database {} not found.", path);
+        }
     }
 
     private void closeEnv(Environment env) {
