@@ -308,13 +308,13 @@ public class Taily {
             stores.put(shardIdStr, store);
 
             // store the shard size (# of docs) feature
-            double totalDocCount = 0;
+            long totalDocCount = 0;
             for (String collection : topics.get(topic)) {
                 totalDocCount += sourceStores.get(collection.toLowerCase(Locale.ROOT)).getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
             }
-            store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, (int) totalDocCount);
+            store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, totalDocCount);
 
-            logger.info("build topics {}: {} = {}", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, (int) totalDocCount);
+            logger.info("build topics {}: {} = {}", shardIdStr, FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount);
         }
 
         // get the total term length of the collection (for Indri scoring)
@@ -341,7 +341,7 @@ public class Taily {
 
             termCnt++;
             if (termCnt % LOG_TERM_INTERVAL == 0) {
-                logger.info("  Finished " + termCnt + " terms");
+                logger.info("  Finished {} terms", termCnt);
             }
 
             // get term ctf
