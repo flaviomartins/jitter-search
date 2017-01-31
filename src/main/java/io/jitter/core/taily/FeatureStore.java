@@ -174,10 +174,10 @@ public class FeatureStore {
         try {
             long returnCount = dbEnv.truncateDatabase(null, path, true);
             dbEnv.removeDatabase(null, path);
-            logger.info("Database {} removed. Discarded {} records.", path, returnCount);
+            logger.debug("Database {} removed. Discarded {} records.", path, returnCount);
 
         } catch (DatabaseNotFoundException ex) {
-            logger.warn("Database {} not found.", path);
+            logger.debug("Database {} not found.", path);
         }
     }
 
