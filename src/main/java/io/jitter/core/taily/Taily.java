@@ -135,10 +135,12 @@ public class Taily {
         int numSources = screenNames.size();
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
-        IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
         FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
         Map<String, FeatureStore> stores = new HashMap<>(numSources);
+
+        Terms screenNameTerms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.SCREEN_NAME.name);
+        TermsEnum screenNameTermEnum = screenNameTerms.iterator(null);
 
         // create FeatureStore dbs for each shard
         for (String screenName : screenNames) {
@@ -149,12 +151,9 @@ public class Taily {
             FeatureStore store = new FeatureStore(cPath, false);
             stores.put(shardIdStr, store);
 
-            Term t = new Term(IndexStatuses.StatusField.SCREEN_NAME.name, shardIdStr);
-            Query q = new TermQuery(t);
-
-            TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
-            indexSearcher.search(q, totalHitCountCollector);
-            int totalDocCount = totalHitCountCollector.getTotalHits();
+            BytesRef bytesRef = new BytesRef(shardIdStr);
+            screenNameTermEnum.seekExact(bytesRef);
+            int totalDocCount = screenNameTermEnum.docFreq();
 
             // store the shard size (# of docs) feature
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, totalDocCount);
