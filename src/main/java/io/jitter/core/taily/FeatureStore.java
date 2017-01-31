@@ -39,6 +39,9 @@ public class FeatureStore {
             // able to create the environment if it does not exist.
             envConfig.setAllowCreate(!readOnly);
 
+            // Set cache mode
+            envConfig.setCacheMode(CacheMode.EVICT_LN);
+
             File dirFile = new File(dir);
             boolean isDirectory = dirFile.isDirectory();
             if (!isDirectory) {
@@ -161,6 +164,9 @@ public class FeatureStore {
     }
 
     private void closeDb(Database db) {
+        if (db.getConfig().getDeferredWrite()) {
+            db.sync();
+        }
         db.close();
     }
 
@@ -176,6 +182,9 @@ public class FeatureStore {
     }
 
     private void closeEnv(Environment env) {
+        if (!env.getConfig().getReadOnly()) {
+            env.cleanLog();
+        }
         env.close();
     }
 
