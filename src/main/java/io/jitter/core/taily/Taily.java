@@ -81,6 +81,7 @@ public class Taily {
 
     public void buildCorpus() throws IOException {
         logger.info("build corpus start");
+        long startTime = System.currentTimeMillis();
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
         FeatureStore store = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
@@ -124,11 +125,13 @@ public class Taily {
         store.close();
         indexReader.close();
 
-        logger.info("build corpus end");
+        long endTime = System.currentTimeMillis();
+        logger.info(String.format(Locale.ENGLISH, "build corpus end %4dms", (endTime - startTime)));
     }
 
     public void buildFromSources(List<String> screenNames) throws IOException {
         logger.info("build sources start");
+        long startTime = System.currentTimeMillis();
         int numSources = screenNames.size();
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
@@ -261,11 +264,13 @@ public class Taily {
 
         indexReader.close();
 
-        logger.info("build sources end");
+        long endTime = System.currentTimeMillis();
+        logger.info(String.format(Locale.ENGLISH, "build sources end %4dms", (endTime - startTime)));
     }
 
     public void buildFromTopics(Map<String, List<String>> topics) throws IOException {
         logger.info("build topics start");
+        long startTime = System.currentTimeMillis();
 
         // Reverse map collections -> topic
         Map<String, String> sourceTopicMap = new HashMap<>();
@@ -416,7 +421,8 @@ public class Taily {
 
         indexReader.close();
 
-        logger.info("build topics end");
+        long endTime = System.currentTimeMillis();
+        logger.info(String.format(Locale.ENGLISH, "build topics end %4dms", (endTime - startTime)));
     }
 
 }
