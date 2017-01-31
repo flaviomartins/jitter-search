@@ -134,7 +134,7 @@ public class Taily {
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
         IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
-        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
+        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
         Map<String, FeatureStore> stores = new HashMap<>(numSources);
 
         // create FeatureStore dbs for each shard
@@ -280,7 +280,7 @@ public class Taily {
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
 
-        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
+        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, true);
         Map<String, FeatureStore> sourceStores = new HashMap<>(numSources);
         Map<String, FeatureStore> stores = new HashMap<>(numTopics);
 

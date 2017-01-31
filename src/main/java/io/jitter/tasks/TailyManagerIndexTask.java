@@ -1,5 +1,6 @@
 package io.jitter.tasks;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableMultimap;
 import io.dropwizard.servlets.tasks.Task;
 import io.jitter.core.taily.TailyManager;
@@ -15,6 +16,7 @@ public class TailyManagerIndexTask extends Task {
         this.tailyManager = tailyManager;
     }
 
+    @Timed
     @Override
     public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
         tailyManager.index();
