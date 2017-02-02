@@ -80,7 +80,7 @@ public class TailyManager implements Managed {
     public void start() throws Exception {
         try {
             ranker = new ShardRanker(users, index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.SOURCES_DBENV);
-            topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
+            topicsRanker = new ShardRanker(topics.keySet(), index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -101,12 +101,10 @@ public class TailyManager implements Managed {
         }
 
         Taily taily = new Taily(dbPath, index, mu);
-        taily.buildCorpus();
-        taily.buildFromSources(users);
-        taily.buildFromTopics(topics);
+        taily.build(users, topics);
 
         ranker = new ShardRanker(users, index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.SOURCES_DBENV);
-        topicsRanker = new ShardRanker(topics.keySet().toArray(new String[topics.keySet().size()]), index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
+        topicsRanker = new ShardRanker(topics.keySet(), index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
     }
 
     public Map<String, Double> select(String query, int v, boolean topics) {
