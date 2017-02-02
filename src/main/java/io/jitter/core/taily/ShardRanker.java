@@ -35,20 +35,22 @@ public class ShardRanker {
     // Taily parameter used in Eq (11)
     private final float _n_c;
 
-    public ShardRanker(List<String> _shardIds, String indexPath, Analyzer analyzer, float _n_c, String dbPath, String shardsDbPath) {
-        this(_shardIds.toArray(new String[_shardIds.size()]), indexPath, analyzer, _n_c, dbPath, shardsDbPath);
-    }
-
-    public ShardRanker(String[] _shardIds, String indexPath, Analyzer analyzer, float _n_c, String dbPath, String shardsDbPath) {
-        this._shardIds = _shardIds;
+    public ShardRanker(Collection<String> shardIds, String indexPath, Analyzer analyzer, float _n_c, String dbPath, String shardsDbPath) {
         this.indexPath = indexPath;
         this.analyzer = analyzer;
 
+        _numShards = shardIds.size() + 1;
+        _shardIds = new String[_numShards];
+        _shardIds[0] = "global";
+        Iterator<String> shardIdsIterator = shardIds.iterator();
+        for (int i = 1; i < _shardIds.length; i++) {
+            _shardIds[i] = shardIdsIterator.next();
+        }
+
         this._n_c = _n_c;
-        _numShards = _shardIds.length;
 
         // open up all output feature storage for each mapping file we are accessing
-        _stores = new FeatureStore[_numShards + 1];
+        _stores = new FeatureStore[_numShards];
 
         // open collection feature store
         if (new File(dbPath).isDirectory()) {
@@ -60,8 +62,8 @@ public class ShardRanker {
 
         // read in the mapping files given and construct a reverse mapping,
         // i.e. doc -> shard, and create FeatureStore dbs for each shard
-        for (int i = 1; i < _numShards + 1; i++) {
-            String shardIdStr = _shardIds[i - 1].toLowerCase(Locale.ROOT);
+        for (int i = 1; i < _numShards; i++) {
+            String shardIdStr = _shardIds[i].toLowerCase(Locale.ROOT);
 
             // create output directory for the feature store dbs
             String cPath = shardsDbPath + "/" + shardIdStr;
@@ -114,7 +116,7 @@ public class ShardRanker {
         if (stem.isEmpty()) {
             logger.warn("Tryed to get the DF of an empty term. Will return numDocs instead.");
         }
-        int i = Lists.newArrayList(_shardIds).indexOf(shardId.toLowerCase(Locale.ROOT)) + 1;
+        int i = Lists.newArrayList(_shardIds).indexOf(shardId.toLowerCase(Locale.ROOT));
         if (i > 0) {
             // get term's shard df
             String dfFeat = stem + FeatureStore.SIZE_FEAT_SUFFIX;
@@ -143,7 +145,7 @@ public class ShardRanker {
     // retrieves the mean/variance for query terms and fills in the given queryMean/queryVar arrays
     // and marks shards that have at least one doc for one query term in given bool array
     private QueryFeats _getQueryFeats(List<String> stems) {
-        QueryFeats queryFeats = new QueryFeats(_numShards + 1);
+        QueryFeats queryFeats = new QueryFeats(_numShards);
         // calculate mean and variances for query for all shards
         for (String stem : stems) {
             if (stem.isEmpty()) {
@@ -167,11 +169,11 @@ public class ShardRanker {
             double globalDf = 0;
 
             // keep track of how many times this term appeared in the shards for minVal later
-            double[] dfCache = new double[_numShards + 1];
+            double[] dfCache = new double[_numShards];
 
             // for each shard (not including whole corpus db), calculate mean/var
             // keep track of totals to use in the corpus-wide features
-            for (int i = 1; i < _numShards + 1; i++) {
+            for (int i = 1; i < _numShards; i++) {
                 // get current term's shard df
                 String dfFeat = stem + FeatureStore.SIZE_FEAT_SUFFIX;
                 double df = _stores[i].getFeature(dfFeat);
@@ -227,7 +229,7 @@ public class ShardRanker {
             }
 
             // adjust shard mean by minimum value
-            for (int i = 0; i < _numShards + 1; i++) {
+            for (int i = 0; i < _numShards; i++) {
                 if (dfCache[i] > 0) {
                     // FIXME: removes shard corresponding to minVal?
                     queryFeats.queryMean[i] -= minVal;
@@ -240,10 +242,10 @@ public class ShardRanker {
     // calculates All from Eq (10)
     private double[] _getAll(List<String> stems) {
         // calculate Any_i & all_i
-        double[] all = new double[_numShards + 1];
-        double[] any = new double[_numShards + 1];
+        double[] all = new double[_numShards];
+        double[] any = new double[_numShards];
 
-        for (int i = 0; i < _numShards + 1; i++) {
+        for (int i = 0; i < _numShards; i++) {
             // initialize Any_i & all_i
             any[i] = 1.0;
             all[i] = 0.0;
@@ -308,11 +310,11 @@ public class ShardRanker {
             // these var ~= 0 cases should be handled carefully; instead of n_i = 1,
             // it could be there are two or more very similarly scoring docs; We keep track
             // of the df of these shards and use that instead of n_i = 1.
-            for (int i = 1; i < _numShards + 1; i++) {
+            for (int i = 1; i < _numShards; i++) {
                 if (hasATerm[i]) {
-                    ranking.put(_shardIds[i - 1], dfTerm[i]);
+                    ranking.put(_shardIds[i], dfTerm[i]);
                 } else {
-                    ranking.put(_shardIds[i - 1], 0.0);
+                    ranking.put(_shardIds[i], 0.0);
                 }
             }
             return sortAndNormalization(ranking);
@@ -326,22 +328,22 @@ public class ShardRanker {
             // if all[0] is ~= 0, then all[i] is ~= 0 because no shard contains all of the query terms
             // these all[0] ~= 0 cases should be handled carefully; instead of just using queryMean,
             // it could be more effective calculating *all* again for the maximum number of query terms
-            for (int i = 1; i < _numShards + 1; i++) {
+            for (int i = 1; i < _numShards; i++) {
                 if (hasATerm[i]) {
                     // actually use mean of the shard as score
-                    ranking.put(_shardIds[i - 1], queryMean[i]);
+                    ranking.put(_shardIds[i], queryMean[i]);
                 } else {
-                    ranking.put(_shardIds[i - 1], 0.0);
+                    ranking.put(_shardIds[i], 0.0);
                 }
             }
             return sortAndNormalization(ranking);
         }
 
         // calculate k and theta from mean/vars Eq (7) (8)
-        double[] k = new double[_numShards + 1];
-        double[] theta = new double[_numShards + 1];
+        double[] k = new double[_numShards];
+        double[] theta = new double[_numShards];
 
-        for (int i = 0; i < _numShards + 1; i++) {
+        for (int i = 0; i < _numShards; i++) {
             // special case, if df = 1, then var ~= 0 (or if no terms occur in shard)
             if (queryVar[i] < 1e-10) {
                 k[i] = -1;
@@ -364,10 +366,10 @@ public class ShardRanker {
         double s_c = collectionGamma.inverseCumulativeProbability(1.0 - p_c);
 
         // calculate n_i for all shards and store it in ranking vector so we can sort (not normalized)
-        for (int i = 1; i < _numShards + 1; i++) {
+        for (int i = 1; i < _numShards; i++) {
             // if there are no query terms in shard, skip
             if (!hasATerm[i]) {
-                ranking.put(_shardIds[i - 1], 0.0);
+                ranking.put(_shardIds[i], 0.0);
                 continue;
             }
 
@@ -375,12 +377,12 @@ public class ShardRanker {
             // based on the mean of the shard (which is the score of the single doc), n_i is either 0 or 1
             if (queryVar[i] < 1e-10) {
                 // actually use mean of the shard as score
-                ranking.put(_shardIds[i - 1], queryMean[i]);
+                ranking.put(_shardIds[i], queryMean[i]);
             } else {
                 // do normal Taily stuff pre-normalized Eq (12)
                 GammaDistribution shardGamma = new GammaDistribution(k[i], theta[i]);
                 double p_i = 1.0 - shardGamma.cumulativeProbability(s_c);
-                ranking.put(_shardIds[i - 1], all[i] * p_i);
+                ranking.put(_shardIds[i], all[i] * p_i);
             }
         }
 
