@@ -17,6 +17,9 @@ public class ShardsManagerForceMergeTask extends Task {
 
     @Override
     public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
+        if (shardsManager.isIndexing())
+            throw new TaskIsAlreadyRunningException(getName() + " is already running.");
+
         shardsManager.forceMerge();
     }
 }

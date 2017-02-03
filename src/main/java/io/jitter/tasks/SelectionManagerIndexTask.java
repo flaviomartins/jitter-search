@@ -17,6 +17,9 @@ public class SelectionManagerIndexTask extends Task {
 
     @Override
     public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
+        if (selectionManager.isIndexing())
+            throw new TaskIsAlreadyRunningException(getName() + " is already running.");
+
         selectionManager.index();
     }
 }

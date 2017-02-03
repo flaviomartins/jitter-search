@@ -99,14 +99,14 @@ public class TailyManager implements Managed {
         if (indexing)
             return;
 
-        indexing = true;
-        if (ranker != null)
-            ranker.close();
-        if (topicsRanker != null)
-            topicsRanker.close();
-
-        Taily taily = new Taily(dbPath, index, mu);
         try {
+            indexing = true;
+            if (ranker != null)
+                ranker.close();
+            if (topicsRanker != null)
+                topicsRanker.close();
+
+            Taily taily = new Taily(dbPath, index, mu);
             taily.build(users, topics);
         } catch (IOException e) {
             throw e;
