@@ -29,6 +29,7 @@ public class TailyManager implements Managed {
 
     private ShardRanker ranker;
     private ShardRanker topicsRanker;
+    private boolean indexing;
 
     public TailyManager(String dbPath, String index, String stopwords, float mu, float nc, List<String> users) {
         this.dbPath = dbPath;
@@ -94,17 +95,26 @@ public class TailyManager implements Managed {
         }
     }
 
-    public void index() throws IOException {
-        if (ranker != null) {
+    public void index() throws Exception {
+        if (indexing)
+            return;
+
+        indexing = true;
+        if (ranker != null)
             ranker.close();
+        if (topicsRanker != null)
             topicsRanker.close();
-        }
 
         Taily taily = new Taily(dbPath, index, mu);
-        taily.build(users, topics);
-
-        ranker = new ShardRanker(users, index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.SOURCES_DBENV);
-        topicsRanker = new ShardRanker(topics.keySet(), index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
+        try {
+            taily.build(users, topics);
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            ranker = new ShardRanker(users, index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.SOURCES_DBENV);
+            topicsRanker = new ShardRanker(topics.keySet(), index, analyzer, nc, dbPath + "/" + Taily.CORPUS_DBENV, dbPath + "/" + Taily.TOPICS_DBENV);
+            indexing = false;
+        }
     }
 
     public Map<String, Double> select(String query, int v, boolean topics) {
@@ -119,6 +129,10 @@ public class TailyManager implements Managed {
 
     public TailySelection selection(String query, int v) {
         return new TailySelection(query, v).invoke();
+    }
+
+    public boolean isIndexing() {
+        return indexing;
     }
 
     public class TailySelection implements Selection {
