@@ -247,6 +247,7 @@ public class Taily {
     private void buildSources(List<String> screenNames, DirectoryReader indexReader, Map<String, String> sourceTopicMap, Map<String, FeatureStore> sourceStores) throws IOException {
         Terms screenNameTerms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.SCREEN_NAME.name);
         TermsEnum screenNameTermEnum = screenNameTerms.iterator(null);
+        IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
         // create FeatureStore dbs for each source
         for (String screenName : Sets.union(new HashSet<>(screenNames), sourceTopicMap.keySet())) {
@@ -260,6 +261,16 @@ public class Taily {
             BytesRef bytesRef = new BytesRef(shardIdStr);
             screenNameTermEnum.seekExact(bytesRef);
             int totalDocCount = screenNameTermEnum.docFreq();
+
+            // fallback for case sensitive indexes
+            if (totalDocCount == 0) {
+                Term t = new Term(IndexStatuses.StatusField.SCREEN_NAME.name, shardIdStr);
+                Query q = new TermQuery(t);
+
+                TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
+                indexSearcher.search(q, totalHitCountCollector);
+                totalDocCount = totalHitCountCollector.getTotalHits();
+            }
 
             // store the shard size (# of docs) feature
             store.putFeature(FeatureStore.SIZE_FEAT_SUFFIX, totalDocCount, totalDocCount);
