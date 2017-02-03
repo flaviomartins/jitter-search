@@ -64,6 +64,7 @@ public class ShardsManager implements Managed {
 
     private TwitterManager twitterManager;
     private TailyManager tailyManager;
+    private boolean indexing;
 
     public ShardsManager(String collection, String indexPath, String stopwords, float mu, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
         this.collection = collection;
@@ -353,11 +354,23 @@ public class ShardsManager implements Managed {
     }
 
     public void index() throws IOException {
-        logger.info("shards indexing");
-        twitterManager.index(collection, indexPath, analyzer, removeDuplicates);
+        if (indexing)
+            return;
+
+        try {
+            logger.info("shards indexing");
+            twitterManager.index(collection, indexPath, analyzer, removeDuplicates);
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            indexing = false;
+        }
     }
 
     public void forceMerge() throws IOException {
+        if (indexing)
+            return;
+
         logger.info("Merging started!");
         long startTime = System.currentTimeMillis();
         File indexPath = new File(this.indexPath);
@@ -366,14 +379,15 @@ public class ShardsManager implements Managed {
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
         try (IndexWriter writer = new IndexWriter(dir, config)) {
+            indexing = true;
             writer.forceMerge(1);
-        } catch (Exception e) {
-            logger.error("{}", e.getMessage());
+        } catch (IOException e) {
+            throw e;
         } finally {
             dir.close();
             long endTime = System.currentTimeMillis();
             logger.info(String.format(Locale.ENGLISH, "Merging finished! Total time: %4dms", (endTime - startTime)));
-
+            indexing = false;
         }
     }
 
@@ -421,5 +435,9 @@ public class ShardsManager implements Managed {
             shardResults = search(topics, selected, query, limit, !retweets);
         }
         return shardResults;
+    }
+
+    public boolean isIndexing() {
+        return indexing;
     }
 }

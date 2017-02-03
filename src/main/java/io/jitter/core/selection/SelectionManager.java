@@ -68,6 +68,7 @@ public class SelectionManager implements Managed {
 
     private ShardsManager shardsManager;
     private TwitterManager twitterManager;
+    private boolean indexing;
 
     public SelectionManager(String collection, String indexPath, String stopwords, float mu, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
         this.collection = collection;
@@ -344,11 +345,24 @@ public class SelectionManager implements Managed {
     }
 
     public void index() throws IOException {
-        logger.info("selection indexing");
-        twitterManager.index(collection, indexPath, analyzer, removeDuplicates);
+        if (indexing)
+            return;
+
+        try {
+            logger.info("selection indexing");
+            indexing = true;
+            twitterManager.index(collection, indexPath, analyzer, removeDuplicates);
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            indexing = false;
+        }
     }
 
     public void forceMerge() throws IOException {
+        if (indexing)
+            return;
+
         logger.info("Merging started!");
         long startTime = System.currentTimeMillis();
         File indexPath = new File(this.indexPath);
@@ -357,14 +371,15 @@ public class SelectionManager implements Managed {
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
         try (IndexWriter writer = new IndexWriter(dir, config)) {
+            indexing = true;
             writer.forceMerge(1);
-        } catch (Exception e) {
-            logger.error("{}", e.getMessage());
+        } catch (IOException e) {
+            throw e;
         } finally {
             dir.close();
             long endTime = System.currentTimeMillis();
             logger.info(String.format(Locale.ENGLISH, "Merging finished! Total time: %4dms", (endTime - startTime)));
-
+            indexing = false;
         }
     }
 
@@ -426,6 +441,10 @@ public class SelectionManager implements Managed {
 
     public CsiSelection selection(Optional<Long> maxId, Optional<String> epoch, int limit, boolean retweets, boolean future, String method, int maxCol, Double minRanks, boolean normalize, String query, long[] epochs) throws IOException, ParseException {
         return new CsiSelection(maxId, epoch, limit, retweets, future, method, maxCol, minRanks, normalize, query, epochs).invoke();
+    }
+
+    public boolean isIndexing() {
+        return indexing;
     }
 
     public class CsiSelection implements Selection {
