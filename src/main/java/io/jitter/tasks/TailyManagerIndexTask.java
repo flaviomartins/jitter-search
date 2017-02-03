@@ -1,5 +1,6 @@
 package io.jitter.tasks;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableMultimap;
 import io.dropwizard.servlets.tasks.Task;
@@ -17,8 +18,12 @@ public class TailyManagerIndexTask extends Task {
     }
 
     @Timed
+    @ExceptionMetered
     @Override
     public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
+        if (tailyManager.isIndexing())
+            throw new TaskIsAlreadyRunningException(getName() + " is already running.");
+
         tailyManager.index();
     }
 }
