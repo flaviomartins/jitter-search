@@ -49,7 +49,7 @@
         <kstem.version>3.4</kstem.version>
 
         <sqlite-jdbc.version>3.16.1</sqlite-jdbc.version>
-        <je.version>7.0.6</je.version>
+        <je.version>7.3.7</je.version>
 
         <twittertools.version>1.4.5-SNAPSHOT</twittertools.version>
         <!--
