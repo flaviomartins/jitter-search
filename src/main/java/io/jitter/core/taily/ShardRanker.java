@@ -250,8 +250,8 @@ public class ShardRanker {
             any[i] = 1.0;
             all[i] = 0.0;
 
-            // get size of current shard
-            double shardSize = _stores[i].getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
+            // get size of current shard (add 1 to avoid division by zero)
+            double shardSize = 1 + _stores[i].getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
 
             // for each query term, calculate inner bracket of any_i equation
             double[] dfs = new double[stems.size()];
@@ -401,7 +401,7 @@ public class ShardRanker {
         }
 
         // if sum is 0 no shard will be selected
-        if (sum == 0) {
+        if (sum == 0 || Double.isNaN(sum)) {
             logger.error("BAD sum");
         }
 
