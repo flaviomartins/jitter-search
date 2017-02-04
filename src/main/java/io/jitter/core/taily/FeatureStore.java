@@ -39,9 +39,6 @@ public class FeatureStore {
             // able to create the environment if it does not exist.
             envConfig.setAllowCreate(!readOnly);
 
-            // Set cache mode
-            envConfig.setCacheMode(CacheMode.EVICT_LN);
-
             File dirFile = new File(dir);
             boolean isDirectory = dirFile.isDirectory();
             if (!isDirectory) {
@@ -58,11 +55,6 @@ public class FeatureStore {
             dbEnv = new Environment(dirFile, envConfig);
         } catch (DatabaseException dbe) {
             logger.error(dbe.getMessage());
-        }
-
-        if (!readOnly) {
-            truncateDb(freqPath);
-            truncateDb(infreqPath);
         }
 
         freqDb = openDb(freqPath, readOnly);
