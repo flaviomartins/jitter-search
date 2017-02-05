@@ -2,6 +2,7 @@ package io.jitter.core.twittertools.api;
 
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.core.taily.FeatureStore;
+import io.jitter.core.taily.JeFeatureStore;
 import org.apache.log4j.Logger;
 
 import java.io.*;
@@ -35,7 +36,7 @@ public class TrecCollectionStats implements CollectionStats {
         Path statsStorePath = Paths.get(statsDb, CORPUS_DBENV);
         if (!Files.isDirectory(statsStorePath)) {
             LOG.info("creating stats database...");
-            corpusStore = new FeatureStore(statsStorePath.toString(), false);
+            corpusStore = new JeFeatureStore(statsStorePath.toString(), false);
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(new File(pathToStatsFile))), "UTF-8"));
                 String line = reader.readLine();
@@ -85,7 +86,7 @@ public class TrecCollectionStats implements CollectionStats {
             corpusStore.close();
         }
 
-        corpusStore = new FeatureStore(statsStorePath.toString(), true);
+        corpusStore = new JeFeatureStore(statsStorePath.toString(), true);
 
         String dfFeatKey = FeatureStore.SIZE_FEAT_SUFFIX;
         sumDocFreq = (long) corpusStore.getFeature(dfFeatKey);
