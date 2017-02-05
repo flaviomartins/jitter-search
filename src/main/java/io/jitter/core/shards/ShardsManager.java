@@ -181,8 +181,8 @@ public class ShardsManager implements Managed {
 
     private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) {
         List<Document> results = new ArrayList<>();
-        if (selectedSources != null) {
-            results.addAll(selectResults.scoreDocs.stream().filter(doc -> selectedSources.contains(doc.getScreen_name())).collect(Collectors.toList()));
+        if (selectedSources != null && !selectedSources.isEmpty()) {
+            results.addAll(selectResults.scoreDocs.stream().filter(doc -> selectedSources.contains(doc.getScreen_name().toLowerCase(Locale.ROOT))).collect(Collectors.toList()));
         } else {
             results.addAll(selectResults.scoreDocs);
         }
@@ -219,9 +219,9 @@ public class ShardsManager implements Managed {
 
     private SelectionTopDocuments filterTopics(Query query, Set<String> selectedTopics, SelectionTopDocuments selectResults) {
         List<Document> results = new ArrayList<>();
-        if (selectedTopics != null) {
+        if (selectedTopics != null && !selectedTopics.isEmpty()) {
             for (Document doc : selectResults.scoreDocs) {
-                results.addAll(selectedTopics.stream().filter(selectedTopic -> topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name())).map(selectedTopic -> doc).collect(Collectors.toList()));
+                results.addAll(selectedTopics.stream().filter(selectedTopic -> topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name().toLowerCase(Locale.ROOT))).map(selectedTopic -> doc).collect(Collectors.toList()));
             }
         } else {
             results.addAll(selectResults.scoreDocs);
@@ -260,21 +260,6 @@ public class ShardsManager implements Managed {
     public SelectionTopDocuments limit(SelectionTopDocuments selectionTopDocuments, int limit) {
         selectionTopDocuments.scoreDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
         return selectionTopDocuments;
-    }
-
-    public SelectionTopDocuments reScoreSelected(Iterable<Map.Entry<String, Double>> selectedTopics, List<Document> selectResults) {
-        List<Document> docs = new ArrayList<>();
-        for (Document doc : selectResults) {
-            Document updatedDocument = new Document(doc);
-            for (Map.Entry<String, Double> selectedTopic : selectedTopics) {
-                if (topics.get(selectedTopic.getKey()) != null && topics.get(selectedTopic.getKey()).contains(doc.getScreen_name())) {
-                    double newRsv = selectedTopic.getValue() * doc.getRsv();
-                    updatedDocument.setRsv(newRsv);
-                    docs.add(updatedDocument);
-                }
-            }
-        }
-        return new SelectionTopDocuments(docs.size(), docs);
     }
 
     public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
