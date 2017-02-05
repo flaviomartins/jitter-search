@@ -83,7 +83,7 @@ public class Taily {
 
         DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
 
-        FeatureStore corpusStore = new FeatureStore(dbPath + "/" + CORPUS_DBENV, false);
+        FeatureStore corpusStore = new JeFeatureStore(dbPath + "/" + CORPUS_DBENV, false);
         buildCorpus(indexReader, corpusStore);
 
         // get the total term length of the collection (for Indri scoring)
@@ -230,7 +230,7 @@ public class Taily {
             String cPath = dbPath + "/" + TOPICS_DBENV + "/" + shardIdStr;
 
             // create feature store for shard
-            FeatureStore store = new FeatureStore(cPath, false);
+            FeatureStore store = new JeFeatureStore(cPath, false);
             topicStores.put(shardIdStr, store);
 
             // store the shard size (# of docs) feature
@@ -255,7 +255,7 @@ public class Taily {
             String cPath = dbPath + "/" + SOURCES_DBENV + "/" + shardIdStr;
 
             // create feature store for source
-            FeatureStore store = new FeatureStore(cPath, false);
+            FeatureStore store = new JeFeatureStore(cPath, false);
             sourceStores.put(shardIdStr, store);
 
             BytesRef bytesRef = new BytesRef(shardIdStr);
