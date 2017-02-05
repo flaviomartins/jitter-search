@@ -54,7 +54,7 @@ public class ShardRanker {
 
         // open collection feature store
         if (new File(dbPath).isDirectory()) {
-            FeatureStore collectionStore = new FeatureStore(dbPath, true);
+            FeatureStore collectionStore = new JeFeatureStore(dbPath, true);
             _stores[0] = collectionStore;
         } else {
             logger.error("directory not found: " + dbPath);
@@ -70,7 +70,7 @@ public class ShardRanker {
 
             if (new File(cPath).isDirectory()) {
                 // open feature store for shard
-                FeatureStore store = new FeatureStore(cPath, true);
+                FeatureStore store = new JeFeatureStore(cPath, true);
                 _stores[i] = store;
             } else {
                 logger.error("directory not found: " + cPath);
