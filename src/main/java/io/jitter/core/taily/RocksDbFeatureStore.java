@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.ByteBuffer;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class RocksDbFeatureStore implements FeatureStore {
     private static final Logger logger = LoggerFactory.getLogger(RocksDbFeatureStore.class);
 
@@ -61,7 +63,7 @@ public class RocksDbFeatureStore implements FeatureStore {
             return -1;
         }
 
-        byte[] key = keyStr.getBytes();
+        byte[] key = keyStr.getBytes(UTF_8);
         try {
             byte[] bytes = db.get(key);
             if (bytes != null) {
@@ -76,7 +78,7 @@ public class RocksDbFeatureStore implements FeatureStore {
 
     @Override
     public void putFeature(String keyStr, double val, long frequency) {
-        byte[] key = keyStr.getBytes();
+        byte[] key = keyStr.getBytes(UTF_8);
         byte[] bytes = new byte[8];
         ByteBuffer.wrap(bytes).putDouble(val);
         try {
@@ -93,7 +95,7 @@ public class RocksDbFeatureStore implements FeatureStore {
             return;
         }
 
-        byte[] key = keyStr.getBytes();
+        byte[] key = keyStr.getBytes(UTF_8);
         double prevVal;
         try {
             byte[] bytes = db.get(key);
