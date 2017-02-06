@@ -25,6 +25,7 @@ import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.stream.LiveStreamIndexer;
 import io.jitter.core.stream.StreamLogger;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
+import org.rocksdb.RocksDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,8 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
     final static Logger logger = LoggerFactory.getLogger(JitterSearchApplication.class);
 
     public static void main(String[] args) throws Exception {
+        // a static method that loads the RocksDB C++ library.
+        RocksDB.loadLibrary();
         System.setSecurityManager(new NoExitSecurityManager());
         new JitterSearchApplication().run(args);
     }
