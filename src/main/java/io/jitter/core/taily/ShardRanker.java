@@ -174,9 +174,13 @@ public class ShardRanker {
             // for each shard (not including whole corpus db), calculate mean/var
             // keep track of totals to use in the corpus-wide features
             for (int i = 1; i < _numShards; i++) {
+                FeatureStore store = _stores[i];
+                if (store == null)
+                    continue;
+
                 // get current term's shard df
                 String dfFeat = stem + FeatureStore.SIZE_FEAT_SUFFIX;
-                double df = _stores[i].getFeature(dfFeat);
+                double df = store.getFeature(dfFeat);
 
                 // TODO: fix this kludge
                 // if this shard doesn't have this term, skip; otherwise you get nan everywhere
@@ -192,7 +196,7 @@ public class ShardRanker {
 
                 // add current term's mean to shard; also shift by min feat value Eq (5)
                 String meanFeat = stem + FeatureStore.FEAT_SUFFIX;
-                double fSum = _stores[i].getFeature(meanFeat);
+                double fSum = store.getFeature(meanFeat);
                 if (fSum == -1) {
                     logger.error("BAD fSum");
                 }
@@ -202,7 +206,7 @@ public class ShardRanker {
 
                 // add current term's variance to shard Eq (6)
                 String f2Feat = stem + FeatureStore.SQUARED_FEAT_SUFFIX;
-                double f2Sum = _stores[i].getFeature(f2Feat);
+                double f2Sum = store.getFeature(f2Feat);
                 if (f2Sum < 0) {
                     logger.error("BAD f2Sum");
                 }
@@ -212,7 +216,7 @@ public class ShardRanker {
 
                 // if there is no global min stored, figure out the minimum from shards
                 if (calcMin) {
-                    double currMin = _stores[i].getFeature(minFeat);
+                    double currMin = store.getFeature(minFeat);
                     if (currMin < minVal) {
                         minVal = currMin;
                     }
@@ -250,8 +254,12 @@ public class ShardRanker {
             any[i] = 1.0;
             all[i] = 0.0;
 
+            FeatureStore store = _stores[i];
+            if (store == null)
+                continue;
+
             // get size of current shard
-            double shardSize = _stores[i].getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
+            double shardSize = store.getFeature(FeatureStore.SIZE_FEAT_SUFFIX);
 
             // if this shard is empty, skip; otherwise you get nan everywhere
             if (shardSize == 0)
@@ -262,7 +270,7 @@ public class ShardRanker {
             int dfCnt = 0;
             for (String stem : stems) {
                 String stemKey = stem + FeatureStore.SIZE_FEAT_SUFFIX;
-                double df = _stores[i].getFeature(stemKey);
+                double df = store.getFeature(stemKey);
 
                 // no smoothing
                 if (df == -1) {
