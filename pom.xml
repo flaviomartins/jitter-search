@@ -50,7 +50,7 @@
 
         <sqlite-jdbc.version>3.16.1</sqlite-jdbc.version>
         <je.version>7.0.6</je.version>
-        <rocksdbjni.version>5.0.1</rocksdbjni.version>
+        <rocksdbjni.version>5.1.2</rocksdbjni.version>
 
         <twittertools.version>1.4.5-SNAPSHOT</twittertools.version>
         <!--
