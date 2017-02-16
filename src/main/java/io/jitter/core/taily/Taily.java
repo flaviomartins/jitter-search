@@ -250,8 +250,18 @@ public class Taily {
         IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
         // create FeatureStore dbs for each source
-        for (String screenName : Sets.union(new HashSet<>(screenNames), sourceTopicMap.keySet())) {
-            String shardIdStr = screenName.toLowerCase(Locale.ROOT);
+        HashSet<String> allSources = new HashSet<>(screenNames.size());
+
+        for (String screenName : screenNames) {
+            allSources.add(screenName.toLowerCase(Locale.ROOT));
+        }
+
+        for (String screenName : sourceTopicMap.keySet()) {
+            allSources.add(screenName.toLowerCase(Locale.ROOT));
+        }
+
+        for (String screenName : allSources) {
+            String shardIdStr = screenName;
             String cPath = dbPath + "/" + SOURCES_DBENV + "/" + shardIdStr;
 
             // create feature store for source

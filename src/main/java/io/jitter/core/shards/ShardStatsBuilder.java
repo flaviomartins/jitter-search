@@ -28,7 +28,6 @@ public class ShardStatsBuilder {
         this.reader = reader;
         this.topics = topics;
         reverseMap(topics);
-        collectStats();
     }
 
     public Map<String, String> getReverseTopicMap() {
