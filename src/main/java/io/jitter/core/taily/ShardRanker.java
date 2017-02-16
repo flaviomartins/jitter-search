@@ -118,9 +118,13 @@ public class ShardRanker {
         }
         int i = Lists.newArrayList(_shardIds).indexOf(shardId.toLowerCase(Locale.ROOT));
         if (i > 0) {
+            FeatureStore store = _stores[i];
+            if (store == null)
+                return 0;
+
             // get term's shard df
             String dfFeat = stem + FeatureStore.SIZE_FEAT_SUFFIX;
-            double df = _stores[i].getFeature(dfFeat);
+            double df = store.getFeature(dfFeat);
             if (df > 0)
                 return (int) df;
         }
