@@ -285,9 +285,6 @@ public class SelectionManager implements Managed {
         }
 
         List<Document> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT);
-        if (filterRT) {
-            logger.info("filter_rt count: {}", nDocsReturned - docs.size());
-        }
 
         int c_sel;
         if (live) {
