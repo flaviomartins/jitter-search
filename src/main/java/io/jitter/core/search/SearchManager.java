@@ -122,9 +122,6 @@ public class SearchManager implements Managed {
 
         // Compute real QL scores even when live to build termVectors
         List<Document> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT, true);
-        if (filterRT) {
-            logger.info("filter_rt count: {}", nDocsReturned - docs.size());
-        }
 
         return new TopDocuments(totalHits, docs);
     }
