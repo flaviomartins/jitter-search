@@ -63,7 +63,7 @@ public class StreamLogger implements RawStreamListener, Managed {
 
         statusesAppender.setRollingPolicy(statusesRollingPolicy);
         statusesAppender.setImmediateFlush(false);
-        statusesAppender.setBufferSize(FileSize.valueOf("8mb"));
+        statusesAppender.setBufferSize(FileSize.valueOf("512kb"));
         statusesAppender.start();
 
 
@@ -81,7 +81,7 @@ public class StreamLogger implements RawStreamListener, Managed {
 
         warningsAppender.setRollingPolicy(warningsRollingPolicy);
         warningsAppender.setImmediateFlush(false);
-        warningsAppender.setBufferSize(FileSize.valueOf("256kb"));
+        warningsAppender.setBufferSize(FileSize.valueOf("512kb"));
         warningsAppender.start();
 
         // configures the logger
