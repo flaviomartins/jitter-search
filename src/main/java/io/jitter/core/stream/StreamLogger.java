@@ -8,23 +8,19 @@ import ch.qos.logback.classic.filter.LevelFilter;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
 import ch.qos.logback.core.spi.FilterReply;
+import ch.qos.logback.core.util.FileSize;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-@SuppressWarnings("unchecked")
 public class StreamLogger implements RawStreamListener, Managed {
 
     private static final String HOUR_ROLL = ".%d{yyyy-MM-dd-HH, UTC}.gz";
 
-    private final AtomicLong counter;
     private final Logger logger;
 
     public StreamLogger(String directory) {
-        counter = new AtomicLong();
         logger = (Logger) LoggerFactory.getLogger(StreamLogger.class + directory);
         LoggerContext logCtx = (LoggerContext) LoggerFactory.getILoggerFactory();
 
@@ -66,6 +62,8 @@ public class StreamLogger implements RawStreamListener, Managed {
         statusesRollingPolicy.start();
 
         statusesAppender.setRollingPolicy(statusesRollingPolicy);
+        statusesAppender.setImmediateFlush(false);
+        statusesAppender.setBufferSize(FileSize.valueOf("8mb"));
         statusesAppender.start();
 
 
@@ -82,6 +80,8 @@ public class StreamLogger implements RawStreamListener, Managed {
         warningsRollingPolicy.start();
 
         warningsAppender.setRollingPolicy(warningsRollingPolicy);
+        warningsAppender.setImmediateFlush(false);
+        warningsAppender.setBufferSize(FileSize.valueOf("256kb"));
         warningsAppender.start();
 
         // configures the logger
@@ -103,11 +103,7 @@ public class StreamLogger implements RawStreamListener, Managed {
 
     @Override
     public void onMessage(String rawString) {
-        long cnt = counter.incrementAndGet();
         logger.info(StringUtils.chomp(rawString));
-        if (cnt % 1000 == 0) {
-            logger.warn(cnt + " messages received.");
-        }
     }
 
     @Override
