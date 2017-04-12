@@ -48,7 +48,7 @@ public class ShardsStatsResource {
 
         long endTime = System.currentTimeMillis();
 
-        logger.info(String.format(Locale.ENGLISH, "%4dms selection manager stats", (endTime - startTime)));
+        logger.info(String.format(Locale.ENGLISH, "%4dms shard manager stats", (endTime - startTime)));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
         ShardStatsResponse shardStatsResponse = new ShardStatsResponse(collectionsShardStats, topicsShardStats);
