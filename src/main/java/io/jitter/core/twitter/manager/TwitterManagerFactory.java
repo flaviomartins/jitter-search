@@ -21,9 +21,6 @@ public class TwitterManagerFactory {
     @NotEmpty
     private String collectionPath;
 
-    @NotEmpty
-    private Set<String> users;
-
     @JsonProperty("oauth")
     public OAuth1Factory getOAuth1Factory() {
         return oAuth1Factory;
@@ -54,18 +51,8 @@ public class TwitterManagerFactory {
         this.collectionPath = collectionPath;
     }
 
-    @JsonProperty
-    public Set<String> getUsers() {
-        return users;
-    }
-
-    @JsonProperty
-    public void setUsers(Set<String> users) {
-        this.users = users;
-    }
-
     public TwitterManager build(Environment environment) {
-        final TwitterManager twitterManager = new TwitterManager(users);
+        final TwitterManager twitterManager = new TwitterManager();
         environment.lifecycle().manage(twitterManager);
         return twitterManager;
     }

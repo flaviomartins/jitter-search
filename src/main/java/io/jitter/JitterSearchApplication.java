@@ -88,7 +88,6 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TwitterManagerHealthCheck twitterManagerHealthCheck =
                 new TwitterManagerHealthCheck(twitterManager);
         environment.healthChecks().register("twitter-manager", twitterManagerHealthCheck);
-        environment.admin().addTask(new TwitterManagerArchiveTask(twitterManager));
 
         final SearchManager searchManager = configuration.getSearchManagerFactory().build(environment, configuration.isLive());
         final SearchManagerHealthCheck searchManagerHealthCheck =
