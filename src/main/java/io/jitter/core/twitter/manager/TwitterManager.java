@@ -26,110 +26,20 @@ public class TwitterManager implements Managed {
 
     private final static Logger logger = LoggerFactory.getLogger(TwitterManager.class);
 
-    private static final int MAX_USERS_LOOKUP = 100;
-    private static final int MAX_STATUSES_REQUEST = 200;
-
-    private final ImmutableSortedSet<String> screenNames;
-
-    private final Map<String, User> usersMap;
-    private final Map<String, UserTimeline> userTimelines;
-
     // The factory instance is re-usable and thread safe.
     private final Twitter twitter = TwitterFactory.getSingleton();
 
-    public TwitterManager(Set<String> screenNames) {
-        this.screenNames = new ImmutableSortedSet.Builder<>(String.CASE_INSENSITIVE_ORDER).addAll(screenNames).build();
-        this.usersMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        this.userTimelines = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    public TwitterManager() {
     }
 
     @Override
     public void start() throws Exception {
-//        lookupUsers();
+
     }
 
     @Override
     public void stop() throws Exception {
 
-    }
-
-    public ImmutableSortedSet<String> getUsers() {
-        return screenNames;
-    }
-
-    private UserTimeline getUserTimeline(String screenName) {
-        return userTimelines.get(screenName);
-    }
-
-    private void lookupUsers() {
-        int remaining = screenNames.size();
-        logger.info(remaining + " total users");
-
-        ImmutableList<String> users = ImmutableList.copyOf(screenNames);
-        int i = 0;
-        do {
-            int reqSize = Math.min(remaining, MAX_USERS_LOOKUP);
-
-            List<String> var = users.subList(i, i + reqSize);
-            String[] names = var.toArray(new String[var.size()]);
-            ResponseList<User> userResponseList;
-            try {
-                logger.info("{} users info requested", reqSize);
-                userResponseList = twitter.lookupUsers(names);
-                for (User user : userResponseList) {
-                    logger.info("Got info for " + user.getScreenName() + " : " + user.getName() + " : " + user.getStatusesCount());
-                    usersMap.put(user.getScreenName(), user);
-                }
-            } catch (TwitterException e) {
-                logger.error("{}", e.getMessage());
-            }
-            remaining -= reqSize;
-            i += reqSize;
-        } while (remaining > 0);
-    }
-
-    private void fetchTimeline(String screenName) {
-        User user = usersMap.get(screenName);
-
-        UserTimeline timeline;
-        if (userTimelines.get(screenName) != null) {
-            timeline = userTimelines.get(screenName);
-        } else {
-            timeline = new UserTimeline(user);
-            userTimelines.put(screenName, timeline);
-        }
-
-        long sinceId = timeline.getLatestId();
-        try {
-            if (user.getStatus() != null) {
-                int page = 1;
-                logger.info(screenName + " since_id: " + sinceId);
-                Paging paging = new Paging(page, MAX_STATUSES_REQUEST).sinceId(sinceId);
-                for (; ; page++) {
-                    paging.setPage(page);
-                    logger.info(screenName + " page: " + page);
-                    ResponseList<Status> statuses = twitter.getUserTimeline(user.getId(), paging);
-                    if (statuses.isEmpty()) {
-                        logger.info(screenName + " total : " + timeline.size());
-                        break;
-                    }
-                    timeline.addAll(statuses);
-                }
-            }
-        } catch (TwitterException e) {
-            logger.error("{}", e.getMessage());
-        }
-    }
-
-    public void archive() {
-        lookupUsers();
-        for (String screenName : screenNames) {
-            User user = usersMap.get(screenName);
-            if (user == null)
-                logger.warn("Failed to lookup {}", screenName);
-
-            fetchTimeline(screenName);
-        }
     }
 
     @SuppressWarnings("UnusedParameters")

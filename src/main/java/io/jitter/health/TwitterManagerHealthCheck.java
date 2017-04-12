@@ -12,10 +12,6 @@ public class TwitterManagerHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() throws Exception {
-        final int numUsers = twitterManager.getUsers().size();
-        if (numUsers == 0) {
-            return Result.unhealthy("TwitterManager doesn't have any Twitter users");
-        }
         return Result.healthy();
     }
 }
