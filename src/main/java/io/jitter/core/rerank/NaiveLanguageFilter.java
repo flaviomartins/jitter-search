@@ -26,13 +26,13 @@ public class NaiveLanguageFilter implements Reranker {
             if (origResult.getLang() != null) {
                 // Hit is annotated as different language
                 if (!lang.equals(origResult.getLang())) {
-                    continue;
-                }
-            } else {
-                if ("en".equals(lang)) {
-                    // For English: Skip only if text contains non ASCII chars
-                    if (!isProbablyEnglish(origResult.getText()))
+                    if ("en".equals(lang)) {
+                        // For English: Skip only if text contains non ASCII chars
+                        if (!isProbablyEnglish(origResult.getText()))
+                            continue;
+                    } else {
                         continue;
+                    }
                 }
             }
 
