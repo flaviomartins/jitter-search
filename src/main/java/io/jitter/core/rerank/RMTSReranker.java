@@ -1,6 +1,5 @@
 package io.jitter.core.rerank;
 
-import cc.twittertools.index.IndexStatuses;
 import ciir.umass.edu.features.LinearNormalizer;
 import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.learning.RankList;
@@ -20,10 +19,6 @@ import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.ListUtils;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.similarities.DefaultSimilarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.slf4j.Logger;
@@ -60,23 +55,10 @@ public class RMTSReranker implements Reranker {
 
     @Override
     public List<Document> rerank(List<Document> results, RerankerContext context) {
-        Query q;
-        Set<String> qTerms = new HashSet<>();
-        try {
-            q = new QueryParser(IndexStatuses.StatusField.TEXT.name, ANALYZER).parse(query);
-            Set<Term> queryTerms = new TreeSet<>();
-            q.extractTerms(queryTerms);
-            for (Term term : queryTerms) {
-                String text = term.text();
-                if (!text.isEmpty()) {
-                    qTerms.add(text);
-                }
-            }
-        } catch (ParseException e) {
-            for (String term : AnalyzerUtils.analyze(ANALYZER, query)) {
-                if (!term.isEmpty()) {
-                    qTerms.add(term);
-                }
+        Set<String> qTerms = new LinkedHashSet<>();
+        for (String term : AnalyzerUtils.analyze(ANALYZER, query)) {
+            if (!term.isEmpty()) {
+                qTerms.add(term);
             }
         }
 

@@ -24,12 +24,12 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -179,7 +179,7 @@ public class ShardsManager implements Managed {
         this.tailyManager = tailyManager;
     }
 
-    private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) {
+    private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) throws IOException {
         List<Document> results = new ArrayList<>();
         if (selectedSources != null && !selectedSources.isEmpty()) {
             results.addAll(selectResults.scoreDocs.stream().filter(doc -> selectedSources.contains(doc.getScreen_name().toLowerCase(Locale.ROOT))).collect(Collectors.toList()));
@@ -193,7 +193,7 @@ public class ShardsManager implements Managed {
         } else {
             int totalDF = 0;
             Set<Term> queryTerms = new TreeSet<>();
-            query.extractTerms(queryTerms);
+            query.createWeight(searcher, false).extractTerms(queryTerms);
             for (Term term : queryTerms) {
                 String text = term.text();
                 if (text.isEmpty())
@@ -217,7 +217,7 @@ public class ShardsManager implements Managed {
         return selectionTopDocuments;
     }
 
-    private SelectionTopDocuments filterTopics(Query query, Set<String> selectedTopics, SelectionTopDocuments selectResults) {
+    private SelectionTopDocuments filterTopics(Query query, Set<String> selectedTopics, SelectionTopDocuments selectResults) throws IOException {
         List<Document> results = new ArrayList<>();
         if (selectedTopics != null && !selectedTopics.isEmpty()) {
             for (Document doc : selectResults.scoreDocs) {
@@ -233,7 +233,7 @@ public class ShardsManager implements Managed {
         } else {
             int totalDF = 0;
             Set<Term> queryTerms = new TreeSet<>();
-            query.extractTerms(queryTerms);
+            query.createWeight(searcher, false).extractTerms(queryTerms);
             for (Term term : queryTerms) {
                 String text = term.text();
                 if (text.isEmpty())
@@ -274,7 +274,7 @@ public class ShardsManager implements Managed {
         CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
 
-        final TopDocsCollector topCollector = TopScoreDocCollector.create(len, true);
+        final TopDocsCollector topCollector = TopScoreDocCollector.create(len, null);
         indexSearcher.search(q, filter, topCollector);
 
         totalHits = topCollector.getTotalHits();
@@ -355,9 +355,9 @@ public class ShardsManager implements Managed {
 
         logger.info("Merging started!");
         long startTime = System.currentTimeMillis();
-        File indexPath = new File(this.indexPath);
+        Path indexPath = Paths.get(this.indexPath);
         Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
         try (IndexWriter writer = new IndexWriter(dir, config)) {
@@ -381,7 +381,7 @@ public class ShardsManager implements Managed {
     private IndexSearcher getIndexSearcher() throws IOException {
         try {
             if (reader == null) {
-                reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+                reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
                 searcher = new IndexSearcher(reader);
                 searcher.setSimilarity(similarity);
             } else if (live && !reader.isCurrent()) {

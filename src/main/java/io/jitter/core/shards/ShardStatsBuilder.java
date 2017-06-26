@@ -66,7 +66,7 @@ public class ShardStatsBuilder {
         Map<String, Integer> topicsSizes = new HashMap<>();
 
         Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.SCREEN_NAME.name);
-        TermsEnum termEnum = terms.iterator(null);
+        TermsEnum termEnum = terms.iterator();
 
         int colCnt = 0;
         BytesRef bytesRef;
