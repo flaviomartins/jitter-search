@@ -5,20 +5,16 @@ import io.dropwizard.lifecycle.Managed;
 import io.jitter.core.analysis.TweetAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
-import org.apache.lucene.index.FieldInfo;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.TieredMergePolicy;
+import org.apache.lucene.index.*;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.*;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class LiveStreamIndexer implements Managed, StatusListener, UserStreamListener {
@@ -41,15 +37,14 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         this.commitEvery = commitEvery;
         this.stringField = stringField;
 
-        Directory dir = FSDirectory.open(new File(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, ANALYZER);
+        Directory dir = FSDirectory.open(Paths.get(indexPath));
+        IndexWriterConfig config = new IndexWriterConfig(ANALYZER);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         config.setMergePolicy(new TieredMergePolicy());
         config.setRAMBufferSizeMB(48);
 
         textOptions = new FieldType();
-        textOptions.setIndexed(true);
-        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        textOptions.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         textOptions.setStored(true);
         textOptions.setTokenized(true);
         textOptions.setStoreTermVectors(true);

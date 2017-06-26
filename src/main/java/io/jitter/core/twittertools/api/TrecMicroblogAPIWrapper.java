@@ -1,6 +1,5 @@
 package io.jitter.core.twittertools.api;
 
-import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.search.api.TrecSearchThriftClient;
 import cc.twittertools.thrift.gen.TResult;
 import com.google.common.base.Preconditions;
@@ -9,16 +8,14 @@ import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
+import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.Stopper;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.Query;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nullable;
@@ -152,14 +149,14 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
         int totalDF = 0;
         if (collectionStats != null) {
-            Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, ANALYZER).parse(query);
-            Set<Term> queryTerms = new TreeSet<>();
-            q.extractTerms(queryTerms);
-            for (Term term : queryTerms) {
-                String text = term.text();
-                if (text.isEmpty())
-                    continue;
-                totalDF += collectionStats.docFreq(text);
+            Set<String> qTerms = new LinkedHashSet<>();
+            for (String term : AnalyzerUtils.analyze(ANALYZER, query)) {
+                if (!term.isEmpty()) {
+                    qTerms.add(term);
+                }
+            }
+            for (String term : qTerms) {
+                totalDF += collectionStats.docFreq(term);
             }
         }
 

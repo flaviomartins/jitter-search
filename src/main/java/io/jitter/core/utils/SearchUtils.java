@@ -109,7 +109,7 @@ public class SearchUtils {
 
     private static LinkedHashMap<String, Integer> getTermsMap(IndexReader indexReader) throws IOException {
         Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
-        TermsEnum termEnum = terms.iterator(null);
+        TermsEnum termEnum = terms.iterator();
 
         LinkedHashMap<String, Integer> termsMap = new LinkedHashMap<>();
         BytesRef bytesRef;
@@ -125,7 +125,7 @@ public class SearchUtils {
     private static DocVector buildDocVector(IndexReader indexReader, int doc) throws IOException {
         DocVector docVector = new DocVector();
         Terms termVector = indexReader.getTermVector(doc, IndexStatuses.StatusField.TEXT.name);
-        TermsEnum termsEnum = termVector.iterator(null);
+        TermsEnum termsEnum = termVector.iterator();
         BytesRef bytesRef;
         while ((bytesRef = termsEnum.next()) != null) {
             String term = bytesRef.utf8ToString();
