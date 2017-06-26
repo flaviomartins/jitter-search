@@ -55,6 +55,7 @@
            as the compiler plugin and the forbidden API checker both
            use this version
         -->
+        <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
@@ -695,7 +696,7 @@
                     <forceJavacCompilerUse>true</forceJavacCompilerUse>
                     <!-- maven-compiler-plugin defaults to targeting Java 5, but our javac
                          only supports >=6 -->
-                    <source>${maven.compiler.target}</source>
+                    <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                 </configuration>
                 <dependencies>
