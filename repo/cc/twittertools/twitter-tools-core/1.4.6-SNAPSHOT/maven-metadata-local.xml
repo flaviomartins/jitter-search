@@ -2,22 +2,22 @@
 <metadata modelVersion="1.1.0">
   <groupId>cc.twittertools</groupId>
   <artifactId>twitter-tools-core</artifactId>
-  <version>1.4.5-SNAPSHOT</version>
+  <version>1.4.6-SNAPSHOT</version>
   <versioning>
     <snapshot>
       <localCopy>true</localCopy>
     </snapshot>
-    <lastUpdated>20160728042333</lastUpdated>
+    <lastUpdated>20170626124602</lastUpdated>
     <snapshotVersions>
       <snapshotVersion>
         <extension>jar</extension>
-        <value>1.4.5-SNAPSHOT</value>
-        <updated>20160728042333</updated>
+        <value>1.4.6-SNAPSHOT</value>
+        <updated>20170626124602</updated>
       </snapshotVersion>
       <snapshotVersion>
         <extension>pom</extension>
-        <value>1.4.5-SNAPSHOT</value>
-        <updated>20160728042333</updated>
+        <value>1.4.6-SNAPSHOT</value>
+        <updated>20170626124602</updated>
       </snapshotVersion>
     </snapshotVersions>
   </versioning>
