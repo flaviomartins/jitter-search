@@ -1,14 +1,9 @@
 package io.jitter.core.taily;
 
-import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.Lists;
 import org.apache.commons.math3.distribution.GammaDistribution;
 import io.jitter.core.utils.AnalyzerUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,17 +87,7 @@ public class ShardRanker {
 
     // tokenize, stem and do stopword removal
     private List<String> _getStems(String query) {
-        List<String> stems = Lists.newArrayList();
-        try {
-            Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
-            Set<Term> queryTerms = new LinkedHashSet<>();
-            q.extractTerms(queryTerms);
-            for (Term term : queryTerms) {
-                stems.add(term.text());
-            }
-        } catch (ParseException e) {
-            stems = AnalyzerUtils.analyze(analyzer, query);
-        }
+        List<String> stems = AnalyzerUtils.analyze(analyzer, query);
         int len = stems.size();
         // remove empty stems
         stems.removeAll(Arrays.asList("", null));

@@ -9,19 +9,16 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.*;
-import org.apache.lucene.index.FieldInfo;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.Term;
+import org.apache.lucene.index.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -146,25 +143,23 @@ public class TwitterManager implements Managed {
 
         StatusStream stream = new JsonStatusCorpusReader(file);
 
-        Directory dir = FSDirectory.open(new File(indexPath));
+        Directory dir = FSDirectory.open(Paths.get(indexPath));
         
         Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
         fieldAnalyzers.put(IndexStatuses.StatusField.SCREEN_NAME.name, new SimpleAnalyzer());
         PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(analyzer, fieldAnalyzers);
 
-        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, perFieldAnalyzerWrapper);
+        IndexWriterConfig config = new IndexWriterConfig(perFieldAnalyzerWrapper);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         final FieldType textOptions = new FieldType();
-        textOptions.setIndexed(true);
-        textOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        textOptions.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         textOptions.setStored(true);
         textOptions.setTokenized(true);
         textOptions.setStoreTermVectors(true);
         
         final FieldType screenNameOptions = new FieldType();
-        screenNameOptions.setIndexed(true);
-        screenNameOptions.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS);
+        screenNameOptions.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
         screenNameOptions.setStored(true);
         screenNameOptions.setTokenized(true);
 

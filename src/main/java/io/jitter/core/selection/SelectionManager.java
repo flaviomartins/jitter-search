@@ -29,12 +29,12 @@ import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRefBuilder;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class SelectionManager implements Managed {
@@ -267,7 +267,7 @@ public class SelectionManager implements Managed {
         CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
 
-        final TopDocsCollector topCollector = TopScoreDocCollector.create(len, true);
+        final TopDocsCollector topCollector = TopScoreDocCollector.create(len, null);
         indexSearcher.search(q, filter, topCollector);
 
         totalHits = topCollector.getTotalHits();
@@ -291,12 +291,12 @@ public class SelectionManager implements Managed {
             c_sel = totalHits;
         } else {
             Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.TEXT.name);
-            TermsEnum termEnum = terms.iterator(null);
+            TermsEnum termEnum = terms.iterator();
             final BytesRefBuilder bytes = new BytesRefBuilder();
 
             int totalDF = 0;
             Set<Term> queryTerms = new TreeSet<>();
-            q.extractTerms(queryTerms);
+            q.createWeight(searcher, false).extractTerms(queryTerms);
             for (Term term : queryTerms) {
                 String text = term.text();
                 if (text.isEmpty())
@@ -362,9 +362,9 @@ public class SelectionManager implements Managed {
 
         logger.info("Merging started!");
         long startTime = System.currentTimeMillis();
-        File indexPath = new File(this.indexPath);
+        Path indexPath = Paths.get(this.indexPath);
         Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
         try (IndexWriter writer = new IndexWriter(dir, config)) {
@@ -388,7 +388,7 @@ public class SelectionManager implements Managed {
     private IndexSearcher getIndexSearcher() throws IOException {
         try {
             if (reader == null) {
-                reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+                reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
                 searcher = new IndexSearcher(reader);
                 searcher.setSimilarity(similarity);
             } else if (live && !reader.isCurrent()) {

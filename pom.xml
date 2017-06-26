@@ -36,7 +36,7 @@
         <commons-math3.version>3.6.1</commons-math3.version>
         <jsat.version>0.0.7</jsat.version>
 
-        <lucene.version>4.10.4</lucene.version>
+        <lucene.version>5.5.4</lucene.version>
 
         <twitter4j.version>4.0.6</twitter4j.version>
         <hbc.version>2.2.0</hbc.version>
@@ -500,6 +500,16 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-codecs</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-backward-codecs</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
                 <artifactId>lucene-queryparser</artifactId>
                 <version>${lucene.version}</version>
             </dependency>
@@ -590,6 +600,16 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-codecs</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-backward-codecs</artifactId>
             <version>${lucene.version}</version>
         </dependency>
         <dependency>

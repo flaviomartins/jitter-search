@@ -1,7 +1,6 @@
 package io.jitter.core.taily;
 
 import cc.twittertools.index.IndexStatuses;
-import com.google.common.collect.Sets;
 import io.jitter.core.features.IndriFeature;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.document.Document;
@@ -13,8 +12,8 @@ import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class Taily {
@@ -81,7 +80,7 @@ public class Taily {
         logger.info("build start");
         long startTime = System.currentTimeMillis();
 
-        DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+        DirectoryReader indexReader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
 
         FeatureStore corpusStore = new RocksDbFeatureStore(dbPath + "/" + CORPUS_DBENV, false);
         buildCorpus(indexReader, corpusStore);
@@ -113,7 +112,7 @@ public class Taily {
         // TODO: field list?
         // TODO: only create shard statistics for specified terms
         Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
-        TermsEnum termEnum = terms.iterator(null);
+        TermsEnum termEnum = terms.iterator();
 
         int termCnt = 0;
         BytesRef bytesRef;
@@ -246,7 +245,7 @@ public class Taily {
 
     private void buildSources(List<String> screenNames, DirectoryReader indexReader, Map<String, String> sourceTopicMap, Map<String, FeatureStore> sourceStores) throws IOException {
         Terms screenNameTerms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.SCREEN_NAME.name);
-        TermsEnum screenNameTermEnum = screenNameTerms.iterator(null);
+        TermsEnum screenNameTermEnum = screenNameTerms.iterator();
         IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
         // create FeatureStore dbs for each source
@@ -300,7 +299,7 @@ public class Taily {
         // TODO: read terms list
         // TODO: field list?
         Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
-        TermsEnum termEnum = terms.iterator(null);
+        TermsEnum termEnum = terms.iterator();
 
         long termCnt = 0;
         BytesRef bytesRef;
