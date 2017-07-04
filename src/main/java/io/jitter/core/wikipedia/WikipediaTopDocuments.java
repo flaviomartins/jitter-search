@@ -22,6 +22,6 @@ public class WikipediaTopDocuments {
         this.totalHits = totalHits;
         this.scoreDocs = scoreDocs;
     }
-  
+
 }
 

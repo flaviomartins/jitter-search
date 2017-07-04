@@ -5,6 +5,7 @@ import cc.twittertools.thrift.gen.TResult;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.twittertools.api.TResultWrapper;
+import io.jitter.core.wikipedia.WikipediaManager;
 
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"setId", "setRsv", "setScreen_name", "setEpoch", "setText",
         "setFollowers_count", "setStatuses_count", "setLang", "setIn_reply_to_status_id", "setIn_reply_to_user_id",
@@ -32,13 +33,33 @@ public class Document extends TResultWrapper {
     }
 
     public Document(org.apache.lucene.document.Document hit) {
-        this.id = (Long) hit.getField(IndexStatuses.StatusField.ID.name).numericValue();
-        this.screen_name = hit.get(IndexStatuses.StatusField.SCREEN_NAME.name);
-        this.epoch = (Long) hit.getField(IndexStatuses.StatusField.EPOCH.name).numericValue();
-        this.text = hit.get(IndexStatuses.StatusField.TEXT.name);
+        if (hit.get(IndexStatuses.StatusField.SCREEN_NAME.name) != null) {
+            this.id = (Long) hit.getField(IndexStatuses.StatusField.ID.name).numericValue();
+        }
 
-        this.followers_count = (Integer) hit.getField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name).numericValue();
-        this.statuses_count = (Integer) hit.getField(IndexStatuses.StatusField.STATUSES_COUNT.name).numericValue();
+        if (hit.get(IndexStatuses.StatusField.SCREEN_NAME.name) != null) {
+            this.screen_name = hit.get(IndexStatuses.StatusField.SCREEN_NAME.name);
+        } else {
+            this.screen_name = hit.get(WikipediaManager.TITLE_FIELD);
+        }
+
+        if (hit.get(IndexStatuses.StatusField.EPOCH.name) != null) {
+            this.epoch = (Long) hit.getField(IndexStatuses.StatusField.EPOCH.name).numericValue();
+        }
+
+        if (hit.get(IndexStatuses.StatusField.TEXT.name) != null) {
+            this.text = hit.get(IndexStatuses.StatusField.TEXT.name);
+        } else {
+            this.text = hit.get(WikipediaManager.TEXT_FIELD);
+        }
+
+        if (hit.get(IndexStatuses.StatusField.FOLLOWERS_COUNT.name) != null) {
+            this.followers_count = (Integer) hit.getField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name).numericValue();
+        }
+
+        if (hit.get(IndexStatuses.StatusField.STATUSES_COUNT.name) != null) {
+            this.statuses_count = (Integer) hit.getField(IndexStatuses.StatusField.STATUSES_COUNT.name).numericValue();
+        }
 
         if (hit.get(IndexStatuses.StatusField.LANG.name) != null) {
             this.lang = hit.get(IndexStatuses.StatusField.LANG.name);

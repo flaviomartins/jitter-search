@@ -22,6 +22,6 @@ public class TopDocuments {
         this.totalHits = totalHits;
         this.scoreDocs = scoreDocs;
     }
-  
+
 }
 
