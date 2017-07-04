@@ -3,6 +3,7 @@ package io.jitter.api.search;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.jitter.core.search.TopDocuments;
+import io.jitter.core.wikipedia.WikipediaTopDocuments;
 
 import java.util.List;
 
@@ -24,6 +25,12 @@ public class DocumentsResponse {
     }
 
     public DocumentsResponse(int numFound, int start, TopDocuments topDocuments) {
+        this.numFound = numFound;
+        this.start = start;
+        this.docs = topDocuments.scoreDocs;
+    }
+
+    public DocumentsResponse(int numFound, int start, WikipediaTopDocuments topDocuments) {
         this.numFound = numFound;
         this.start = start;
         this.docs = topDocuments.scoreDocs;
