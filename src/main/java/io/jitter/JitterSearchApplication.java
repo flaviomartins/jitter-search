@@ -84,17 +84,6 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         environment.jersey().register(SwaggerSerializers.class);
         environment.jersey().register(new ApiListingResource());
 
-        final WikipediaManager wikipediaManager = configuration.getWikipediaManagerFactory().build(environment);
-        final WikipediaManagerHealthCheck wikipediaManagerHealthCheck =
-                new WikipediaManagerHealthCheck(wikipediaManager);
-        environment.healthChecks().register("wikipedia-manager", wikipediaManagerHealthCheck);
-
-        final WikipediaSearchResource wikipediaSearchResource = new WikipediaSearchResource(wikipediaManager);
-        environment.jersey().register(wikipediaSearchResource);
-
-        final WikipediaTopTermsResource wikipediaTopTermsResource = new WikipediaTopTermsResource(wikipediaManager);
-        environment.jersey().register(wikipediaTopTermsResource);
-
         final TwitterManager twitterManager = configuration.getTwitterManagerFactory().build(environment);
         final TwitterManagerHealthCheck twitterManagerHealthCheck =
                 new TwitterManagerHealthCheck(twitterManager);
@@ -116,6 +105,20 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         final FeedbackResource feedbackResource = new FeedbackResource(searchManager);
         environment.jersey().register(feedbackResource);
+
+        final WikipediaManager wikipediaManager = configuration.getWikipediaManagerFactory().build(environment);
+        final WikipediaManagerHealthCheck wikipediaManagerHealthCheck =
+                new WikipediaManagerHealthCheck(wikipediaManager);
+        environment.healthChecks().register("wikipedia-manager", wikipediaManagerHealthCheck);
+
+        final WikipediaSearchResource wikipediaSearchResource = new WikipediaSearchResource(wikipediaManager);
+        environment.jersey().register(wikipediaSearchResource);
+
+        final WikipediaTopTermsResource wikipediaTopTermsResource = new WikipediaTopTermsResource(wikipediaManager);
+        environment.jersey().register(wikipediaTopTermsResource);
+
+        final WikipediaFeedbackResource wikipediaFeedbackResource = new WikipediaFeedbackResource(searchManager, wikipediaManager);
+        environment.jersey().register(wikipediaFeedbackResource);
 
         final TailyManager tailyManager = configuration.getTailyManagerFactory().build(environment);
         final TailyManagerHealthCheck tailyManagerHealthCheck =
