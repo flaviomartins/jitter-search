@@ -13,6 +13,7 @@ import io.jitter.core.stream.UserStream;
 import io.jitter.core.twitter.OAuth1;
 import io.jitter.core.twitter.manager.TwitterManager;
 import io.jitter.core.utils.NoExitSecurityManager;
+import io.jitter.core.wikipedia.WikipediaManager;
 import io.jitter.health.*;
 import io.jitter.resources.*;
 import io.jitter.tasks.*;
@@ -82,6 +83,17 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         environment.jersey().register(SwaggerSerializers.class);
         environment.jersey().register(new ApiListingResource());
+
+        final WikipediaManager wikipediaManager = configuration.getWikipediaManagerFactory().build(environment);
+        final WikipediaManagerHealthCheck wikipediaManagerHealthCheck =
+                new WikipediaManagerHealthCheck(wikipediaManager);
+        environment.healthChecks().register("wikipedia-manager", wikipediaManagerHealthCheck);
+
+        final WikipediaSearchResource wikipediaSearchResource = new WikipediaSearchResource(wikipediaManager);
+        environment.jersey().register(wikipediaSearchResource);
+
+        final WikipediaTopTermsResource wikipediaTopTermsResource = new WikipediaTopTermsResource(wikipediaManager);
+        environment.jersey().register(wikipediaTopTermsResource);
 
         final TwitterManager twitterManager = configuration.getTwitterManagerFactory().build(environment);
         final TwitterManagerHealthCheck twitterManagerHealthCheck =
