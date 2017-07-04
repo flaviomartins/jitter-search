@@ -8,6 +8,7 @@ import io.jitter.core.shards.ShardsManagerFactory;
 import io.jitter.core.twitter.manager.TwitterManagerFactory;
 import io.jitter.core.selection.SelectionManagerFactory;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapperFactory;
+import io.jitter.core.wikipedia.WikipediaManagerFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -53,6 +54,10 @@ public class JitterSearchConfiguration extends Configuration {
     @Valid
     @NotNull
     private TrecMicroblogAPIWrapperFactory trecMicroblogAPIWrapperFactory = new TrecMicroblogAPIWrapperFactory();
+
+    @Valid
+    @NotNull
+    private WikipediaManagerFactory wikipediaManagerFactory = new WikipediaManagerFactory();
 
     @JsonProperty("apidocs")
     public ApiDocsFactory getApiDocsFactory() {
@@ -162,5 +167,15 @@ public class JitterSearchConfiguration extends Configuration {
     @JsonProperty("user_log_path")
     public void setUserStreamLogPath(String userStreamLogPath) {
         this.userStreamLogPath = userStreamLogPath;
+    }
+
+    @JsonProperty("wikipedia")
+    public WikipediaManagerFactory getWikipediaManagerFactory() {
+        return wikipediaManagerFactory;
+    }
+
+    @JsonProperty("wikipedia")
+    public void setWikipediaManagerFactory(WikipediaManagerFactory wikipediaManagerFactory) {
+        this.wikipediaManagerFactory = wikipediaManagerFactory;
     }
 }
