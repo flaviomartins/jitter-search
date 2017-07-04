@@ -42,6 +42,7 @@ public class SearchUtils {
             }
 
             Document doc = new Document(hit);
+            doc.setRsv(scoreDoc.score);
 
             // Throw away retweets.
             if (filterRT && StringUtils.startsWithIgnoreCase(doc.getText(), "RT ")) {
@@ -90,7 +91,7 @@ public class SearchUtils {
 
         for (Document doc : topDocuments) {
             DocVector docVector = doc.getDocVector();
-            if (docVector == null) {
+            if (docVector == null && doc.getText() != null) {
                 DocVector newDocVector = buildDocVector(IndexStatuses.ANALYZER, doc.getText());
                 docVector = newDocVector;
                 doc.setDocVector(newDocVector);
@@ -123,14 +124,17 @@ public class SearchUtils {
     }
 
     private static DocVector buildDocVector(IndexReader indexReader, int doc) throws IOException {
-        DocVector docVector = new DocVector();
+        DocVector docVector = null;
         Terms termVector = indexReader.getTermVector(doc, IndexStatuses.StatusField.TEXT.name);
-        TermsEnum termsEnum = termVector.iterator();
-        BytesRef bytesRef;
-        while ((bytesRef = termsEnum.next()) != null) {
-            String term = bytesRef.utf8ToString();
-            int freq = (int) termsEnum.totalTermFreq();
-            docVector.setTermFreq(term, freq);
+        if (termVector != null) {
+            docVector = new DocVector();
+            TermsEnum termsEnum = termVector.iterator();
+            BytesRef bytesRef;
+            while ((bytesRef = termsEnum.next()) != null) {
+                String term = bytesRef.utf8ToString();
+                int freq = (int) termsEnum.totalTermFreq();
+                docVector.setTermFreq(term, freq);
+            }
         }
         return docVector;
     }
