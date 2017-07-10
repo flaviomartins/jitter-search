@@ -27,7 +27,7 @@ public class QrelsReranker implements Reranker {
 
             Document updatedResult = new Document(origResult);
 
-            int r = qrels.getRel(qid, Long.toString(origResult.getId()));
+            int r = qrels.getRel(qid, origResult.getId());
             updatedResult.setRsv(origResult.getRsv() + r * 100);
 
             updatedResults.add(updatedResult);

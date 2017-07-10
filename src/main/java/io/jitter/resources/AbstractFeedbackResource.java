@@ -1,7 +1,7 @@
 package io.jitter.resources;
 
 import io.jitter.api.collectionstatistics.CollectionStats;
-import io.jitter.api.search.Document;
+import io.jitter.api.search.ADocument;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.feedback.TweetFeedbackRelevanceModel;
@@ -28,11 +28,11 @@ public class AbstractFeedbackResource {
 //        logger.info(fb.describeParams());
 //        fb.setOriginalQueryFV(queryFV);
 
-        List<Document> documents = results.scoreDocs.subList(0, Math.min(fbDocs, results.scoreDocs.size()));
+        List<? extends ADocument> documents = results.scoreDocs.subList(0, Math.min(fbDocs, results.scoreDocs.size()));
         FeatureVector fbVector = null;
         int B = 30;
         for (int i = 0; i < B; i++) {
-            List<Document> sample = sample(fbDocs, documents);
+            List<? extends ADocument> sample = sample(fbDocs, documents);
             FeatureVector like = fb.like(sample);
             if (fbVector == null) {
                 fbVector = like;
@@ -46,7 +46,7 @@ public class AbstractFeedbackResource {
         return fbVector;
     }
 
-    private List<Document> sample(int fbDocs, List<Document> relDocs) {
+    private List<ADocument> sample(int fbDocs, List<? extends ADocument> relDocs) {
         int numDocs = relDocs.size();
         List<Pair<Integer, Double>> probabilities = new ArrayList<>(numDocs);
         for (int i = 0; i < numDocs; i++) {
@@ -61,23 +61,23 @@ public class AbstractFeedbackResource {
         }
 
         EnumeratedDistribution<Integer> dist = new EnumeratedDistribution<>(probabilities);
-        List<Document> sample = new ArrayList<>(fbDocs);
+        List<ADocument> sample = new ArrayList<>(fbDocs);
         for (int i = 0; i < fbDocs; i++) {
             int pos = dist.sample();
-            Document doc = relDocs.get(pos);
+            ADocument doc = relDocs.get(pos);
             sample.add(doc);
         }
         return sample;
     }
 
-    FeatureVector buildFeedbackFV(int fbDocs, int fbTerms, TopDocuments results, Stopper stopper, CollectionStats collectionStats) throws IOException {
+    FeatureVector buildFeedbackFV(int fbDocs, int fbTerms, List<? extends ADocument> results, Stopper stopper, CollectionStats collectionStats) throws IOException {
         TweetFeedbackRelevanceModel fb = new TweetFeedbackRelevanceModel(stopper);
         fb.setCollectionStats(collectionStats);
         fb.setMaxQueryTerms(fbTerms);
 //        logger.info(fb.describeParams());
 //        fb.setOriginalQueryFV(queryFV);
 
-        return fb.like(results.scoreDocs.subList(0, Math.min(fbDocs, results.scoreDocs.size())));
+        return fb.like(results.subList(0, Math.min(fbDocs, results.size())));
     }
 
     FeatureVector buildQueryFV(String query, Stopper stopper) {

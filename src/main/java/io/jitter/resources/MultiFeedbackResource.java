@@ -127,14 +127,14 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
 
             FeatureVector shardsFV = null;
             if (shardResults.totalHits > 0) {
-                shardsFV = buildFeedbackFV(fbDocs, fbTerms, shardResults, shardsManager.getStopper(), searchManager.getCollectionStats());
+                shardsFV = buildFeedbackFV(fbDocs, fbTerms, shardResults.scoreDocs, shardsManager.getStopper(), searchManager.getCollectionStats());
             }
 
             FeatureVector feedbackFV = null;
             FeatureVector fbVector;
             if (fbMerge) {
                 TopDocuments selectResults = searchManager.search(query, maxId, limit, retweets, epochs);
-                feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults, searchManager.getStopper(), searchManager.getCollectionStats());
+                feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults.scoreDocs, searchManager.getStopper(), searchManager.getCollectionStats());
                 fbVector = interpruneFV(fbTerms, fbWeight.floatValue(), shardsFV, feedbackFV);
             } else {
                 fbVector = shardsFV;
