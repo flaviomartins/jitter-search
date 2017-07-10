@@ -11,6 +11,7 @@ import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.Epochs;
 import io.jitter.core.wikipedia.WikipediaManager;
+import io.jitter.core.wikipedia.WikipediaTopDocuments;
 import io.swagger.annotations.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
@@ -81,13 +82,13 @@ public class WikipediaFeedbackResource extends AbstractFeedbackResource {
             String query = URLDecoder.decode(q.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
-            TopDocuments selectResults = wikipediaManager.search(query, limit);
+            WikipediaTopDocuments selectResults = wikipediaManager.search(query, limit);
 
             String finalQuery = query;
             FeatureVector fbVector = null;
             if (fbDocs > 0 && fbTerms > 0) {
                 FeatureVector queryFV = buildQueryFV(query, wikipediaManager.getStopper());
-                FeatureVector feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults, searchManager.getStopper(), searchManager.getCollectionStats());
+                FeatureVector feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults.scoreDocs, searchManager.getStopper(), searchManager.getCollectionStats());
                 fbVector = interpruneFV(fbTerms, fbWeight.floatValue(), queryFV, feedbackFV);
                 finalQuery = buildQuery(fbVector);
             }

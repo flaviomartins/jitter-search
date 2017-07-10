@@ -2,6 +2,7 @@ package io.jitter.core.feedback;
 
 import cc.twittertools.index.TweetAnalyzer;
 import io.jitter.api.collectionstatistics.CollectionStats;
+import io.jitter.api.search.ADocument;
 import io.jitter.api.search.Document;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.document.FeatureVector;
@@ -494,7 +495,7 @@ public class FeedbackRelevanceModel {
         return docFreq < minDocFreq;
     }
 
-    public FeatureVector like(List<Document> relDocs) throws IOException {
+    public FeatureVector like(List<? extends ADocument> relDocs) throws IOException {
         int numDocVectors = relDocs.size();
         FeatureVector f = new FeatureVector();
         Set<String> vocab = new HashSet<>();
@@ -502,7 +503,7 @@ public class FeedbackRelevanceModel {
         double[] scores = new double[numDocVectors];
 
         for (int i = 0; i < numDocVectors; i++) {
-            Document hit = relDocs.get(i);
+            ADocument hit = relDocs.get(i);
             double rsv = hit.getRsv();
             if (rsv >= 0) {
                 scores[i] = rsv;

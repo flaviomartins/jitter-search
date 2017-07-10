@@ -87,7 +87,7 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
             FeatureVector fbVector = null;
             if (fbDocs > 0 && fbTerms > 0) {
                 FeatureVector queryFV = buildQueryFV(query, trecMicroblogAPIWrapper.getStopper());
-                FeatureVector feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+                FeatureVector feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults.scoreDocs, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
                 fbVector = interpruneFV(fbTerms, fbWeight.floatValue(), queryFV, feedbackFV);
                 finalQuery = buildQuery(fbVector);
             }

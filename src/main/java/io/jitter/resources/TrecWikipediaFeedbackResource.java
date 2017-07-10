@@ -1,18 +1,16 @@
 package io.jitter.resources;
 
-import cc.twittertools.util.QueryLikelihoodModel;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.caching.CacheControl;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.Document;
 import io.jitter.api.search.FeedbackDocumentsResponse;
 import io.jitter.api.search.SearchResponse;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
-import io.jitter.core.utils.SearchUtils;
 import io.jitter.core.wikipedia.WikipediaManager;
+import io.jitter.core.wikipedia.WikipediaTopDocuments;
 import io.swagger.annotations.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.thrift.TException;
@@ -23,7 +21,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +70,6 @@ public class TrecWikipediaFeedbackResource extends AbstractFeedbackResource {
                                  @ApiParam(value = "Number of feedback documents", allowableValues="range[1, 1000]") @QueryParam("fbDocs") @DefaultValue("50") Integer fbDocs,
                                  @ApiParam(value = "Number of feedback terms", allowableValues="range[1, 1000]") @QueryParam("fbTerms") @DefaultValue("20") Integer fbTerms,
                                  @ApiParam(value = "Original query weight", allowableValues="range[0, 1]") @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
-                                 @ApiParam(hidden = true) @QueryParam("fbRerankOnly") @DefaultValue("false") Boolean fbRerankOnly,
                                  @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -85,25 +81,18 @@ public class TrecWikipediaFeedbackResource extends AbstractFeedbackResource {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q.orElse(""), "UTF-8");
 
-            TopDocuments selectResults = wikipediaManager.search(query, limit);
+            WikipediaTopDocuments selectResults = wikipediaManager.search(query, limit);
 
             String finalQuery = query;
             FeatureVector fbVector = null;
             if (fbDocs > 0 && fbTerms > 0) {
                 FeatureVector queryFV = buildQueryFV(query, wikipediaManager.getStopper());
-                FeatureVector feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
+                FeatureVector feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults.scoreDocs, trecMicroblogAPIWrapper.getStopper(), trecMicroblogAPIWrapper.getCollectionStats());
                 fbVector = interpruneFV(fbTerms, fbWeight.floatValue(), queryFV, feedbackFV);
                 finalQuery = buildQuery(fbVector);
             }
 
-            TopDocuments results;
-            if (fbRerankOnly) {
-                QueryLikelihoodModel qlModel = new QueryLikelihoodModel(trecMicroblogAPIWrapper.DEFAULT_MU);
-                List<Document> docs = SearchUtils.computeQLScores(trecMicroblogAPIWrapper.getCollectionStats(), qlModel, selectResults.scoreDocs, finalQuery, limit);
-                results = new TopDocuments(docs);
-            } else {
-                results = trecMicroblogAPIWrapper.search(finalQuery, maxId, limit, retweets);
-            }
+            TopDocuments results = trecMicroblogAPIWrapper.search(finalQuery, maxId, limit, retweets);
 
             int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
             int totalHits = results != null ? results.totalHits : 0;

@@ -3,7 +3,8 @@ package io.jitter.core.utils;
 import cc.twittertools.util.QueryLikelihoodModel;
 import com.google.common.collect.Lists;
 import io.jitter.api.collectionstatistics.CollectionStats;
-import io.jitter.api.search.Document;
+import io.jitter.api.search.IDocument;
+import io.jitter.api.wikipedia.WikipediaDocument;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
 import io.jitter.core.wikipedia.WikipediaManager;
@@ -23,18 +24,18 @@ import java.util.*;
 
 public class WikipediaSearchUtils {
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean computeQLScores) throws IOException {
+    public static List<WikipediaDocument> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean computeQLScores) throws IOException {
         IndexReader indexReader = indexSearcher.getIndexReader();
 
         int count = 0;
-        List<Document> topDocuments = Lists.newArrayList();
+        List<WikipediaDocument> topDocuments = Lists.newArrayList();
         for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
             if (count >= limit)
                 break;
 
             org.apache.lucene.document.Document hit = indexSearcher.doc(scoreDoc.doc);
 
-            Document doc = new Document(hit);
+            WikipediaDocument doc = new WikipediaDocument(hit);
             doc.setRsv(scoreDoc.score);
 
             DocVector docVector = doc.getDocVector();
@@ -59,11 +60,11 @@ public class WikipediaSearchUtils {
         }
     }
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit) throws IOException {
+    public static List<WikipediaDocument> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit) throws IOException {
         return getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, limit, true);
     }
 
-    public static List<Document> computeQLScores(CollectionStats collectionStats, QueryLikelihoodModel qlModel, List<Document> topDocuments, String query, int limit) throws IOException {
+    public static List<WikipediaDocument> computeQLScores(CollectionStats collectionStats, QueryLikelihoodModel qlModel, List<WikipediaDocument> topDocuments, String query, int limit) throws IOException {
         Map<String, Float> weights = null;
         HashMap<String, Long> ctfs = null;
         long sumTotalTermFreq = -1;
@@ -77,7 +78,7 @@ public class WikipediaSearchUtils {
             sumTotalTermFreq = collectionStats.getSumTotalTermFreq();
         }
 
-        for (Document doc : topDocuments) {
+        for (IDocument doc : topDocuments) {
             DocVector docVector = doc.getDocVector();
             if (docVector == null && doc.getText() != null) {
                 DocVector newDocVector = buildDocVector(WikipediaManager.ANALYZER, doc.getText());
@@ -86,11 +87,11 @@ public class WikipediaSearchUtils {
             }
 
             if (qlModel != null && weights != null && docVector != null) {
-                doc.rsv = qlModel.computeQLScore(weights, ctfs, docVector.vector, sumTotalTermFreq);
+                doc.setRsv(qlModel.computeQLScore(weights, ctfs, docVector.vector, sumTotalTermFreq));
             }
         }
 
-        Comparator<Document> comparator = new DocumentComparator(true);
+        Comparator<IDocument> comparator = new DocumentComparator(true);
         topDocuments.sort(comparator);
 
         return topDocuments.subList(0, Math.min(limit, topDocuments.size()));

@@ -88,7 +88,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
             FeatureVector fbVector = null;
             if (fbDocs > 0 && fbTerms > 0) {
                 FeatureVector queryFV = buildQueryFV(query, searchManager.getStopper());
-                FeatureVector feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults, searchManager.getStopper(), searchManager.getCollectionStats());
+                FeatureVector feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults.scoreDocs, searchManager.getStopper(), searchManager.getCollectionStats());
                 fbVector = interpruneFV(fbTerms, fbWeight.floatValue(), queryFV, feedbackFV);
                 finalQuery = buildQuery(fbVector);
             }
