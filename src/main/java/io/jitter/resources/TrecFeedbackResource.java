@@ -5,7 +5,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.caching.CacheControl;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.api.search.FeedbackDocumentsResponse;
 import io.jitter.api.search.SearchResponse;
 import io.jitter.core.document.FeatureVector;
@@ -95,7 +95,7 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
             TopDocuments results;
             if (fbRerankOnly) {
                 QueryLikelihoodModel qlModel = new QueryLikelihoodModel(trecMicroblogAPIWrapper.DEFAULT_MU);
-                List<Document> docs = SearchUtils.computeQLScores(trecMicroblogAPIWrapper.getCollectionStats(), qlModel, selectResults.scoreDocs, finalQuery, limit);
+                List<StatusDocument> docs = SearchUtils.computeQLScores(trecMicroblogAPIWrapper.getCollectionStats(), qlModel, selectResults.scoreDocs, finalQuery, limit);
                 results = new TopDocuments(docs);
             } else {
                 results = trecMicroblogAPIWrapper.search(finalQuery, maxId, limit, retweets);

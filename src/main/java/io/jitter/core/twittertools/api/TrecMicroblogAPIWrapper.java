@@ -5,7 +5,7 @@ import cc.twittertools.thrift.gen.TResult;
 import com.google.common.base.Preconditions;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.AnalyzerUtils;
@@ -126,7 +126,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
         Iterator<TResult> resultIt = results.iterator();
 
         LongOpenHashSet seenSet = new LongOpenHashSet();
-        List<Document> updatedResults = new ArrayList<>(results.size());
+        List<StatusDocument> updatedResults = new ArrayList<>(results.size());
         while (resultIt.hasNext()) {
             TResult origResult = resultIt.next();
 
@@ -143,7 +143,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
 
             seenSet.add(origResult.getId());
 
-            Document updatedResult = new Document(origResult);
+            StatusDocument updatedResult = new StatusDocument(origResult);
             updatedResults.add(updatedResult);
         }
 
@@ -160,7 +160,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
             }
         }
 
-        List<Document> documents = updatedResults.subList(0, Math.min(updatedResults.size(), numResults));
+        List<StatusDocument> documents = updatedResults.subList(0, Math.min(updatedResults.size(), numResults));
         
         int totalHits = totalDF > 0 ? totalDF : documents.size();
         return new TopDocuments(totalHits, documents);

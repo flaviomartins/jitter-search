@@ -6,7 +6,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.taily.TailyManager;
@@ -180,7 +180,7 @@ public class ShardsManager implements Managed {
     }
 
     private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) throws IOException {
-        List<Document> results = new ArrayList<>();
+        List<StatusDocument> results = new ArrayList<>();
         if (selectedSources != null && !selectedSources.isEmpty()) {
             results.addAll(selectResults.scoreDocs.stream().filter(doc -> selectedSources.contains(doc.getScreen_name().toLowerCase(Locale.ROOT))).collect(Collectors.toList()));
         } else {
@@ -218,9 +218,9 @@ public class ShardsManager implements Managed {
     }
 
     private SelectionTopDocuments filterTopics(Query query, Set<String> selectedTopics, SelectionTopDocuments selectResults) throws IOException {
-        List<Document> results = new ArrayList<>();
+        List<StatusDocument> results = new ArrayList<>();
         if (selectedTopics != null && !selectedTopics.isEmpty()) {
-            for (Document doc : selectResults.scoreDocs) {
+            for (StatusDocument doc : selectResults.scoreDocs) {
                 results.addAll(selectedTopics.stream().filter(selectedTopic -> topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name().toLowerCase(Locale.ROOT))).map(selectedTopic -> doc).collect(Collectors.toList()));
             }
         } else {
@@ -296,7 +296,7 @@ public class ShardsManager implements Managed {
             scores[i] = scoreDoc.score;
         }
 
-        List<Document> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT);
+        List<StatusDocument> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT);
 
         SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(totalHits, docs);
 

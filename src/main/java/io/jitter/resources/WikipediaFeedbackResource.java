@@ -82,7 +82,7 @@ public class WikipediaFeedbackResource extends AbstractFeedbackResource {
             String query = URLDecoder.decode(q.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
-            WikipediaTopDocuments selectResults = wikipediaManager.search(query, limit);
+            WikipediaTopDocuments selectResults = wikipediaManager.search(query, limit, true);
 
             String finalQuery = query;
             FeatureVector fbVector = null;
