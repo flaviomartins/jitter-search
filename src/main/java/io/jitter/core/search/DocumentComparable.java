@@ -1,18 +1,18 @@
 package io.jitter.core.search;
 
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 
 import java.util.Objects;
 
 public class DocumentComparable implements Comparable<DocumentComparable> {
 
-    private final Document document;
+    private final StatusDocument document;
 
-    public DocumentComparable(Document document) {
+    public DocumentComparable(StatusDocument document) {
         this.document = document;
     }
 
-    public Document getDocument() {
+    public StatusDocument getDocument() {
         return document;
     }
 

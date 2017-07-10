@@ -1,7 +1,7 @@
 package io.jitter.core.rerank;
 
 import com.google.common.primitives.Doubles;
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.core.probabilitydistributions.JsatKDE;
 import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.utils.TimeUtils;
@@ -29,7 +29,7 @@ public class KDEReranker implements Reranker {
     }
 
     @Override
-    public List<Document> rerank(List<Document> docs, RerankerContext context) {
+    public List<StatusDocument> rerank(List<StatusDocument> docs, RerankerContext context) {
         double queryEpoch = context.getQueryEpoch();
         // extract raw epochs from results
         List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(docs);
@@ -41,11 +41,11 @@ public class KDEReranker implements Reranker {
 
         switch (scheme) {
             case SCORE:
-                Iterator<Document> resultIt = docs.iterator();
+                Iterator<StatusDocument> resultIt = docs.iterator();
                 int j = 0;
                 double maxRsv = Double.NEGATIVE_INFINITY;
                 while (resultIt.hasNext()) {
-                    Document result = resultIt.next();
+                    StatusDocument result = resultIt.next();
                     double rsv = result.getRsv();
                     // deal with munged lucene QL's
                     if (rsv < 0.0)
@@ -56,7 +56,7 @@ public class KDEReranker implements Reranker {
                 }
                 break;
             case RANK:
-                Iterator<Document> resultIt1 = docs.iterator();
+                Iterator<StatusDocument> resultIt1 = docs.iterator();
                 int jj = 0;
 //                (n/2)(n+1)
 //                double lambda = 1.0 / (results.size()/2.0)*(results.size()+1);
@@ -76,12 +76,12 @@ public class KDEReranker implements Reranker {
 
         KDE kde = new JsatKDE(densityTrainingData, densityWeights, -1.0, method);
 
-        Iterator<Document> resultIt = docs.iterator();
+        Iterator<StatusDocument> resultIt = docs.iterator();
         Iterator<Double> epochIt = scaledEpochs.iterator();
 
-        List<Document> updatedResults = new ArrayList<>(docs.size());
+        List<StatusDocument> updatedResults = new ArrayList<>(docs.size());
         while (resultIt.hasNext()) {
-            Document origResult = resultIt.next();
+            StatusDocument origResult = resultIt.next();
             double scaledEpoch = epochIt.next();
             double density = 0;
 
@@ -91,7 +91,7 @@ public class KDEReranker implements Reranker {
                     density = 0;
             }
 
-            Document updatedResult = new Document(origResult);
+            StatusDocument updatedResult = new StatusDocument(origResult);
             updatedResult.getFeatures().add((float)density);
             updatedResult.setRsv(origResult.getRsv() + beta * density);
             updatedResults.add(updatedResult);

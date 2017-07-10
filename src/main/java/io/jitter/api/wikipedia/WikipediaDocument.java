@@ -1,12 +1,13 @@
 package io.jitter.api.wikipedia;
 
-import io.jitter.api.search.ADocument;
-import io.jitter.api.search.IDocument;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.jitter.api.search.AbstractDocument;
+import io.jitter.api.search.Document;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.wikipedia.WikipediaManager;
 
-//@JsonIgnoreProperties(ignoreUnknown = true, value = {"docVector"})
-public class WikipediaDocument extends ADocument implements IDocument {
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"dataPoint", "docVector", "features"})
+public class WikipediaDocument extends AbstractDocument implements Document {
 
     public String id; // required
     public double rsv; // required
@@ -18,6 +19,7 @@ public class WikipediaDocument extends ADocument implements IDocument {
         id = other.id;
         rsv = other.rsv;
         title = other.title;
+        text = other.text;
         docVector = other.docVector;
     }
 

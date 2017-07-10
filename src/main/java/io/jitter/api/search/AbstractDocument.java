@@ -6,7 +6,8 @@ import io.jitter.core.twittertools.api.DocumentDataPoint;
 
 import java.util.ArrayList;
 
-public abstract class ADocument {
+public abstract class AbstractDocument {
+    private int shardId;
     private ArrayList<Float> features = new ArrayList<>();
 
     public abstract String getId();
@@ -35,5 +36,13 @@ public abstract class ADocument {
 
     public DataPoint getDataPoint() {
         return new DocumentDataPoint(getId(), features);
+    }
+
+    public int getShardId() {
+        return shardId;
+    }
+
+    public void setShardId(int shardId) {
+        this.shardId = shardId;
     }
 }

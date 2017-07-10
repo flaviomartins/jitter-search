@@ -1,7 +1,7 @@
 package io.jitter.core.rerank;
 
 import com.google.common.collect.Lists;
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 
 import java.util.List;
 
@@ -29,8 +29,8 @@ public class RerankerCascade {
    * @param docs input documents
    * @return reranked results
    */
-  public List<Document> run(List<Document> docs, RerankerContext context) {
-    List<Document> results = docs;
+  public List<StatusDocument> run(List<StatusDocument> docs, RerankerContext context) {
+    List<StatusDocument> results = docs;
 
     for (Reranker reranker : rerankers) {
       results = reranker.rerank(results, context);

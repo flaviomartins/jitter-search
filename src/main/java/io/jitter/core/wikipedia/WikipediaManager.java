@@ -7,6 +7,7 @@ import io.jitter.api.collectionstatistics.IndexCollectionStats;
 import io.jitter.api.wikipedia.WikipediaDocument;
 import io.jitter.core.utils.Stopper;
 import io.jitter.core.utils.WikipediaSearchUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.index.DirectoryReader;
@@ -90,7 +91,7 @@ public class WikipediaManager implements Managed {
         return mu;
     }
 
-    public WikipediaTopDocuments isearch(String query, Filter filter, int n) throws IOException, ParseException {
+    public WikipediaTopDocuments isearch(String query, Filter filter, int n, boolean full) throws IOException, ParseException {
         int len = Math.min(MAX_RESULTS, 3 * n);
         int nDocsReturned;
         int totalHits;
@@ -121,6 +122,12 @@ public class WikipediaManager implements Managed {
 
         // Compute real QL scores even when live to build termVectors
         List<WikipediaDocument> docs = WikipediaSearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n);
+
+        if (!full) {
+            for (WikipediaDocument doc : docs) {
+                doc.setText(StringUtils.abbreviate(doc.getText(), 500));
+            }
+        }
 
         return new WikipediaTopDocuments(totalHits, docs);
     }
@@ -155,7 +162,7 @@ public class WikipediaManager implements Managed {
         return new IndexCollectionStats(reader, TEXT_FIELD);
     }
 
-    public WikipediaTopDocuments search(String query, int limit) throws IOException, ParseException {
-        return isearch(query, null, limit);
+    public WikipediaTopDocuments search(String query, int limit, boolean full) throws IOException, ParseException {
+        return isearch(query, null, limit, full);
     }
 }

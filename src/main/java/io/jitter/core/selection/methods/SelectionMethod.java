@@ -1,6 +1,6 @@
 package io.jitter.core.selection.methods;
 
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.core.shards.ShardStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +15,9 @@ public abstract class SelectionMethod {
     SelectionMethod() {
     }
 
-    Map<String, Double> getCounts(List<Document> results) {
+    Map<String, Double> getCounts(List<StatusDocument> results) {
         Map<String, Double> counts = new HashMap<>();
-        for (Document result : results) {
+        for (StatusDocument result : results) {
             String screenName = result.getScreen_name();
             if (!counts.containsKey(screenName)) {
                 counts.put(screenName, 1d);
@@ -29,9 +29,9 @@ public abstract class SelectionMethod {
         return counts;
     }
 
-    public abstract Map<String, Double> rank(List<Document> results, ShardStats csiStats);
+    public abstract Map<String, Double> rank(List<StatusDocument> results, ShardStats csiStats);
 
-    public Map<String, Double> rankTopics(List<Document> results, ShardStats csiStats, ShardStats shardStats, Map<String, String> reverseTopicMap) {
+    public Map<String, Double> rankTopics(List<StatusDocument> results, ShardStats csiStats, ShardStats shardStats, Map<String, String> reverseTopicMap) {
         Map<String, Double> rankedCollections = rank(results, csiStats);
         Map<String, Double> rankedTopics = new HashMap<>();
         for (String col : rankedCollections.keySet()) {

@@ -1,11 +1,11 @@
 package io.jitter.core.rerank;
 
-import io.jitter.api.search.IDocument;
+import io.jitter.api.search.Document;
 
 import java.util.Comparator;
 
 
-public class DocumentComparator implements Comparator<IDocument> {
+public class DocumentComparator implements Comparator<Document> {
     private final boolean decreasing;
 
     @SuppressWarnings("SameParameterValue")
@@ -14,7 +14,7 @@ public class DocumentComparator implements Comparator<IDocument> {
     }
 
     @Override
-    public int compare(IDocument x, IDocument y) {
+    public int compare(Document x, Document y) {
         double xVal = x.getRsv();
         double yVal = y.getRsv();
 

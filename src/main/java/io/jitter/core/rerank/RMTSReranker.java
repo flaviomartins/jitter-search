@@ -10,7 +10,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.twitter.Extractor;
 import io.jitter.api.collectionstatistics.CollectionStats;
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.features.BM25Feature;
@@ -38,12 +38,12 @@ public class RMTSReranker implements Reranker {
     private final String rankerModel;
     private final String query;
     private final double queryEpoch;
-    private List<Document> shardResults;
+    private List<StatusDocument> shardResults;
     private final CollectionStats collectionStats;
     private final int numResults;
     private final int numRerank;
 
-    public RMTSReranker(String rankerModel, String query, double queryEpoch, List<Document> shardResults, CollectionStats collectionStats, int numResults, int numRerank) {
+    public RMTSReranker(String rankerModel, String query, double queryEpoch, List<StatusDocument> shardResults, CollectionStats collectionStats, int numResults, int numRerank) {
         this.rankerModel = rankerModel;
         this.query = query;
         this.queryEpoch = queryEpoch;
@@ -54,7 +54,7 @@ public class RMTSReranker implements Reranker {
     }
 
     @Override
-    public List<Document> rerank(List<Document> results, RerankerContext context) {
+    public List<StatusDocument> rerank(List<StatusDocument> results, RerankerContext context) {
         Set<String> qTerms = new LinkedHashSet<>();
         for (String term : AnalyzerUtils.analyze(ANALYZER, query)) {
             if (!term.isEmpty()) {
@@ -65,7 +65,7 @@ public class RMTSReranker implements Reranker {
         BM25Feature bm25Feature = new BM25Feature(1.2D, 1.0D);
         Extractor extractor = new Extractor();
 
-        for (Document result : results) {
+        for (StatusDocument result : results) {
             result.getFeatures().add((float) result.getRsv());
         }
 
@@ -78,7 +78,7 @@ public class RMTSReranker implements Reranker {
 //            method = KDE.METHOD.valueOf(kdeMethod);
 //        }
 
-        for (Document result : results) {
+        for (StatusDocument result : results) {
             result.getFeatures().add(0f);
         }
 //        KDEReranker kdeReranker = new KDEReranker(results, queryEpoch, method, KDEReranker.WEIGHT.UNIFORM, 1.0);
@@ -87,7 +87,7 @@ public class RMTSReranker implements Reranker {
         results = kdeReranker1.rerank(results, context);
 
 //        KDERerank(retrievalOracle, query, method, bRet); // USE KDE RERANKER
-        for (Document result : results) {
+        for (StatusDocument result : results) {
             result.getFeatures().add(0f);
             result.getFeatures().add(0f);
 //            result.getFeatures().add(0f);
@@ -110,7 +110,7 @@ public class RMTSReranker implements Reranker {
         // KDE News
         List<Double> newsOracle = Lists.newArrayList();
         List<Double> newsWeights = Lists.newArrayList();
-        for (Document shardResult : shardResults) {
+        for (StatusDocument shardResult : shardResults) {
             DocVector docVector = shardResult.getDocVector();
             // if the term vectors are unavailable generate it here
             if (docVector == null) {
@@ -151,7 +151,7 @@ public class RMTSReranker implements Reranker {
             results = KDERerank(newsOracle, newsWeights, results, queryEpoch, method, 1.0, context);
         } else {
             // set feature to 0f for all documents
-            for (Document result : results) {
+            for (StatusDocument result : results) {
                 result.getFeatures().add(0f);
             }
         }
@@ -163,7 +163,7 @@ public class RMTSReranker implements Reranker {
             dfs.put(term, docFreq);
         }
 
-        for (Document result : results) {
+        for (StatusDocument result : results) {
             double averageDocumentLength = 28;
             double docLength;
             double idf = 0;
@@ -280,7 +280,7 @@ public class RMTSReranker implements Reranker {
         return results;
     }
 
-    private List<Document> KDERerank(List<Double> oracleRawEpochs, List<Double> oracleWeights, List<Document> results, double queryEpoch, KDE.METHOD method, double weight, RerankerContext context) {
+    private List<StatusDocument> KDERerank(List<Double> oracleRawEpochs, List<Double> oracleWeights, List<StatusDocument> results, double queryEpoch, KDE.METHOD method, double weight, RerankerContext context) {
         // if we're using our oracle, we need the right training data
         List<Double> oracleScaledEpochs = TimeUtils.adjustEpochsToLandmark(oracleRawEpochs, queryEpoch, DAY);
         double[] densityTrainingData = ListUtils.listToArray(oracleScaledEpochs);
@@ -292,14 +292,14 @@ public class RMTSReranker implements Reranker {
     }
 
     @SuppressWarnings("UnusedAssignment")
-    private List<Document> rankRankLib(Ranker ranker, String query, List<Document> results, int numResults, int numRerank) {
+    private List<StatusDocument> rankRankLib(Ranker ranker, String query, List<StatusDocument> results, int numResults, int numRerank) {
         int[] features = ranker.getFeatures();
         List<DataPoint> rl = new ArrayList<>();
 
         String qid = query.replaceFirst("^MB0*", "");
 
         int i = 1;
-        for (Document hit : results) {
+        for (StatusDocument hit : results) {
 //            String rel = String.valueOf(qrels.getRel(qid, String.valueOf(hit.getId())));
 //            DataPoint dp = hit.getDataPoint(rel, qid);
             DataPoint dp = hit.getDataPoint();
@@ -317,7 +317,7 @@ public class RMTSReranker implements Reranker {
             scores[j] = ranker.eval(l.get(j));
 
 
-        List<Document> finalResults = Lists.newArrayList();
+        List<StatusDocument> finalResults = Lists.newArrayList();
         int[] idx = MergeSorter.sort(scores, false);
         for (int j = 0; j < Math.min(idx.length, numResults); j++) {
             int k = idx[j];
@@ -327,7 +327,7 @@ public class RMTSReranker implements Reranker {
 
 //            float maxTF = l.get(k).getFeatureValue(21);
 //            if (maxTF < 3) {
-                Document updatedResult = new Document(results.get(k));
+                StatusDocument updatedResult = new StatusDocument(results.get(k));
                 updatedResult.setRsv(scores[k]);
                 finalResults.add(updatedResult);
 //            }

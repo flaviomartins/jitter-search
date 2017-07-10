@@ -1,6 +1,6 @@
 package io.jitter.core.search;
 
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 
 import java.util.List;
 
@@ -11,14 +11,14 @@ public class TopDocuments {
     public final int totalHits;
 
     /** The top hits for the query. */
-    public List<Document> scoreDocs;
+    public List<StatusDocument> scoreDocs;
 
     /** Constructs a TopDocuments taking the size from the input */
-    public TopDocuments(List<Document> scoreDocs) {
+    public TopDocuments(List<StatusDocument> scoreDocs) {
     this(scoreDocs.size(), scoreDocs);
   }
 
-    public TopDocuments(int totalHits, List<Document> scoreDocs) {
+    public TopDocuments(int totalHits, List<StatusDocument> scoreDocs) {
         this.totalHits = totalHits;
         this.scoreDocs = scoreDocs;
     }

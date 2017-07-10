@@ -3,7 +3,7 @@ package io.jitter.core.utils;
 import cc.twittertools.util.QueryLikelihoodModel;
 import com.google.common.collect.Lists;
 import io.jitter.api.collectionstatistics.CollectionStats;
-import io.jitter.api.search.IDocument;
+import io.jitter.api.search.Document;
 import io.jitter.api.wikipedia.WikipediaDocument;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
@@ -78,7 +78,7 @@ public class WikipediaSearchUtils {
             sumTotalTermFreq = collectionStats.getSumTotalTermFreq();
         }
 
-        for (IDocument doc : topDocuments) {
+        for (Document doc : topDocuments) {
             DocVector docVector = doc.getDocVector();
             if (docVector == null && doc.getText() != null) {
                 DocVector newDocVector = buildDocVector(WikipediaManager.ANALYZER, doc.getText());
@@ -91,7 +91,7 @@ public class WikipediaSearchUtils {
             }
         }
 
-        Comparator<IDocument> comparator = new DocumentComparator(true);
+        Comparator<Document> comparator = new DocumentComparator(true);
         topDocuments.sort(comparator);
 
         return topDocuments.subList(0, Math.min(limit, topDocuments.size()));

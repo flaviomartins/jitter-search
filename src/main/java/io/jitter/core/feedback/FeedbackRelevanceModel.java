@@ -2,8 +2,8 @@ package io.jitter.core.feedback;
 
 import cc.twittertools.index.TweetAnalyzer;
 import io.jitter.api.collectionstatistics.CollectionStats;
-import io.jitter.api.search.ADocument;
-import io.jitter.api.search.Document;
+import io.jitter.api.search.AbstractDocument;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.utils.AnalyzerUtils;
@@ -233,7 +233,7 @@ public class FeedbackRelevanceModel {
 
     /**
      * Sets the analyzer to use. An analyzer is not required for generating a query with the
-     * {@link #like(List<Document>)} method, all other 'like' methods require an analyzer.
+     * {@link #like(List< StatusDocument >)} method, all other 'like' methods require an analyzer.
      *
      * @param analyzer the analyzer to use to tokenize text.
      */
@@ -495,7 +495,7 @@ public class FeedbackRelevanceModel {
         return docFreq < minDocFreq;
     }
 
-    public FeatureVector like(List<? extends ADocument> relDocs) throws IOException {
+    public FeatureVector like(List<? extends AbstractDocument> relDocs) throws IOException {
         int numDocVectors = relDocs.size();
         FeatureVector f = new FeatureVector();
         Set<String> vocab = new HashSet<>();
@@ -503,7 +503,7 @@ public class FeedbackRelevanceModel {
         double[] scores = new double[numDocVectors];
 
         for (int i = 0; i < numDocVectors; i++) {
-            ADocument hit = relDocs.get(i);
+            AbstractDocument hit = relDocs.get(i);
             double rsv = hit.getRsv();
             if (rsv >= 0) {
                 scores[i] = rsv;
