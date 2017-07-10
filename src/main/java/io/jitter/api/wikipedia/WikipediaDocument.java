@@ -1,10 +1,12 @@
 package io.jitter.api.wikipedia;
 
+import io.jitter.api.search.ADocument;
+import io.jitter.api.search.IDocument;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.wikipedia.WikipediaManager;
 
 //@JsonIgnoreProperties(ignoreUnknown = true, value = {"docVector"})
-public class WikipediaDocument {
+public class WikipediaDocument extends ADocument implements IDocument {
 
     public String id; // required
     public double rsv; // required
@@ -25,18 +27,22 @@ public class WikipediaDocument {
         this.text = hit.get(WikipediaManager.TEXT_FIELD);
     }
 
+    @Override
     public String getId() {
         return id;
     }
 
+    @Override
     public void setId(String id) {
         this.id = id;
     }
 
+    @Override
     public double getRsv() {
         return rsv;
     }
 
+    @Override
     public void setRsv(double rsv) {
         this.rsv = rsv;
     }

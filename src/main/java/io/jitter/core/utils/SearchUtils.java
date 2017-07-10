@@ -5,6 +5,7 @@ import cc.twittertools.util.QueryLikelihoodModel;
 import com.google.common.collect.Lists;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.Document;
+import io.jitter.api.search.IDocument;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
 import org.apache.commons.lang.StringUtils;
@@ -98,11 +99,11 @@ public class SearchUtils {
             }
 
             if (qlModel != null && weights != null && docVector != null) {
-                doc.rsv = qlModel.computeQLScore(weights, ctfs, docVector.vector, sumTotalTermFreq);
+                doc.setRsv(qlModel.computeQLScore(weights, ctfs, docVector.vector, sumTotalTermFreq));
             }
         }
 
-        Comparator<Document> comparator = new DocumentComparator(true);
+        Comparator<IDocument> comparator = new DocumentComparator(true);
         topDocuments.sort(comparator);
 
         return topDocuments.subList(0, Math.min(limit, topDocuments.size()));

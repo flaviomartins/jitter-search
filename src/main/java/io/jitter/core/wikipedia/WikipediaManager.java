@@ -4,8 +4,7 @@ import cc.twittertools.util.QueryLikelihoodModel;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
-import io.jitter.api.search.Document;
-import io.jitter.core.search.TopDocuments;
+import io.jitter.api.wikipedia.WikipediaDocument;
 import io.jitter.core.utils.Stopper;
 import io.jitter.core.utils.WikipediaSearchUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -91,7 +90,7 @@ public class WikipediaManager implements Managed {
         return mu;
     }
 
-    public TopDocuments isearch(String query, Filter filter, int n) throws IOException, ParseException {
+    public WikipediaTopDocuments isearch(String query, Filter filter, int n) throws IOException, ParseException {
         int len = Math.min(MAX_RESULTS, 3 * n);
         int nDocsReturned;
         int totalHits;
@@ -121,9 +120,9 @@ public class WikipediaManager implements Managed {
         }
 
         // Compute real QL scores even when live to build termVectors
-        List<Document> docs = WikipediaSearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n);
+        List<WikipediaDocument> docs = WikipediaSearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n);
 
-        return new TopDocuments(totalHits, docs);
+        return new WikipediaTopDocuments(totalHits, docs);
     }
 
     public TermStats[] getHighFreqTerms(int n) throws Exception {
@@ -156,7 +155,7 @@ public class WikipediaManager implements Managed {
         return new IndexCollectionStats(reader, TEXT_FIELD);
     }
 
-    public TopDocuments search(String query, int limit) throws IOException, ParseException {
+    public WikipediaTopDocuments search(String query, int limit) throws IOException, ParseException {
         return isearch(query, null, limit);
     }
 }

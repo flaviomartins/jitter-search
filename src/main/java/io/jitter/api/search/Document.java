@@ -4,32 +4,57 @@ import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.thrift.gen.TResult;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.jitter.core.document.DocVector;
-import io.jitter.core.twittertools.api.TResultWrapper;
 import io.jitter.core.wikipedia.WikipediaManager;
 
-@JsonIgnoreProperties(ignoreUnknown = true, value = {"setId", "setRsv", "setScreen_name", "setEpoch", "setText",
-        "setFollowers_count", "setStatuses_count", "setLang", "setIn_reply_to_status_id", "setIn_reply_to_user_id",
-        "setRetweeted_status_id", "setRetweeted_user_id", "setRetweeted_count", "features", "properties", "dataPoint",
-        "docVector"})
-public class Document extends TResultWrapper {
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"docVector"})
+public class Document extends ADocument implements IDocument {
 
+    public long id; // required
+    public double rsv; // required
+    public String screen_name; // required
+    public long epoch; // required
+    public String text; // required
+    public int followers_count; // required
+    public int statuses_count; // required
+    public String lang; // required
+    public long in_reply_to_status_id; // required
+    public long in_reply_to_user_id; // required
+    public long retweeted_status_id; // required
+    public long retweeted_user_id; // required
+    public int retweeted_count; // required
     private DocVector docVector;
 
-    public Document() {
-        super();
-    }
-
     public Document(Document other) {
-        super(other);
-        docVector = other.docVector;
+        this.id = other.id;
+        this.rsv = other.rsv;
+        this.screen_name = other.screen_name;
+        this.epoch = other.epoch;
+        this.text = other.text;
+        this.followers_count = other.followers_count;
+        this.statuses_count = other.statuses_count;
+        this.lang = other.lang;
+        this.in_reply_to_status_id = other.in_reply_to_status_id;
+        this.in_reply_to_user_id = other.in_reply_to_user_id;
+        this.retweeted_status_id = other.retweeted_status_id;
+        this.retweeted_user_id = other.retweeted_user_id;
+        this.retweeted_count = other.retweeted_count;
+        this.docVector = other.docVector;
     }
 
     public Document(TResult other) {
-        super(other);
-    }
-
-    public Document(TResultWrapper other) {
-        super(other);
+        this.id = other.id;
+        this.rsv = other.rsv;
+        this.screen_name = other.screen_name;
+        this.epoch = other.epoch;
+        this.text = other.text;
+        this.followers_count = other.followers_count;
+        this.statuses_count = other.statuses_count;
+        this.lang = other.lang;
+        this.in_reply_to_status_id = other.in_reply_to_status_id;
+        this.in_reply_to_user_id = other.in_reply_to_user_id;
+        this.retweeted_status_id = other.retweeted_status_id;
+        this.retweeted_user_id = other.retweeted_user_id;
+        this.retweeted_count = other.retweeted_count;
     }
 
     public Document(org.apache.lucene.document.Document hit) {
@@ -86,11 +111,122 @@ public class Document extends TResultWrapper {
         }
     }
 
-    public void setDocVector(DocVector docVector) {
-        this.docVector = docVector;
+    @Override
+    public String getId() {
+        return Long.toString(id);
     }
 
+    public void setId(String id) {
+        this.id = Long.parseLong(id);
+    }
+
+    @Override
+    public double getRsv() {
+        return rsv;
+    }
+
+    @Override
+    public void setRsv(double rsv) {
+        this.rsv = rsv;
+    }
+
+    public String getScreen_name() {
+        return screen_name;
+    }
+
+    public void setScreen_name(String screen_name) {
+        this.screen_name = screen_name;
+    }
+
+    public long getEpoch() {
+        return epoch;
+    }
+
+    public void setEpoch(long epoch) {
+        this.epoch = epoch;
+    }
+
+    @Override
+    public String getText() {
+        return text;
+    }
+
+    @Override
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public int getFollowers_count() {
+        return followers_count;
+    }
+
+    public void setFollowers_count(int followers_count) {
+        this.followers_count = followers_count;
+    }
+
+    public int getStatuses_count() {
+        return statuses_count;
+    }
+
+    public void setStatuses_count(int statuses_count) {
+        this.statuses_count = statuses_count;
+    }
+
+    public String getLang() {
+        return lang;
+    }
+
+    public void setLang(String lang) {
+        this.lang = lang;
+    }
+
+    public long getIn_reply_to_status_id() {
+        return in_reply_to_status_id;
+    }
+
+    public void setIn_reply_to_status_id(long in_reply_to_status_id) {
+        this.in_reply_to_status_id = in_reply_to_status_id;
+    }
+
+    public long getIn_reply_to_user_id() {
+        return in_reply_to_user_id;
+    }
+
+    public void setIn_reply_to_user_id(long in_reply_to_user_id) {
+        this.in_reply_to_user_id = in_reply_to_user_id;
+    }
+
+    public long getRetweeted_status_id() {
+        return retweeted_status_id;
+    }
+
+    public void setRetweeted_status_id(long retweeted_status_id) {
+        this.retweeted_status_id = retweeted_status_id;
+    }
+
+    public long getRetweeted_user_id() {
+        return retweeted_user_id;
+    }
+
+    public void setRetweeted_user_id(long retweeted_user_id) {
+        this.retweeted_user_id = retweeted_user_id;
+    }
+
+    public int getRetweeted_count() {
+        return retweeted_count;
+    }
+
+    public void setRetweeted_count(int retweeted_count) {
+        this.retweeted_count = retweeted_count;
+    }
+
+    @Override
     public DocVector getDocVector() {
         return docVector;
+    }
+
+    @Override
+    public void setDocVector(DocVector docVector) {
+        this.docVector = docVector;
     }
 }
