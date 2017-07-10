@@ -17,7 +17,7 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.core.utils.Stopper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,7 +121,7 @@ public class SearchManager implements Managed {
         }
 
         // Compute real QL scores even when live to build termVectors
-        List<Document> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT, true);
+        List<StatusDocument> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT, true);
 
         return new TopDocuments(totalHits, docs);
     }

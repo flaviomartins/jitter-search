@@ -18,7 +18,7 @@ public class FeedbackDocumentsResponse extends DocumentsResponse {
         // Jackson deserialization
     }
 
-    public FeedbackDocumentsResponse(int fbDocs, int fbTerms, Map<String, Float> fbVector, int numFound, int start, List<Document> docs) {
+    public FeedbackDocumentsResponse(int fbDocs, int fbTerms, Map<String, Float> fbVector, int numFound, int start, List<StatusDocument> docs) {
         super(numFound, start, docs);
         this.fbDocs = fbDocs;
         this.fbTerms = fbTerms;

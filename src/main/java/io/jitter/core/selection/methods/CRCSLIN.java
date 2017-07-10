@@ -1,6 +1,6 @@
 package io.jitter.core.selection.methods;
 
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.core.shards.ShardStats;
 
 import java.util.List;
@@ -12,7 +12,7 @@ public class CRCSLIN extends CRCS {
     }
 
     @Override
-    public Map<String, Double> rank(List<Document> results, ShardStats csiStats) {
+    public Map<String, Double> rank(List<StatusDocument> results, ShardStats csiStats) {
         return getScores(results);
     }
 

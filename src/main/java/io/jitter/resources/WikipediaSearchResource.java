@@ -55,6 +55,7 @@ public class WikipediaSearchResource {
     public SearchResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") Optional<String> q,
                                  @ApiParam(hidden = true) @QueryParam("fq") Optional<String> fq,
                                  @ApiParam(value = "Limit results", allowableValues="range[1, 10000]") @QueryParam("limit") @DefaultValue("1000") Integer limit,
+                                 @ApiParam(value = "Return full contents") @QueryParam("full") @DefaultValue("false") Boolean full,
                                  @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -66,7 +67,7 @@ public class WikipediaSearchResource {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q.orElse(""), "UTF-8");
 
-            WikipediaTopDocuments results = wikipediaManager.search(query, limit);
+            WikipediaTopDocuments results = wikipediaManager.search(query, limit, full);
             int totalHits = results != null ? results.totalHits : 0;
             if (totalHits == 0) {
                 throw new NotFoundException("No results found");

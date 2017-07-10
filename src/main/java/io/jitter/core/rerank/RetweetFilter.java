@@ -1,6 +1,6 @@
 package io.jitter.core.rerank;
 
-import io.jitter.api.search.Document;
+import io.jitter.api.search.StatusDocument;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -13,12 +13,12 @@ public class RetweetFilter implements Reranker {
     }
 
     @Override
-    public List<Document> rerank(List<Document> docs, RerankerContext context) {
-        Iterator<Document> resultIt = docs.iterator();
+    public List<StatusDocument> rerank(List<StatusDocument> docs, RerankerContext context) {
+        Iterator<StatusDocument> resultIt = docs.iterator();
 
-        List<Document> updatedResults = new ArrayList<>();
+        List<StatusDocument> updatedResults = new ArrayList<>();
         while (resultIt.hasNext()) {
-            Document origResult = resultIt.next();
+            StatusDocument origResult = resultIt.next();
 
             if (origResult.getRetweeted_status_id() != 0)
                 continue;

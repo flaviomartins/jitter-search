@@ -4,8 +4,8 @@ import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.util.QueryLikelihoodModel;
 import com.google.common.collect.Lists;
 import io.jitter.api.collectionstatistics.CollectionStats;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.api.search.Document;
-import io.jitter.api.search.IDocument;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
 import org.apache.commons.lang.StringUtils;
@@ -21,11 +21,11 @@ import java.util.*;
 
 public class SearchUtils {
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean filterRT, boolean computeQLScores) throws IOException {
+    public static List<StatusDocument> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean filterRT, boolean computeQLScores) throws IOException {
         IndexReader indexReader = indexSearcher.getIndexReader();
 
         int count = 0;
-        List<Document> topDocuments = Lists.newArrayList();
+        List<StatusDocument> topDocuments = Lists.newArrayList();
         for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
             if (count >= limit)
                 break;
@@ -42,7 +42,7 @@ public class SearchUtils {
                 continue;
             }
 
-            Document doc = new Document(hit);
+            StatusDocument doc = new StatusDocument(hit);
             doc.setRsv(scoreDoc.score);
 
             // Throw away retweets.
@@ -72,11 +72,11 @@ public class SearchUtils {
         }
     }
 
-    public static List<Document> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean filterRT) throws IOException {
+    public static List<StatusDocument> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean filterRT) throws IOException {
         return getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, limit, filterRT, true);
     }
 
-    public static List<Document> computeQLScores(CollectionStats collectionStats, QueryLikelihoodModel qlModel, List<Document> topDocuments, String query, int limit) throws IOException {
+    public static List<StatusDocument> computeQLScores(CollectionStats collectionStats, QueryLikelihoodModel qlModel, List<StatusDocument> topDocuments, String query, int limit) throws IOException {
         Map<String, Float> weights = null;
         HashMap<String, Long> ctfs = null;
         long sumTotalTermFreq = -1;
@@ -90,7 +90,7 @@ public class SearchUtils {
             sumTotalTermFreq = collectionStats.getSumTotalTermFreq();
         }
 
-        for (Document doc : topDocuments) {
+        for (StatusDocument doc : topDocuments) {
             DocVector docVector = doc.getDocVector();
             if (docVector == null && doc.getText() != null) {
                 DocVector newDocVector = buildDocVector(IndexStatuses.ANALYZER, doc.getText());
@@ -103,7 +103,7 @@ public class SearchUtils {
             }
         }
 
-        Comparator<IDocument> comparator = new DocumentComparator(true);
+        Comparator<Document> comparator = new DocumentComparator(true);
         topDocuments.sort(comparator);
 
         return topDocuments.subList(0, Math.min(limit, topDocuments.size()));
