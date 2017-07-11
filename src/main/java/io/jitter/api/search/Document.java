@@ -9,7 +9,7 @@ public interface Document {
 
     double getRsv();
 
-    void setRsv(double score);
+    void setRsv(double rsv);
 
     String getText();
 
@@ -17,5 +17,5 @@ public interface Document {
 
     DocVector getDocVector();
 
-    void setDocVector(DocVector newDocVector);
+    void setDocVector(DocVector docVector);
 }

@@ -3,7 +3,6 @@ package io.jitter.api.wikipedia;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.jitter.api.search.AbstractDocument;
 import io.jitter.api.search.Document;
-import io.jitter.core.document.DocVector;
 import io.jitter.core.wikipedia.WikipediaManager;
 
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"dataPoint", "docVector", "features"})
@@ -13,14 +12,12 @@ public class WikipediaDocument extends AbstractDocument implements Document {
     public double rsv; // required
     public String title; // required
     public String text; // required
-    private DocVector docVector;
 
     public WikipediaDocument(WikipediaDocument other) {
         id = other.id;
         rsv = other.rsv;
         title = other.title;
         text = other.text;
-        docVector = other.docVector;
     }
 
     public WikipediaDocument(org.apache.lucene.document.Document hit) {
@@ -63,13 +60,5 @@ public class WikipediaDocument extends AbstractDocument implements Document {
 
     public void setText(String text) {
         this.text = text;
-    }
-
-    public DocVector getDocVector() {
-        return docVector;
-    }
-
-    public void setDocVector(DocVector docVector) {
-        this.docVector = docVector;
     }
 }
