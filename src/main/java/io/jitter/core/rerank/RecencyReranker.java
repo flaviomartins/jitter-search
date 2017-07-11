@@ -40,6 +40,7 @@ public class RecencyReranker implements Reranker {
                 recency = -1000.0;
             StatusDocument updatedResult = new StatusDocument(origResult);
             updatedResult.getFeatures().add((float)density);
+            //TODO: why set Rsv here?
             updatedResult.setRsv(origResult.getRsv() + recency);
             updatedResults.add(updatedResult);
         }

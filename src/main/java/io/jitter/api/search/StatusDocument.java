@@ -3,11 +3,10 @@ package io.jitter.api.search;
 import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.thrift.gen.TResult;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.jitter.core.document.DocVector;
 import io.jitter.core.wikipedia.WikipediaManager;
 
-@JsonIgnoreProperties(ignoreUnknown = true, value = {"dataPoint", "docVector", "features"})
-public class StatusDocument extends AbstractDocument implements Document {
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"docVector", "features"})
+public class StatusDocument extends AbstractRerankableDocument implements Document {
 
     public long id; // required
     public double rsv; // required
@@ -22,7 +21,6 @@ public class StatusDocument extends AbstractDocument implements Document {
     public long retweeted_status_id; // required
     public long retweeted_user_id; // required
     public int retweeted_count; // required
-    private DocVector docVector;
 
     public StatusDocument(StatusDocument other) {
         this.id = other.id;
@@ -38,7 +36,7 @@ public class StatusDocument extends AbstractDocument implements Document {
         this.retweeted_status_id = other.retweeted_status_id;
         this.retweeted_user_id = other.retweeted_user_id;
         this.retweeted_count = other.retweeted_count;
-        this.docVector = other.docVector;
+        this.setDocVector(other.getDocVector());
     }
 
     public StatusDocument(TResult other) {
@@ -218,15 +216,5 @@ public class StatusDocument extends AbstractDocument implements Document {
 
     public void setRetweeted_count(int retweeted_count) {
         this.retweeted_count = retweeted_count;
-    }
-
-    @Override
-    public DocVector getDocVector() {
-        return docVector;
-    }
-
-    @Override
-    public void setDocVector(DocVector docVector) {
-        this.docVector = docVector;
     }
 }
