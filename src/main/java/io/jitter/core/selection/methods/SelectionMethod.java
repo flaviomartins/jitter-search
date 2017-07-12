@@ -18,12 +18,12 @@ public abstract class SelectionMethod {
     Map<String, Double> getCounts(List<StatusDocument> results) {
         Map<String, Double> counts = new HashMap<>();
         for (StatusDocument result : results) {
-            String screenName = result.getScreen_name();
-            if (!counts.containsKey(screenName)) {
-                counts.put(screenName, 1d);
+            String shardId = result.getShardId();
+            if (!counts.containsKey(shardId)) {
+                counts.put(shardId, 1d);
             } else {
-                double cur = counts.get(screenName);
-                counts.put(screenName, cur + 1d);
+                double cur = counts.get(shardId);
+                counts.put(shardId, cur + 1d);
             }
         }
         return counts;

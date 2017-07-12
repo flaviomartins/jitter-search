@@ -168,7 +168,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
             logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
             ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-            SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selection.getSources(), selection.getTopics(), method, totalFbDocs, fbTerms, shardsFV.getMap(), feedbackFV != null ? feedbackFV.getMap() : null, fbVector.getMap(), 0, selection.getResults(), shardResults, results);
+            SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selection.getSources().entrySet(), selection.getTopics().entrySet(), method, totalFbDocs, fbTerms, shardsFV.getMap(), feedbackFV != null ? feedbackFV.getMap() : null, fbVector.getMap(), 0, selection.getResults(), shardResults, results);
             return new SelectionSearchResponse(responseHeader, documentsResponse);
         } catch (ParseException pe) {
             throw new BadRequestException(pe.getClass().getSimpleName());

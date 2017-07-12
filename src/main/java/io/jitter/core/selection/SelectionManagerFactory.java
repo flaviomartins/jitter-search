@@ -28,10 +28,6 @@ public class SelectionManagerFactory {
     @NotEmpty
     private String method;
 
-    @Valid
-    @NotNull
-    private boolean removeDuplicates;
-
     private Map<String, Set<String>> topics;
 
     @JsonProperty
@@ -85,16 +81,6 @@ public class SelectionManagerFactory {
     }
 
     @JsonProperty
-    public boolean isRemoveDuplicates() {
-        return removeDuplicates;
-    }
-
-    @JsonProperty
-    public void setRemoveDuplicates(boolean removeDuplicates) {
-        this.removeDuplicates = removeDuplicates;
-    }
-
-    @JsonProperty
     public Map<String, Set<String>> getTopics() {
         return topics;
     }
@@ -105,7 +91,7 @@ public class SelectionManagerFactory {
     }
 
     public SelectionManager build(Environment environment, boolean live) {
-        final SelectionManager selectionManager = new SelectionManager(collection, index, stopwords, mu, method, removeDuplicates, live, topics);
+        final SelectionManager selectionManager = new SelectionManager(collection, index, stopwords, mu, method, live, topics);
         environment.lifecycle().manage(selectionManager);
         return selectionManager;
     }

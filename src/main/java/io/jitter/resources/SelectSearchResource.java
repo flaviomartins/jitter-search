@@ -90,7 +90,7 @@ public class SelectSearchResource extends AbstractFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), shardResults.totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selection.getSources(), selection.getTopics(), method, 0, selection.getResults(), shardResults);
+        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selection.getSources().entrySet(), selection.getTopics().entrySet(), method, 0, selection.getResults(), shardResults);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

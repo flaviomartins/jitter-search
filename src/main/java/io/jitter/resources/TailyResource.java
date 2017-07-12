@@ -68,7 +68,7 @@ public class TailyResource {
             logger.info(String.format(Locale.ENGLISH, "%4dms %s", (endTime - startTime), query));
 
             ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-            SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(ranking, "Taily", 0, 0, 0);
+            SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(ranking.entrySet(), "Taily", 0, 0, 0);
             return new SelectionResponse(responseHeader, documentsResponse);
         } catch (IOException ioe) {
             throw new ServerErrorException(Response.Status.INTERNAL_SERVER_ERROR);
