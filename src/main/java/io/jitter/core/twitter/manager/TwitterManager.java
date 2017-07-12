@@ -133,7 +133,7 @@ public class TwitterManager implements Managed {
     }
 
     @SuppressWarnings("UnusedParameters")
-    public void index(String collection, String indexPath, Analyzer analyzer, boolean removeDuplicates) throws IOException {
+    public void index(String collection, String indexPath, Analyzer analyzer) throws IOException {
         long startTime = System.currentTimeMillis();
         File file = new File(collection);
         if (!file.isDirectory()) {

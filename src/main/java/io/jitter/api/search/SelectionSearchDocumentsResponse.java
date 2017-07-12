@@ -6,12 +6,13 @@ import io.jitter.core.selection.SelectionTopDocuments;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @JsonPropertyOrder({"method", "c_sel", "c_r", "sources", "topics", "numFound", "start", "selectDocs", "docs"})
 public class SelectionSearchDocumentsResponse {
 
-    private Map<String, Double> sources;
-    private Map<String, Double> topics;
+    private Set<Map.Entry<String, Double>> sources;
+    private Set<Map.Entry<String, Double>> topics;
     private String method;
     private int c_sel;
     private int c_r;
@@ -24,7 +25,7 @@ public class SelectionSearchDocumentsResponse {
         // Jackson deserialization
     }
 
-    public SelectionSearchDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int numFound, int start, List<?> selectDocs, List<?> shardDocs) {
+    public SelectionSearchDocumentsResponse(Set<Map.Entry<String, Double>> sources, Set<Map.Entry<String, Double>> topics, String method, int numFound, int start, List<?> selectDocs, List<?> shardDocs) {
         this.sources = sources;
         this.topics = topics;
         this.method = method;
@@ -34,7 +35,7 @@ public class SelectionSearchDocumentsResponse {
         this.shardDocs = shardDocs;
     }
 
-    public SelectionSearchDocumentsResponse(Map<String, Double> sources, Map<String, Double> topics, String method, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments shardTopDocuments) {
+    public SelectionSearchDocumentsResponse(Set<Map.Entry<String, Double>> sources, Set<Map.Entry<String, Double>> topics, String method, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments shardTopDocuments) {
         this.sources = sources;
         this.topics = topics;
         this.method = method;
@@ -61,7 +62,7 @@ public class SelectionSearchDocumentsResponse {
     }
 
     @JsonProperty
-    public Map<String, Double> getSources() {
+    public Set<Map.Entry<String, Double>> getSources() {
         return sources;
     }
 
@@ -76,7 +77,7 @@ public class SelectionSearchDocumentsResponse {
     }
 
     @JsonProperty
-    public Map<String, Double> getTopics() {
+    public Set<Map.Entry<String, Double>> getTopics() {
         return topics;
     }
 

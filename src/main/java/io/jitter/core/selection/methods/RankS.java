@@ -37,7 +37,7 @@ public class RankS extends SelectionMethod {
         String topShard = null;
         for (StatusDocument result : results) {
             if (j == 1) {
-                topShard = result.getScreen_name();
+                topShard = result.getShardId();
             }
 
             double r = getStepFactor(step);
@@ -49,12 +49,12 @@ public class RankS extends SelectionMethod {
                 }
             }
 
-            String screenName = result.getScreen_name();
-            if (!map.containsKey(screenName)) {
-                map.put(screenName, r);
+            String shardId = result.getShardId();
+            if (!map.containsKey(shardId)) {
+                map.put(shardId, r);
             } else {
-                double cur = map.get(screenName);
-                map.put(screenName, cur + r);
+                double cur = map.get(shardId);
+                map.put(shardId, cur + r);
             }
 
             if (j > 1) {

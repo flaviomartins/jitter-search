@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.jitter.core.wikipedia.WikipediaManager;
 
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"docVector", "features"})
-public class StatusDocument extends AbstractRerankableDocument implements Document {
+public class StatusDocument extends AbstractRerankableDocument implements ShardedDocument {
 
     public long id; // required
     public double rsv; // required
@@ -216,5 +216,15 @@ public class StatusDocument extends AbstractRerankableDocument implements Docume
 
     public void setRetweeted_count(int retweeted_count) {
         this.retweeted_count = retweeted_count;
+    }
+
+    @Override
+    public String getShardId() {
+        return getScreen_name();
+    }
+
+    @Override
+    public void setShardId(String shardId) {
+        setScreen_name(shardId);
     }
 }

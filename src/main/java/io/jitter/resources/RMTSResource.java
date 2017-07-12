@@ -149,7 +149,7 @@ public class RMTSResource extends AbstractFeedbackResource {
             logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
             ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-            RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selection.getSources(), selection.getTopics(), method, 0, selection.getResults(), shardResults, results);
+            RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selection.getSources().entrySet(), selection.getTopics().entrySet(), method, 0, selection.getResults(), shardResults, results);
             return new SelectionSearchResponse(responseHeader, documentsResponse);
         } catch (ParseException pe) {
             throw new BadRequestException(pe.getClass().getSimpleName());

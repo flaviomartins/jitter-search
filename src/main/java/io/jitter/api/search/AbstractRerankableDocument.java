@@ -5,7 +5,7 @@ import io.jitter.core.twittertools.api.DocumentDataPoint;
 
 import java.util.ArrayList;
 
-public abstract class AbstractRerankableDocument extends AbstractDocument {
+public abstract class AbstractRerankableDocument extends AbstractDocument implements Document, ShardedDocument {
     private ArrayList<Float> features = new ArrayList<>();
 
     public ArrayList<Float> getFeatures() {

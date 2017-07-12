@@ -341,7 +341,7 @@ public class ShardsManager implements Managed {
 
         try {
             logger.info("shards indexing");
-            twitterManager.index(collection, indexPath, analyzer, removeDuplicates);
+            twitterManager.index(collection, indexPath, analyzer);
         } catch (IOException e) {
             throw e;
         } finally {
