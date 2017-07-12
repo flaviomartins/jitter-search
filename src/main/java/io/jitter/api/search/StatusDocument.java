@@ -37,6 +37,7 @@ public class StatusDocument extends AbstractRerankableDocument implements Sharde
         this.retweeted_user_id = other.retweeted_user_id;
         this.retweeted_count = other.retweeted_count;
         this.setDocVector(other.getDocVector());
+        this.setFeatures(other.getFeatures());
     }
 
     public StatusDocument(TResult other) {
