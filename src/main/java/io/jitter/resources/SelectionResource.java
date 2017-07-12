@@ -95,7 +95,7 @@ public class SelectionResource {
             logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
             ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-            SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(selected, method, 0, selectResults);
+            SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(selected.entrySet(), method, 0, selectResults);
             return new SelectionResponse(responseHeader, documentsResponse);
         } catch (ParseException pe) {
             throw new BadRequestException(pe.getClass().getSimpleName());

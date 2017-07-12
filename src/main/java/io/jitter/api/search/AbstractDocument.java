@@ -2,7 +2,7 @@ package io.jitter.api.search;
 
 import io.jitter.core.document.DocVector;
 
-public abstract class AbstractDocument {
+public abstract class AbstractDocument implements Document {
     private DocVector docVector;
 
     public abstract String getId();

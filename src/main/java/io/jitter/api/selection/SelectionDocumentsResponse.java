@@ -7,11 +7,12 @@ import io.jitter.core.selection.SelectionTopDocuments;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @JsonPropertyOrder({"method", "c_sel", "collections", "numFound", "start", "selectDocs"})
 public class SelectionDocumentsResponse {
 
-    private Map<String, Double> collections;
+    private Set<Map.Entry<String, Double>> collections;
     private String method;
     private int c_sel;
     private int numFound;
@@ -22,7 +23,7 @@ public class SelectionDocumentsResponse {
         // Jackson deserialization
     }
 
-    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int c_sel, int numFound, int start, List<?> selectDocs) {
+    public SelectionDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int c_sel, int numFound, int start, List<?> selectDocs) {
         this.collections = collections;
         this.method = method;
         this.c_sel = c_sel;
@@ -31,7 +32,7 @@ public class SelectionDocumentsResponse {
         this.selectDocs = selectDocs;
     }
 
-    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int start, SelectionTopDocuments topDocuments) {
+    public SelectionDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int start, SelectionTopDocuments topDocuments) {
         this.collections = collections;
         this.c_sel = topDocuments.c_sel;
         this.method = method;
@@ -40,7 +41,7 @@ public class SelectionDocumentsResponse {
         this.selectDocs = topDocuments.scoreDocs;
     }
 
-    public SelectionDocumentsResponse(Map<String, Double> collections, String method, int c_sel, int numFound, int start) {
+    public SelectionDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int c_sel, int numFound, int start) {
         this.collections = collections;
         this.method = method;
         this.c_sel = c_sel;
@@ -60,7 +61,7 @@ public class SelectionDocumentsResponse {
     }
 
     @JsonProperty
-    public Map<String, Double> getCollections() {
+    public Set<Map.Entry<String, Double>> getCollections() {
         return collections;
     }
 

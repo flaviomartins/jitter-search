@@ -56,7 +56,6 @@ public class SelectionManager implements Managed {
     private Stopper stopper;
     private final float mu;
     private final String method;
-    private final boolean removeDuplicates;
     private final boolean live;
 
     private Map<String, ImmutableSortedSet<String>> topics;
@@ -70,12 +69,11 @@ public class SelectionManager implements Managed {
     private TwitterManager twitterManager;
     private boolean indexing;
 
-    public SelectionManager(String collection, String indexPath, String stopwords, float mu, String method, boolean removeDuplicates, boolean live, Map<String, Set<String>> topics) {
+    public SelectionManager(String collection, String indexPath, String stopwords, float mu, String method, boolean live, Map<String, Set<String>> topics) {
         this.collection = collection;
         this.indexPath = indexPath;
         this.mu = mu;
         this.method = method;
-        this.removeDuplicates = removeDuplicates;
         this.live = live;
 
         TreeMap<String, ImmutableSortedSet<String>> treeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -145,10 +143,6 @@ public class SelectionManager implements Managed {
 
     public void setTopics(Map<String, ImmutableSortedSet<String>> topics) {
         this.topics = topics;
-    }
-
-    public boolean isRemoveDuplicates() {
-        return removeDuplicates;
     }
 
     public ShardStats getCsiStats() {
@@ -348,7 +342,7 @@ public class SelectionManager implements Managed {
         try {
             logger.info("selection indexing");
             indexing = true;
-            twitterManager.index(collection, indexPath, analyzer, removeDuplicates);
+            twitterManager.index(collection, indexPath, analyzer);
         } catch (IOException e) {
             throw e;
         } finally {

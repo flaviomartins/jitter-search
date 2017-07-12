@@ -15,12 +15,12 @@ abstract class CRCS extends SelectionMethod {
         int j = 1;
         for (StatusDocument result : results) {
             double r = weight(j, results.size());
-            String screenName = result.getScreen_name();
-            if (!scores.containsKey(screenName)) {
-                scores.put(screenName, r);
+            String shardId = result.getShardId();
+            if (!scores.containsKey(shardId)) {
+                scores.put(shardId, r);
             } else {
-                double cur = scores.get(screenName);
-                scores.put(screenName, cur + r);
+                double cur = scores.get(shardId);
+                scores.put(shardId, cur + r);
             }
             j++;
         }
