@@ -14,14 +14,14 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
 
-public class StreamLogger implements RawStreamListener, Managed {
+public class RawStreamLogger implements RawStreamListener, Managed {
 
     private static final String HOUR_ROLL = ".%d{yyyy-MM-dd-HH, UTC}.gz";
 
     private final Logger logger;
 
-    public StreamLogger(String directory) {
-        logger = (Logger) LoggerFactory.getLogger(StreamLogger.class + directory);
+    public RawStreamLogger(String directory) {
+        logger = (Logger) LoggerFactory.getLogger(RawStreamLogger.class + directory);
         LoggerContext logCtx = (LoggerContext) LoggerFactory.getILoggerFactory();
 
         PatternLayoutEncoder standardEncoder = new PatternLayoutEncoder();
