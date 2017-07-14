@@ -1,4 +1,4 @@
-package io.jitter.core.twitter4j;
+package io.jitter.core.hbc.twitter4j;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
