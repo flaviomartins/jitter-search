@@ -9,7 +9,7 @@ import com.twitter.hbc.httpclient.BasicClient;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
 import io.dropwizard.lifecycle.Managed;
-import io.jitter.core.twitter4j.CustomTwitter4jUserstreamClient;
+import io.jitter.core.twitter4j.RawTwitter4jUserstreamClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.*;
@@ -61,7 +61,7 @@ public class UserStream implements Managed {
         ExecutorService service = Executors.newFixedThreadPool(numProcessingThreads);
 
         // Wrap our BasicClient with the twitter4j client
-        CustomTwitter4jUserstreamClient t4jClient = new CustomTwitter4jUserstreamClient(
+        RawTwitter4jUserstreamClient t4jClient = new RawTwitter4jUserstreamClient(
                 client, queue, userStreamListeners, service, rawStreamListeners);
 
         // Establish a connection
