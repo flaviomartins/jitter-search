@@ -3,25 +3,26 @@ package io.jitter.core.twitter4j;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.twitter.hbc.core.Client;
-import com.twitter.hbc.twitter4j.Twitter4jUserstreamClient;
+import com.twitter.hbc.twitter4j.Twitter4jStatusClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import twitter4j.*;
+import twitter4j.RawStreamListener;
+import twitter4j.StatusListener;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 
-public class CustomTwitter4jUserstreamClient extends Twitter4jUserstreamClient {
+public class RawTwitter4jStatusClient extends Twitter4jStatusClient {
 
-    private final static Logger logger = LoggerFactory.getLogger(CustomTwitter4jUserstreamClient.class);
+    private final static Logger logger = LoggerFactory.getLogger(RawTwitter4jStatusClient.class);
 
     private final Client client;
     private final BlockingQueue<String> messageQueue;
     private final ExecutorService executorService;
     private final List<RawStreamListener> rawStreamListeners;
 
-    public CustomTwitter4jUserstreamClient(Client client, BlockingQueue<String> blockingQueue, List<UserStreamListener> listeners, ExecutorService executorService, List<RawStreamListener> rawStreamListeners) {
+    public RawTwitter4jStatusClient(Client client, BlockingQueue<String> blockingQueue, List<? extends StatusListener> listeners, ExecutorService executorService, List<RawStreamListener> rawStreamListeners) {
         super(client, blockingQueue, listeners, executorService);
         this.client = Preconditions.checkNotNull(client);
         this.messageQueue = Preconditions.checkNotNull(blockingQueue);
