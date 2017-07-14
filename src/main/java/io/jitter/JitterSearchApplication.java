@@ -24,7 +24,7 @@ import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.stream.LiveStreamIndexer;
-import io.jitter.core.stream.StreamLogger;
+import io.jitter.core.stream.RawStreamLogger;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import org.rocksdb.RocksDB;
 import org.slf4j.Logger;
@@ -207,14 +207,14 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             if (StringUtils.isNotBlank(configuration.getUserStreamLogPath()))
                 userLogPath = configuration.getUserStreamLogPath();
 
-            final StreamLogger userStreamLogger = new StreamLogger(userLogPath);
+            final RawStreamLogger userRawStreamLogger = new RawStreamLogger(userLogPath);
             final TimelineSseResource timelineSseResource = new TimelineSseResource();
             environment.jersey().register(timelineSseResource);
 
             final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10, true);
             final UserStream userStream = new UserStream(oAuth1,
                     Lists.newArrayList(timelineSseResource, userStreamIndexer),
-                    Lists.newArrayList(timelineSseResource, userStreamLogger));
+                    Lists.newArrayList(timelineSseResource, userRawStreamLogger));
             environment.lifecycle().manage(userStream);
             environment.lifecycle().manage(userStreamIndexer);
             
@@ -222,7 +222,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             if (StringUtils.isNotBlank(configuration.getStatusStreamLogPath()))
                 statusLogPath = configuration.getStatusStreamLogPath();
 
-            final StreamLogger statusStreamLogger = new StreamLogger(statusLogPath);
+            final RawStreamLogger statusRawStreamLogger = new RawStreamLogger(statusLogPath);
             final SampleSseResource sampleSseResource = new SampleSseResource();
             environment.jersey().register(sampleSseResource);
 
@@ -230,7 +230,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 10000, false);
             final SampleStream statusStream = new SampleStream(oAuth1,
                     Lists.newArrayList(sampleSseResource, statusStreamIndexer),
-                    Lists.newArrayList(sampleSseResource, statusStreamLogger));
+                    Lists.newArrayList(sampleSseResource, statusRawStreamLogger));
             environment.lifecycle().manage(statusStream);
             environment.lifecycle().manage(statusStreamIndexer);
         }
