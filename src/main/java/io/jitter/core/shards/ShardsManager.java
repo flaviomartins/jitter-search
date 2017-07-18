@@ -44,7 +44,7 @@ public class ShardsManager implements Managed {
     private final LMDirichletSimilarity similarity;
     private final QueryLikelihoodModel qlModel;
 
-    private DirectoryReader reader;
+    private DirectoryReader indexReader;
     private IndexSearcher searcher;
 
     private final String collection;
@@ -98,7 +98,7 @@ public class ShardsManager implements Managed {
     public void start() throws Exception {
         try {
             searcher = getIndexSearcher();
-            shardStatsBuilder = new ShardStatsBuilder(reader, topics);
+            shardStatsBuilder = new ShardStatsBuilder(indexReader, topics);
             reverseTopicMap = shardStatsBuilder.getReverseTopicMap();
             collectStats();
         } catch (Exception e) {
@@ -114,8 +114,8 @@ public class ShardsManager implements Managed {
 
     @Override
     public void stop() throws Exception {
-        if (reader != null) {
-            reader.close();
+        if (indexReader != null) {
+            indexReader.close();
         }
     }
 
@@ -274,15 +274,15 @@ public class ShardsManager implements Managed {
         CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
 
-        final TopDocsCollector topCollector = TopScoreDocCollector.create(len, null);
-        indexSearcher.search(q, filter, topCollector);
+        final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
+        indexSearcher.search(q, filter, hitsCollector);
 
-        totalHits = topCollector.getTotalHits();
+        totalHits = hitsCollector.getTotalHits();
         TopDocs topDocs;
         if (live) {
-            topDocs = topCollector.topDocs(0, len);
+            topDocs = hitsCollector.topDocs(0, len);
         } else {
-            topDocs = topCollector.topDocs(0, reader.numDocs());
+            topDocs = hitsCollector.topDocs(0, indexReader.numDocs());
         }
 
         //noinspection UnusedAssignment
@@ -375,21 +375,21 @@ public class ShardsManager implements Managed {
 
     public TermStats[] getHighFreqTerms(int n) throws Exception {
         int numResults = n > MAX_TERMS_RESULTS ? MAX_TERMS_RESULTS : n;
-        return HighFreqTerms.getHighFreqTerms(reader, numResults, IndexStatuses.StatusField.TEXT.name, new HighFreqTerms.DocFreqComparator());
+        return HighFreqTerms.getHighFreqTerms(indexReader, numResults, IndexStatuses.StatusField.TEXT.name, new HighFreqTerms.DocFreqComparator());
     }
 
     private IndexSearcher getIndexSearcher() throws IOException {
         try {
-            if (reader == null) {
-                reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
-                searcher = new IndexSearcher(reader);
+            if (indexReader == null) {
+                indexReader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
+                searcher = new IndexSearcher(indexReader);
                 searcher.setSimilarity(similarity);
-            } else if (live && !reader.isCurrent()) {
-                DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
+            } else if (live && !indexReader.isCurrent()) {
+                DirectoryReader newReader = DirectoryReader.openIfChanged(indexReader);
                 if (newReader != null) {
-                    reader.close();
-                    reader = newReader;
-                    searcher = new IndexSearcher(reader);
+                    indexReader.close();
+                    indexReader = newReader;
+                    searcher = new IndexSearcher(indexReader);
                     searcher.setSimilarity(similarity);
                 }
             }
@@ -400,7 +400,7 @@ public class ShardsManager implements Managed {
     }
 
     public CollectionStats getCollectionStats() {
-        return new IndexCollectionStats(reader, IndexStatuses.StatusField.TEXT.name);
+        return new IndexCollectionStats(indexReader, IndexStatuses.StatusField.TEXT.name);
     }
 
     public SelectionTopDocuments search(Optional<Long> maxId, Optional<String> epoch, boolean retweets, boolean future, int limit, boolean topics, String query, long[] epochs, Set<String> selected) throws IOException, ParseException {

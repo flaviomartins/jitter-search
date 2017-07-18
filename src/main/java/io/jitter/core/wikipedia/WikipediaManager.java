@@ -10,6 +10,13 @@ import io.jitter.core.utils.WikipediaSearchUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.apache.lucene.facet.FacetResult;
+import org.apache.lucene.facet.Facets;
+import org.apache.lucene.facet.FacetsCollector;
+import org.apache.lucene.facet.FacetsConfig;
+import org.apache.lucene.facet.taxonomy.FastTaxonomyFacetCounts;
+import org.apache.lucene.facet.taxonomy.TaxonomyReader;
+import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexNotFoundException;
 import org.apache.lucene.misc.HighFreqTerms;
@@ -24,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 public class WikipediaManager implements Managed {
@@ -46,8 +54,10 @@ public class WikipediaManager implements Managed {
     private Stopper stopper;
     private final float mu;
 
-    private DirectoryReader reader;
+    private DirectoryReader indexReader;
     private IndexSearcher searcher;
+    private TaxonomyReader taxoReader;
+    private FacetsConfig facetsConfig = new FacetsConfig();
 
     public WikipediaManager(String indexPath, boolean live, float mu) {
         this.indexPath = indexPath;
@@ -74,8 +84,8 @@ public class WikipediaManager implements Managed {
 
     @Override
     public void stop() throws Exception {
-        if (reader != null) {
-            reader.close();
+        if (indexReader != null) {
+            indexReader.close();
         }
     }
 
@@ -103,11 +113,17 @@ public class WikipediaManager implements Managed {
         CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(TEXT_FIELD, ANALYZER).parse(query);
 
-        final TopDocsCollector topCollector = TopScoreDocCollector.create(len, null);
-        indexSearcher.search(q, filter, topCollector);
+        final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
+        final FacetsCollector fc = new FacetsCollector();
+        indexSearcher.search(q, filter, MultiCollector.wrap(hitsCollector, fc));
 
-        totalHits = topCollector.getTotalHits();
-        TopDocs topDocs = topCollector.topDocs(0, len);
+        // Retrieve results
+        List<FacetResult> results = new ArrayList<>();
+        Facets facets = new FastTaxonomyFacetCounts(taxoReader, facetsConfig, fc);
+        results.add(facets.getTopChildren(10, "categories"));
+
+        totalHits = hitsCollector.getTotalHits();
+        TopDocs topDocs = hitsCollector.topDocs(0, len);
 
         //noinspection UnusedAssignment
         maxScore = totalHits > 0 ? topDocs.getMaxScore() : 0.0f;
@@ -134,21 +150,27 @@ public class WikipediaManager implements Managed {
 
     public TermStats[] getHighFreqTerms(int n) throws Exception {
         int numResults = n > MAX_TERMS_RESULTS ? MAX_TERMS_RESULTS : n;
-        return HighFreqTerms.getHighFreqTerms(reader, numResults, TEXT_FIELD, new HighFreqTerms.DocFreqComparator());
+        return HighFreqTerms.getHighFreqTerms(indexReader, numResults, TEXT_FIELD, new HighFreqTerms.DocFreqComparator());
     }
 
     private IndexSearcher getIndexSearcher() throws IOException {
         try {
-            if (reader == null) {
-                reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
-                searcher = new IndexSearcher(reader);
+            if (taxoReader == null) {
+                taxoReader = new DirectoryTaxonomyReader(FSDirectory.open(Paths.get(indexPath, "facets")));
+            } else if (live) {
+                taxoReader = DirectoryTaxonomyReader.openIfChanged(taxoReader);
+            }
+
+            if (indexReader == null) {
+                indexReader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath, "index")));
+                searcher = new IndexSearcher(indexReader);
                 searcher.setSimilarity(similarity);
-            } else if (live && !reader.isCurrent()) {
-                DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
+            } else if (live && !indexReader.isCurrent()) {
+                DirectoryReader newReader = DirectoryReader.openIfChanged(indexReader);
                 if (newReader != null) {
-                    reader.close();
-                    reader = newReader;
-                    searcher = new IndexSearcher(reader);
+                    indexReader.close();
+                    indexReader = newReader;
+                    searcher = new IndexSearcher(indexReader);
                     searcher.setSimilarity(similarity);
                 }
             }
@@ -159,7 +181,7 @@ public class WikipediaManager implements Managed {
     }
 
     public CollectionStats getCollectionStats() {
-        return new IndexCollectionStats(reader, TEXT_FIELD);
+        return new IndexCollectionStats(indexReader, TEXT_FIELD);
     }
 
     public WikipediaTopDocuments search(String query, int limit, boolean full) throws IOException, ParseException {
