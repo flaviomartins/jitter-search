@@ -9,7 +9,6 @@ import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
 import io.jitter.core.wikipedia.WikipediaManager;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
@@ -44,7 +43,7 @@ public class WikipediaSearchUtils {
                 try {
                     newDocVector = buildDocVector(indexReader, scoreDoc.doc);
                 } catch (IOException e) {
-                    newDocVector = buildDocVector(new EnglishAnalyzer(), doc.getText());
+                    newDocVector = buildDocVector(WikipediaManager.ANALYZER, doc.getText());
                 }
                 doc.setDocVector(newDocVector);
             }
