@@ -46,7 +46,7 @@ public class SearchManager implements Managed {
     private Stopper stopper;
     private final float mu;
 
-    private DirectoryReader reader;
+    private DirectoryReader indexReader;
     private IndexSearcher searcher;
 
     public SearchManager(String indexPath, boolean live, float mu) {
@@ -74,8 +74,8 @@ public class SearchManager implements Managed {
 
     @Override
     public void stop() throws Exception {
-        if (reader != null) {
-            reader.close();
+        if (indexReader != null) {
+            indexReader.close();
         }
     }
 
@@ -103,11 +103,11 @@ public class SearchManager implements Managed {
         CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, ANALYZER).parse(query);
 
-        final TopDocsCollector topCollector = TopScoreDocCollector.create(len, null);
-        indexSearcher.search(q, filter, topCollector);
+        final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
+        indexSearcher.search(q, filter, hitsCollector);
 
-        totalHits = topCollector.getTotalHits();
-        TopDocs topDocs = topCollector.topDocs(0, len);
+        totalHits = hitsCollector.getTotalHits();
+        TopDocs topDocs = hitsCollector.topDocs(0, len);
 
         //noinspection UnusedAssignment
         maxScore = totalHits > 0 ? topDocs.getMaxScore() : 0.0f;
@@ -176,21 +176,21 @@ public class SearchManager implements Managed {
 
     public TermStats[] getHighFreqTerms(int n) throws Exception {
         int numResults = n > MAX_TERMS_RESULTS ? MAX_TERMS_RESULTS : n;
-        return HighFreqTerms.getHighFreqTerms(reader, numResults, IndexStatuses.StatusField.TEXT.name, new HighFreqTerms.DocFreqComparator());
+        return HighFreqTerms.getHighFreqTerms(indexReader, numResults, IndexStatuses.StatusField.TEXT.name, new HighFreqTerms.DocFreqComparator());
     }
 
     private IndexSearcher getIndexSearcher() throws IOException {
         try {
-            if (reader == null) {
-                reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
-                searcher = new IndexSearcher(reader);
+            if (indexReader == null) {
+                indexReader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
+                searcher = new IndexSearcher(indexReader);
                 searcher.setSimilarity(similarity);
-            } else if (live && !reader.isCurrent()) {
-                DirectoryReader newReader = DirectoryReader.openIfChanged(reader);
+            } else if (live && !indexReader.isCurrent()) {
+                DirectoryReader newReader = DirectoryReader.openIfChanged(indexReader);
                 if (newReader != null) {
-                    reader.close();
-                    reader = newReader;
-                    searcher = new IndexSearcher(reader);
+                    indexReader.close();
+                    indexReader = newReader;
+                    searcher = new IndexSearcher(indexReader);
                     searcher.setSimilarity(similarity);
                 }
             }
@@ -201,7 +201,7 @@ public class SearchManager implements Managed {
     }
 
     public CollectionStats getCollectionStats() {
-        return new IndexCollectionStats(reader, IndexStatuses.StatusField.TEXT.name);
+        return new IndexCollectionStats(indexReader, IndexStatuses.StatusField.TEXT.name);
     }
 
     public TopDocuments search(String query, Optional<Long> maxId, int limit, boolean retweets, long[] epochs, boolean future) throws IOException, ParseException {
