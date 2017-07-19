@@ -41,6 +41,8 @@ public class WikipediaManager implements Managed {
     public static final String ID_FIELD = "id";
     public static final String TITLE_FIELD = "titleTokenized";
     public static final String TEXT_FIELD = "body";
+    public static final String DATE_FIELD = "date";
+    public static final String CATEGORIES_FIELD = "categories";
     public static final int MAX_RESULTS = 10000;
     public static final int MAX_TERMS_RESULTS = 1000;
 
@@ -120,7 +122,7 @@ public class WikipediaManager implements Managed {
         // Retrieve results
         List<FacetResult> results = new ArrayList<>();
         Facets facets = new FastTaxonomyFacetCounts(taxoReader, facetsConfig, fc);
-        results.add(facets.getTopChildren(10, "categories"));
+        results.add(facets.getTopChildren(10, "Categories"));
 
         totalHits = hitsCollector.getTotalHits();
         TopDocs topDocs = hitsCollector.topDocs(0, len);
