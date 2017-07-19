@@ -8,6 +8,7 @@ import io.jitter.api.collectionstatistics.IndexCollectionStats;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.utils.SearchUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
 import org.apache.lucene.misc.TermStats;
@@ -36,8 +37,7 @@ public class SearchManager implements Managed {
     public static final int MAX_RESULTS = 10000;
     public static final int MAX_TERMS_RESULTS = 1000;
 
-    private static final Analyzer ANALYZER = new TweetAnalyzer();
-
+    private final Analyzer analyzer;
     private final LMDirichletSimilarity similarity;
     private final QueryLikelihoodModel qlModel;
 
@@ -49,18 +49,23 @@ public class SearchManager implements Managed {
     private DirectoryReader indexReader;
     private IndexSearcher searcher;
 
-    public SearchManager(String indexPath, boolean live, float mu) {
+    public SearchManager(String indexPath, String stopwords, float mu, boolean live) {
         this.indexPath = indexPath;
-        this.live = live;
         this.mu = mu;
+        this.live = live;
 
         similarity = new LMDirichletSimilarity(mu);
         qlModel = new QueryLikelihoodModel(mu);
-    }
 
-    public SearchManager(String indexPath, boolean live, String stopwords, float mu) {
-        this(indexPath, live, mu);
-        stopper = new Stopper(stopwords);
+        if (!stopwords.isEmpty()) {
+            stopper = new Stopper(stopwords);
+        }
+        if (stopper == null || stopper.asSet().isEmpty()) {
+            analyzer = new TweetAnalyzer();
+        } else {
+            CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
+            analyzer = new TweetAnalyzer(charArraySet);
+        }
     }
 
     @Override
@@ -101,7 +106,7 @@ public class SearchManager implements Managed {
 
         IndexSearcher indexSearcher = getIndexSearcher();
         CollectionStats collectionStats = getCollectionStats();
-        Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, ANALYZER).parse(query);
+        Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
 
         final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
         indexSearcher.search(q, filter, hitsCollector);
@@ -159,7 +164,7 @@ public class SearchManager implements Managed {
         long startTime = System.currentTimeMillis();
         Path indexPath = Paths.get(this.indexPath);
         Directory dir = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(ANALYZER);
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         
         try (IndexWriter writer = new IndexWriter(dir, config)) {
