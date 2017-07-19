@@ -50,7 +50,7 @@ public class SearchManagerFactory {
     }
 
     public SearchManager build(Environment environment, boolean live) {
-        final SearchManager searchManager = new SearchManager(index, live, stopwords, mu);
+        final SearchManager searchManager = new SearchManager(index, stopwords, mu, live);
         environment.lifecycle().manage(searchManager);
         return searchManager;
     }
