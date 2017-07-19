@@ -6,6 +6,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import java.io.IOException;
 
 public class WikipediaManagerFactory {
 
@@ -18,6 +19,9 @@ public class WikipediaManagerFactory {
     @Min(1)
     @Max(5000)
     private float mu;
+
+    @NotEmpty
+    private String cat2topic;
 
     @JsonProperty
     public String getIndex() {
@@ -49,8 +53,18 @@ public class WikipediaManagerFactory {
         this.mu = mu;
     }
 
-    public WikipediaManager build(Environment environment) {
-        final WikipediaManager wikipediaManager = new WikipediaManager(index, false, stopwords, mu);
+    @JsonProperty
+    public String getCat2topic() {
+        return cat2topic;
+    }
+
+    @JsonProperty
+    public void setCat2topic(String cat2topic) {
+        this.cat2topic = cat2topic;
+    }
+
+    public WikipediaManager build(Environment environment) throws IOException {
+        final WikipediaManager wikipediaManager = new WikipediaManager(index, false, stopwords, mu, cat2topic);
         environment.lifecycle().manage(wikipediaManager);
         return wikipediaManager;
     }

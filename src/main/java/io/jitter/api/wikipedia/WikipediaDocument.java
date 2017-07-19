@@ -14,6 +14,7 @@ public class WikipediaDocument extends AbstractDocument implements Document {
     public String text; // required
     public String date; // required
     public String[] categories;
+    public String[] topics;
 
     public WikipediaDocument(WikipediaDocument other) {
         id = other.id;
@@ -22,6 +23,7 @@ public class WikipediaDocument extends AbstractDocument implements Document {
         text = other.text;
         date = other.date;
         categories = other.categories;
+        topics = other.topics;
     }
 
     public WikipediaDocument(org.apache.lucene.document.Document hit) {
@@ -82,5 +84,13 @@ public class WikipediaDocument extends AbstractDocument implements Document {
 
     public void setCategories(String[] categories) {
         this.categories = categories;
+    }
+
+    public String[] getTopics() {
+        return topics;
+    }
+
+    public void setTopics(String[] topics) {
+        this.topics = topics;
     }
 }
