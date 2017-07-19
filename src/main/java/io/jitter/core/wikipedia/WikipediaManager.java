@@ -29,10 +29,13 @@ import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class WikipediaManager implements Managed {
 
@@ -55,23 +58,25 @@ public class WikipediaManager implements Managed {
     private final boolean live;
     private Stopper stopper;
     private final float mu;
+    private final PetscanCsvCategoryMapper categoryMapper;
 
     private DirectoryReader indexReader;
     private IndexSearcher searcher;
     private TaxonomyReader taxoReader;
     private FacetsConfig facetsConfig = new FacetsConfig();
 
-    public WikipediaManager(String indexPath, boolean live, float mu) {
+    public WikipediaManager(String indexPath, boolean live, float mu, String cat2Topic) throws IOException {
         this.indexPath = indexPath;
         this.live = live;
         this.mu = mu;
+        categoryMapper = new PetscanCsvCategoryMapper(new File(cat2Topic));
 
         similarity = new LMDirichletSimilarity(mu);
         qlModel = new QueryLikelihoodModel(mu);
     }
 
-    public WikipediaManager(String indexPath, boolean live, String stopwords, float mu) {
-        this(indexPath, live, mu);
+    public WikipediaManager(String indexPath, boolean live, String stopwords, float mu, String cat2Topic) throws IOException {
+        this(indexPath, live, mu, cat2Topic);
         stopper = new Stopper(stopwords);
     }
 
@@ -141,8 +146,17 @@ public class WikipediaManager implements Managed {
         // Compute real QL scores even when live to build termVectors
         List<WikipediaDocument> docs = WikipediaSearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n);
 
-        if (!full) {
-            for (WikipediaDocument doc : docs) {
+        for (WikipediaDocument doc : docs) {
+            HashSet<Object> topics = new HashSet<>();
+            for (String cat : doc.getCategories()) {
+                Set<String> catTopics = categoryMapper.getMap().get(cat);
+                if (catTopics != null ) {
+                    topics.addAll(catTopics);
+                }
+            }
+            doc.setTopics(topics.toArray(new String[topics.size()]));
+
+            if (!full) {
                 doc.setText(StringUtils.abbreviate(doc.getText(), 500));
             }
         }
