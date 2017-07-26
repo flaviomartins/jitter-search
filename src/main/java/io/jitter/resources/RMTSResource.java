@@ -81,6 +81,7 @@ public class RMTSResource extends AbstractFeedbackResource {
                                           @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
                                           @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
                                           @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
+                                          @ApiParam(value = "Day filter", allowableValues="yyyyMMdd") @QueryParam("day") Optional<String> day,
                                           @ApiParam(value = "Limit feedback results", allowableValues="range[1, 10000]") @QueryParam("sLimit") @DefaultValue("1000") Integer sLimit,
                                           @ApiParam(value = "Include retweets for feedback") @QueryParam("sRetweets") @DefaultValue("true") Boolean sRetweets,
                                           @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean sFuture,
@@ -107,6 +108,10 @@ public class RMTSResource extends AbstractFeedbackResource {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
+
+            if (day.isPresent()) {
+                epochs = Epochs.parseDay(day.get());
+            }
 
             Selection selection;
             if ("taily".equalsIgnoreCase(method)) {
