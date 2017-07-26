@@ -104,13 +104,14 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
         try {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q, "UTF-8");
+            String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
             Selection selection;
             if ("taily".equalsIgnoreCase(method)) {
                 selection = tailyManager.selection(query, v);
             } else {
-                selection = selectionManager.selection(maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query);
+                selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize);
             }
 
             Set<String> selected;

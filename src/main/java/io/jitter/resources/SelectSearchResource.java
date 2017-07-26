@@ -71,6 +71,7 @@ public class SelectSearchResource extends AbstractFeedbackResource {
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
         String query = URLDecoder.decode(q, "UTF-8");
+        String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
         long[] epochs = Epochs.parseEpoch(epoch);
 
         long startTime = System.currentTimeMillis();
@@ -79,7 +80,7 @@ public class SelectSearchResource extends AbstractFeedbackResource {
         if ("taily".equalsIgnoreCase(method)) {
             selection = tailyManager.selection(query, v);
         } else {
-            selection = selectionManager.selection(maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query);
+            selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize);
         }
 
         Set<String> selected = topics ? selection.getTopics().keySet() : selection.getSources().keySet();
