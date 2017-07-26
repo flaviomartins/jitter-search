@@ -404,12 +404,12 @@ public class SelectionManager implements Managed {
         return new IndexCollectionStats(indexReader, IndexStatuses.StatusField.TEXT.name);
     }
 
-    public SelectionTopDocuments search(Optional<Long> maxId, Optional<String> epoch, int limit, boolean retweets, boolean future, String query, long[] epochs) throws IOException, ParseException {
+    public SelectionTopDocuments search(Optional<Long> maxId, int limit, boolean retweets, long[] epochs, boolean future, String query) throws IOException, ParseException {
         SelectionTopDocuments selectResults;
         if (!future) {
             if (maxId.isPresent()) {
                 selectResults = search(query, limit, !retweets, maxId.get());
-            } else if (epoch.isPresent()) {
+            } else if (epochs[0] > 0 || epochs[1] > 0) {
                 selectResults = search(query, limit, !retweets, epochs[0], epochs[1]);
             } else {
                 selectResults = search(query, limit, !retweets);
@@ -430,8 +430,8 @@ public class SelectionManager implements Managed {
         return selected;
     }
 
-    public CsiSelection selection(Optional<Long> maxId, Optional<String> epoch, int limit, boolean retweets, boolean future, String method, int maxCol, Double minRanks, boolean normalize, String query, long[] epochs) throws IOException, ParseException {
-        return new CsiSelection(maxId, epoch, limit, retweets, future, method, maxCol, minRanks, normalize, query, epochs).invoke();
+    public CsiSelection selection(Optional<Long> maxId, long[] epochs, int limit, boolean retweets, boolean future, String method, int maxCol, Double minRanks, boolean normalize, String query) throws IOException, ParseException {
+        return new CsiSelection(maxId, epochs, limit, retweets, future, method, maxCol, minRanks, normalize, query).invoke();
     }
 
     public boolean isIndexing() {
@@ -440,7 +440,6 @@ public class SelectionManager implements Managed {
 
     public class CsiSelection implements Selection {
         private final Optional<Long> maxId;
-        private final Optional<String> epoch;
         private final int limit;
         private final boolean retweets;
         private final boolean future;
@@ -454,9 +453,8 @@ public class SelectionManager implements Managed {
         private Map<String, Double> sources;
         private Map<String, Double> topics;
 
-        public CsiSelection(Optional<Long> maxId, Optional<String> epoch, int limit, boolean retweets, boolean future, String method, int maxCol, double minRanks, boolean normalize, String query, long[] epochs) {
+        public CsiSelection(Optional<Long> maxId, long[] epochs, int limit, boolean retweets,  boolean future, String method, int maxCol, double minRanks, boolean normalize, String query) {
             this.maxId = maxId;
-            this.epoch = epoch;
             this.limit = limit;
             this.retweets = retweets;
             this.future = future;
@@ -484,7 +482,7 @@ public class SelectionManager implements Managed {
         }
 
         public CsiSelection invoke() throws IOException, ParseException {
-            results = search(maxId, epoch, limit, retweets, future, query, epochs);
+            results = search(maxId, limit, retweets, epochs, future, query);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
             sources = select(results, limit, selectionMethod, maxCol, minRanks, normalize);
             topics = selectTopics(results, limit, selectionMethod, maxCol, minRanks, normalize);

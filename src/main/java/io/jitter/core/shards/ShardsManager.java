@@ -403,12 +403,12 @@ public class ShardsManager implements Managed {
         return new IndexCollectionStats(indexReader, IndexStatuses.StatusField.TEXT.name);
     }
 
-    public SelectionTopDocuments search(Optional<Long> maxId, Optional<String> epoch, boolean retweets, boolean future, int limit, boolean topics, String query, long[] epochs, Set<String> selected) throws IOException, ParseException {
+    public SelectionTopDocuments search(Optional<Long> maxId, long[] epochs, boolean retweets, boolean future, int limit, boolean topics, String query, Set<String> selected) throws IOException, ParseException {
         SelectionTopDocuments shardResults;
         if (!future) {
             if (maxId.isPresent()) {
                 shardResults = search(topics, selected, query, limit, !retweets, maxId.get());
-            } else if (epoch.isPresent()) {
+            } else if (epochs[0] > 0 || epochs[1] > 0) {
                 shardResults = search(topics, selected, query, limit, !retweets, epochs[0], epochs[1]);
             } else {
                 shardResults = search(topics, selected, query, limit, !retweets);

@@ -117,7 +117,7 @@ public class RMTSResource extends AbstractFeedbackResource {
             if ("taily".equalsIgnoreCase(method)) {
                 selection = tailyManager.selection(query, v);
             } else {
-                selection = selectionManager.selection(maxId, epoch, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query, epochs);
+                selection = selectionManager.selection(maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query);
             }
 
             Set<String> selected;
@@ -129,7 +129,7 @@ public class RMTSResource extends AbstractFeedbackResource {
                 selected = topics ? fbTopicsEnabled : fbSourcesEnabled;
             }
 
-            SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, fbDocs, topics, query, epochs, selected);
+            SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, sRetweets, sFuture, fbDocs, topics, query, selected);
 
             // get the query epoch
             double currentEpoch = System.currentTimeMillis() / 1000L;
