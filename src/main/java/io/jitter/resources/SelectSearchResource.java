@@ -13,6 +13,7 @@ import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,7 @@ public class SelectSearchResource extends AbstractFeedbackResource {
     @GET
     @Timed
     @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
-    public SelectionSearchResponse search(@QueryParam("q") Optional<String> q,
+    public SelectionSearchResponse search(@QueryParam("q") @NotEmpty String q,
                                           @QueryParam("fq") Optional<String> fq,
                                           @QueryParam("limit") @DefaultValue("1000") Integer limit,
                                           @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
@@ -69,7 +70,7 @@ public class SelectSearchResource extends AbstractFeedbackResource {
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        String query = URLDecoder.decode(q.orElse(""), "UTF-8");
+        String query = URLDecoder.decode(q, "UTF-8");
         long[] epochs = Epochs.parseEpoch(epoch);
 
         long startTime = System.currentTimeMillis();

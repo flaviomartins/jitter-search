@@ -25,6 +25,7 @@ import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.selection.SelectionManager;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +75,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             @ApiResponse(code = 404, message = "No results found"),
             @ApiResponse(code = 500, message = "Internal Server Error")
     })
-    public SelectionSearchResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") Optional<String> q,
+    public SelectionSearchResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") @NotEmpty String q,
                                           @ApiParam(hidden = true) @QueryParam("fq") Optional<String> fq,
                                           @ApiParam(value = "Limit results", allowableValues="range[1, 10000]") @QueryParam("limit") @DefaultValue("1000") Integer limit,
                                           @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
@@ -99,13 +100,9 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
                                           @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
-        if (!q.isPresent() || q.get().isEmpty()) {
-            throw new BadRequestException();
-        }
-
         try {
             long startTime = System.currentTimeMillis();
-            String query = URLDecoder.decode(q.orElse(""), "UTF-8");
+            String query = URLDecoder.decode(q, "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
             if (day.isPresent()) {
