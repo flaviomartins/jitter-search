@@ -86,7 +86,7 @@ public class SelectionResource {
                 epochs = Epochs.parseDay(day.get());
             }
 
-            SelectionTopDocuments selectResults = selectionManager.search(maxId, epoch, limit, retweets, future, query, epochs);
+            SelectionTopDocuments selectResults = selectionManager.search(maxId, limit, retweets, epochs, future, query);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
 
             Map<String, Double> selected = selectionManager.select(limit, topics, maxCol, minRanks, normalize, selectResults, selectionMethod);
