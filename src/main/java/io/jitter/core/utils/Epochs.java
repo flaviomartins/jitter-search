@@ -1,5 +1,9 @@
 package io.jitter.core.utils;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -38,6 +42,16 @@ public class Epochs {
         } catch (Exception e) {
             // pass
         }
+        return epochs;
+    }
+
+    public static long[] parseDay(String day) {
+        long[] epochs = new long[]{0L, Long.MAX_VALUE};
+        final DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ssZ");
+        final DateTime startDateTime = dateTimeFormatter.withZoneUTC().parseDateTime(day + "T00:00:00Z");
+        DateTime endDateTime = startDateTime.plusDays(1).minusSeconds(1);
+        epochs[0] = startDateTime.getMillis() / 1000L;
+        epochs[1] = endDateTime.getMillis() / 1000L;
         return epochs;
     }
 }
