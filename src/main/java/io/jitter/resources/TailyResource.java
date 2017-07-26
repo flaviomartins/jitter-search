@@ -9,6 +9,7 @@ import io.jitter.api.selection.SelectionDocumentsResponse;
 import io.jitter.api.selection.SelectionResponse;
 import io.jitter.core.taily.TailyManager;
 import io.swagger.annotations.*;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,19 +49,15 @@ public class TailyResource {
             @ApiResponse(code = 400, message = "Invalid query"),
             @ApiResponse(code = 500, message = "Internal Server Error")
     })
-    public SelectionResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") Optional<String> q,
+    public SelectionResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") @NotEmpty String q,
                                     @ApiParam(value = "Taily parameter", allowableValues="range[0, 100]") @QueryParam("v") @DefaultValue("10") Integer v,
                                     @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
                                     @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
-        if (!q.isPresent() || q.get().isEmpty()) {
-            throw new BadRequestException();
-        }
-
         try {
             long startTime = System.currentTimeMillis();
-            String query = URLDecoder.decode(q.orElse(""), "UTF-8");
+            String query = URLDecoder.decode(q, "UTF-8");
 
             Map<String, Double> ranking = tailyManager.select(query, v, topics);
 
