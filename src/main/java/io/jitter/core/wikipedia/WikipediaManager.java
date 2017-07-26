@@ -9,6 +9,7 @@ import io.jitter.core.utils.Stopper;
 import io.jitter.core.utils.WikipediaSearchUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.facet.FacetResult;
 import org.apache.lucene.facet.Facets;
@@ -108,7 +109,7 @@ public class WikipediaManager implements Managed {
         return mu;
     }
 
-    public WikipediaTopDocuments isearch(String query, Filter filter, int n, boolean full) throws IOException, ParseException {
+    public WikipediaTopDocuments isearch(String query, String filterQuery, Filter filter, int n, boolean full) throws IOException, ParseException {
         int len = Math.min(MAX_RESULTS, 3 * n);
         int nDocsReturned;
         int totalHits;
@@ -120,9 +121,19 @@ public class WikipediaManager implements Managed {
         CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(TEXT_FIELD, ANALYZER).parse(query);
 
+        BooleanQuery.Builder b = new BooleanQuery.Builder();
+        b.add(q, BooleanClause.Occur.SHOULD);
+
+        if (!filterQuery.isEmpty()) {
+            Query fq = new QueryParser(TEXT_FIELD, new WhitespaceAnalyzer()).parse(filterQuery);
+            b.add(fq, BooleanClause.Occur.FILTER);
+        }
+
+        Query bQuery = b.build();
+
         final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
         final FacetsCollector fc = new FacetsCollector();
-        indexSearcher.search(q, filter, MultiCollector.wrap(hitsCollector, fc));
+        indexSearcher.search(bQuery, filter, MultiCollector.wrap(hitsCollector, fc));
 
         // Retrieve results
         List<FacetResult> results = new ArrayList<>();
@@ -200,7 +211,7 @@ public class WikipediaManager implements Managed {
         return new IndexCollectionStats(indexReader, TEXT_FIELD);
     }
 
-    public WikipediaTopDocuments search(String query, int limit, boolean full) throws IOException, ParseException {
-        return isearch(query, null, limit, full);
+    public WikipediaTopDocuments search(String query, String filterQuery, int limit, boolean full) throws IOException, ParseException {
+        return isearch(query, filterQuery, null, limit, full);
     }
 }

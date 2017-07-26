@@ -8,6 +8,7 @@ import io.jitter.api.collectionstatistics.IndexCollectionStats;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.utils.SearchUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
@@ -112,7 +113,7 @@ public class SearchManager implements Managed {
         b.add(q, BooleanClause.Occur.SHOULD);
 
         if (!filterQuery.isEmpty()) {
-            Query fq = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(filterQuery);
+            Query fq = new QueryParser(IndexStatuses.StatusField.TEXT.name, new WhitespaceAnalyzer()).parse(filterQuery);
             b.add(fq, BooleanClause.Occur.FILTER);
         }
 
