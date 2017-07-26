@@ -183,7 +183,7 @@ public class ShardsManager implements Managed {
     private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) throws IOException {
         List<StatusDocument> results = new ArrayList<>();
         if (selectedSources != null && !selectedSources.isEmpty()) {
-            results.addAll(selectResults.scoreDocs.stream().filter(doc -> selectedSources.contains(doc.getScreen_name().toLowerCase(Locale.ROOT))).collect(Collectors.toList()));
+            results.addAll(selectResults.scoreDocs.stream().filter(doc -> selectedSources.contains(doc.getShardIds().toLowerCase(Locale.ROOT))).collect(Collectors.toList()));
         } else {
             results.addAll(selectResults.scoreDocs);
         }

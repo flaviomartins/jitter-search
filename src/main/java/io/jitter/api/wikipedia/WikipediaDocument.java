@@ -3,10 +3,11 @@ package io.jitter.api.wikipedia;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.jitter.api.search.AbstractDocument;
 import io.jitter.api.search.Document;
+import io.jitter.api.search.ShardedDocument;
 import io.jitter.core.wikipedia.WikipediaManager;
 
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"dataPoint", "docVector", "features"})
-public class WikipediaDocument extends AbstractDocument implements Document {
+public class WikipediaDocument extends AbstractDocument implements ShardedDocument {
 
     public String id; // required
     public double rsv; // required
@@ -15,6 +16,7 @@ public class WikipediaDocument extends AbstractDocument implements Document {
     public String date; // required
     public String[] categories;
     public String[] topics;
+    public String[] shardIds;
 
     public WikipediaDocument(WikipediaDocument other) {
         id = other.id;
@@ -92,5 +94,15 @@ public class WikipediaDocument extends AbstractDocument implements Document {
 
     public void setTopics(String[] topics) {
         this.topics = topics;
+    }
+
+    @Override
+    public String[] getShardIds() {
+        return shardIds;
+    }
+
+    @Override
+    public void setShardIds(String[] shardIds) {
+        this.shardIds = shardIds;
     }
 }

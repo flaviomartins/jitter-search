@@ -2,7 +2,7 @@ package io.jitter.api.search;
 
 public interface ShardedDocument {
 
-    String getShardId();
+    String[] getShardIds();
 
-    void setShardId(String shardId);
+    void setShardIds(String[] shardIds);
 }
