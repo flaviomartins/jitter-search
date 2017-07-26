@@ -17,6 +17,7 @@ import io.jitter.core.wikipedia.WikipediaManager;
 import io.jitter.health.*;
 import io.jitter.resources.*;
 import io.jitter.tasks.*;
+import io.swagger.converter.ModelConverters;
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
@@ -75,6 +76,9 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             // Add URL mapping
             cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         }
+
+        // DateTimeParam Property Converter for Swagger
+        ModelConverters.getInstance().addConverter(new DateTimeParamPropertyConverter());
 
         // Swagger API listing
         BeanConfig beanConfig = configuration.getApiDocsFactory().build();

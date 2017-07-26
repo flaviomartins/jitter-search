@@ -7,6 +7,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.dropwizard.jersey.caching.CacheControl;
+import io.dropwizard.jersey.params.DateTimeParam;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.core.rerank.MaxTFFilter;
 import io.jitter.core.rerank.RerankerCascade;
@@ -79,7 +80,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
                                           @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
                                           @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
                                           @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
-                                          @ApiParam(value = "Day filter", allowableValues="yyyyMMdd") @QueryParam("day") Optional<String> day,
+                                          @ApiParam(value = "Day filter") @QueryParam("day") Optional<DateTimeParam> day,
                                           @ApiParam(value = "Limit feedback results", allowableValues="range[1, 10000]") @QueryParam("sLimit") @DefaultValue("1000") Integer sLimit,
                                           @ApiParam(value = "Include retweets for feedback") @QueryParam("sRetweets") @DefaultValue("true") Boolean sRetweets,
                                           @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean sFuture,
@@ -108,7 +109,8 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             long[] epochs = Epochs.parseEpoch(epoch);
 
             if (day.isPresent()) {
-                epochs = Epochs.parseDay(day.get());
+                DateTimeParam dateTimeParam = day.get();
+                epochs = Epochs.parseDay(dateTimeParam.get());
             }
 
             Selection selection;
