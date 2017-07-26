@@ -96,7 +96,7 @@ public class SearchManager implements Managed {
         return mu;
     }
 
-    public TopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
+    public TopDocuments isearch(String query, String filterQuery, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
         int len = Math.min(MAX_RESULTS, 3 * n);
         int nDocsReturned;
         int totalHits;
@@ -108,8 +108,18 @@ public class SearchManager implements Managed {
         CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
 
+        BooleanQuery.Builder b = new BooleanQuery.Builder();
+        b.add(q, BooleanClause.Occur.SHOULD);
+
+        if (!filterQuery.isEmpty()) {
+            Query fq = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(filterQuery);
+            b.add(fq, BooleanClause.Occur.FILTER);
+        }
+
+        Query bQuery = b.build();
+
         final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
-        indexSearcher.search(q, filter, hitsCollector);
+        indexSearcher.search(bQuery, filter, hitsCollector);
 
         totalHits = hitsCollector.getTotalHits();
         TopDocs topDocs = hitsCollector.topDocs(0, len);
@@ -131,32 +141,32 @@ public class SearchManager implements Managed {
         return new TopDocuments(totalHits, docs);
     }
 
-    public TopDocuments isearch(String query, int n, boolean filterRT) throws IOException, ParseException {
-        return isearch(query, null, n, filterRT);
+    public TopDocuments isearch(String query, String filterQuery, int n, boolean filterRT) throws IOException, ParseException {
+        return isearch(query, filterQuery, null, n, filterRT);
     }
 
-    public TopDocuments isearch(String query, int n) throws IOException, ParseException {
-        return isearch(query, null, n, false);
+    public TopDocuments isearch(String query, String filterQuery, int n) throws IOException, ParseException {
+        return isearch(query, filterQuery, null, n, false);
     }
 
-    public TopDocuments search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
+    public TopDocuments search(String query, String filterQuery, int n, boolean filterRT, long maxId) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
-        return isearch(query, filter, n, filterRT);
+        return isearch(query, filterQuery, filter, n, filterRT);
     }
 
-    public TopDocuments search(String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
+    public TopDocuments search(String query, String filterQuery, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
-        return isearch(query, filter, n, filterRT);
+        return isearch(query, filterQuery, filter, n, filterRT);
     }
 
-    public TopDocuments search(String query, int n, boolean filterRT) throws IOException, ParseException {
-        return isearch(query, n, filterRT);
+    public TopDocuments search(String query, String filterQuery, int n, boolean filterRT) throws IOException, ParseException {
+        return isearch(query, filterQuery, n, filterRT);
     }
 
-    public TopDocuments search(String query, int n) throws IOException, ParseException {
-        return isearch(query, n);
+    public TopDocuments search(String query, String filterQuery, int n) throws IOException, ParseException {
+        return isearch(query, filterQuery, n);
     }
 
     public void forceMerge() throws IOException {
@@ -209,23 +219,23 @@ public class SearchManager implements Managed {
         return new IndexCollectionStats(indexReader, IndexStatuses.StatusField.TEXT.name);
     }
 
-    public TopDocuments search(String query, Optional<Long> maxId, int limit, boolean retweets, long[] epochs, boolean future) throws IOException, ParseException {
+    public TopDocuments search(String query, String filterQuery, Optional<Long> maxId, int limit, boolean retweets, long[] epochs, boolean future) throws IOException, ParseException {
         TopDocuments results;
         if (!future) {
             if (maxId.isPresent()) {
-                results = search(query, limit, !retweets, maxId.get());
+                results = search(query, filterQuery, limit, !retweets, maxId.get());
             } else if (epochs[0] > 0 || epochs[1] > 0) {
-                results = search(query, limit, !retweets, epochs[0], epochs[1]);
+                results = search(query, filterQuery, limit, !retweets, epochs[0], epochs[1]);
             } else {
-                results = search(query, limit, !retweets);
+                results = search(query, filterQuery, limit, !retweets);
             }
         } else {
-            results = search(query, limit, !retweets, Long.MAX_VALUE);
+            results = search(query, filterQuery, limit, !retweets, Long.MAX_VALUE);
         }
         return results;
     }
 
-    public TopDocuments search(String query, Optional<Long> maxId, int limit, boolean retweets, long[] epochs) throws IOException, ParseException {
-        return search(query, maxId, limit, retweets, epochs, false);
+    public TopDocuments search(String query, String filterQuery, Optional<Long> maxId, int limit, boolean retweets, long[] epochs) throws IOException, ParseException {
+        return search(query, filterQuery, maxId, limit, retweets, epochs, false);
     }
 }
