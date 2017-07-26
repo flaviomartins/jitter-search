@@ -123,7 +123,7 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
                 selected = topics ? fbTopicsEnabled : fbSourcesEnabled;
             }
 
-            SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, sRetweets, sFuture, fbDocs, topics, query, selected);
+            SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, sRetweets, sFuture, fbDocs, topics, query, filterQuery, selected);
 
             // get the query epoch
             double currentEpoch = System.currentTimeMillis() / 1000L;
