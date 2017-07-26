@@ -262,7 +262,7 @@ public class ShardsManager implements Managed {
         return selectionTopDocuments;
     }
 
-    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
+    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, String filterQuery, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
         int len = Math.min(MAX_RESULTS, 3 * n);
         int nDocsReturned;
         int totalHits;
@@ -274,8 +274,18 @@ public class ShardsManager implements Managed {
         CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
 
+        BooleanQuery.Builder b = new BooleanQuery.Builder();
+        b.add(q, BooleanClause.Occur.SHOULD);
+
+        if (!filterQuery.isEmpty()) {
+            Query fq = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(filterQuery);
+            b.add(fq, BooleanClause.Occur.FILTER);
+        }
+
+        Query bQuery = b.build();
+
         final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
-        indexSearcher.search(q, filter, hitsCollector);
+        indexSearcher.search(bQuery, filter, hitsCollector);
 
         totalHits = hitsCollector.getTotalHits();
         TopDocs topDocs;
@@ -307,32 +317,32 @@ public class ShardsManager implements Managed {
         }
     }
 
-    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, int n, boolean filterRT) throws IOException, ParseException {
-        return isearch(topics, collections, query, null, n, filterRT);
+    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, String filterQuery, int n, boolean filterRT) throws IOException, ParseException {
+        return isearch(topics, collections, query, filterQuery, null, n, filterRT);
     }
 
-    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, int n) throws IOException, ParseException {
-        return isearch(topics, collections, query, null, n, false);
+    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, String filterQuery, int n) throws IOException, ParseException {
+        return isearch(topics, collections, query, filterQuery, null, n, false);
     }
 
-    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
+    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, String filterQuery, int n, boolean filterRT, long maxId) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
-        return isearch(topics, collections, query, filter, n, filterRT);
+        return isearch(topics, collections, query, filterQuery, filter, n, filterRT);
     }
 
-    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
+    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, String filterQuery, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
-        return isearch(topics, collections, query, filter, n, filterRT);
+        return isearch(topics, collections, query, filterQuery, filter, n, filterRT);
     }
 
-    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, int n, boolean filterRT) throws IOException, ParseException {
-        return isearch(topics, collections, query, n, filterRT);
+    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, String filterQuery, int n, boolean filterRT) throws IOException, ParseException {
+        return isearch(topics, collections, query, filterQuery, n, filterRT);
     }
 
-    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, int n) throws IOException, ParseException {
-        return isearch(topics, collections, query, n, false);
+    public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, String filterQuery, int n) throws IOException, ParseException {
+        return isearch(topics, collections, query, filterQuery, n, false);
     }
 
     public void index() throws IOException {
@@ -403,18 +413,18 @@ public class ShardsManager implements Managed {
         return new IndexCollectionStats(indexReader, IndexStatuses.StatusField.TEXT.name);
     }
 
-    public SelectionTopDocuments search(Optional<Long> maxId, long[] epochs, boolean retweets, boolean future, int limit, boolean topics, String query, Set<String> selected) throws IOException, ParseException {
+    public SelectionTopDocuments search(Optional<Long> maxId, long[] epochs, boolean retweets, boolean future, int limit, boolean topics, String query, String filterQuery, Set<String> selected) throws IOException, ParseException {
         SelectionTopDocuments shardResults;
         if (!future) {
             if (maxId.isPresent()) {
-                shardResults = search(topics, selected, query, limit, !retweets, maxId.get());
+                shardResults = search(topics, selected, query, filterQuery, limit, !retweets, maxId.get());
             } else if (epochs[0] > 0 || epochs[1] > 0) {
-                shardResults = search(topics, selected, query, limit, !retweets, epochs[0], epochs[1]);
+                shardResults = search(topics, selected, query, filterQuery, limit, !retweets, epochs[0], epochs[1]);
             } else {
-                shardResults = search(topics, selected, query, limit, !retweets);
+                shardResults = search(topics, selected, query, filterQuery, limit, !retweets);
             }
         } else {
-            shardResults = search(topics, selected, query, limit, !retweets);
+            shardResults = search(topics, selected, query, filterQuery, limit, !retweets);
         }
         return shardResults;
     }

@@ -85,7 +85,7 @@ public class SelectSearchResource extends AbstractFeedbackResource {
 
         Set<String> selected = topics ? selection.getTopics().keySet() : selection.getSources().keySet();
 
-        SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, retweets, sFuture, limit, topics, query, selected);
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, retweets, sFuture, limit, topics, query, filterQuery, selected);
 
         long endTime = System.currentTimeMillis();
 
