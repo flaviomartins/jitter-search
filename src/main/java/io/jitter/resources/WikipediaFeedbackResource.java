@@ -87,7 +87,7 @@ public class WikipediaFeedbackResource extends AbstractFeedbackResource {
                 epochs = Epochs.parseDay(dateTimeParam.get());
             }
 
-            WikipediaTopDocuments selectResults = wikipediaManager.search(query, limit, true);
+            WikipediaTopDocuments selectResults = wikipediaManager.search(query, "", limit, true);
 
             String finalQuery = query;
             FeatureVector fbVector = null;

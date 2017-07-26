@@ -77,8 +77,9 @@ public class TrecWikipediaFeedbackResource extends AbstractFeedbackResource {
         try {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q, "UTF-8");
+            String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
 
-            WikipediaTopDocuments selectResults = wikipediaManager.search(query, limit, true);
+            WikipediaTopDocuments selectResults = wikipediaManager.search(query, filterQuery, limit, true);
 
             String finalQuery = query;
             FeatureVector fbVector = null;
