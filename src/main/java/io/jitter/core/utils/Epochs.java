@@ -5,6 +5,8 @@ import org.joda.time.DateTime;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import static org.joda.time.DateTimeConstants.MILLIS_PER_SECOND;
+
 public class Epochs {
 
     private static final Pattern RANGE_PATTERN;
@@ -45,10 +47,10 @@ public class Epochs {
 
     public static long[] parseDay(DateTime dateTime) {
         long[] epochs = new long[]{0L, Long.MAX_VALUE};
-        DateTime startDateTime = dateTime;
-        DateTime endDateTime = dateTime.plusDays(1).minusSeconds(1);
-        epochs[0] = startDateTime.getMillis() / 1000L;
-        epochs[1] = endDateTime.getMillis() / 1000L;
+        DateTime startDateTime = dateTime.withTimeAtStartOfDay();
+        DateTime endDateTime = dateTime.millisOfDay().withMaximumValue();
+        epochs[0] = startDateTime.getMillis() / MILLIS_PER_SECOND;
+        epochs[1] = endDateTime.getMillis() / MILLIS_PER_SECOND;
         return epochs;
     }
 }
