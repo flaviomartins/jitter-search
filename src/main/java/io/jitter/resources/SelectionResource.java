@@ -78,6 +78,7 @@ public class SelectionResource {
         try {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q, "UTF-8");
+            String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
             if (day.isPresent()) {
@@ -85,7 +86,7 @@ public class SelectionResource {
                 epochs = Epochs.parseDay(dateTimeParam.get());
             }
 
-            SelectionTopDocuments selectResults = selectionManager.search(maxId, limit, retweets, epochs, future, query);
+            SelectionTopDocuments selectResults = selectionManager.search(query, filterQuery, maxId, limit, retweets, epochs, future);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
 
             Map<String, Double> selected = selectionManager.select(limit, topics, maxCol, minRanks, normalize, selectResults, selectionMethod);
