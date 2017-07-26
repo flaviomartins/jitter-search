@@ -79,6 +79,7 @@ public class WikipediaFeedbackResource extends AbstractFeedbackResource {
         try {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q, "UTF-8");
+            String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
             if (day.isPresent()) {
@@ -97,7 +98,7 @@ public class WikipediaFeedbackResource extends AbstractFeedbackResource {
                 finalQuery = buildQuery(fbVector);
             }
 
-            TopDocuments results = searchManager.search(finalQuery, maxId, limit, retweets, epochs);
+            TopDocuments results = searchManager.search(finalQuery, filterQuery, maxId, limit, retweets, epochs);
 
             int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
             int totalHits = results != null ? results.totalHits : 0;
