@@ -3,6 +3,7 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.caching.CacheControl;
+import io.dropwizard.jersey.params.DateTimeParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.DocumentsResponse;
 import io.jitter.api.search.SearchResponse;
@@ -58,7 +59,7 @@ public class SearchResource {
                                  @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
                                  @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
                                  @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
-                                 @ApiParam(value = "Day filter", allowableValues="yyyyMMdd") @QueryParam("day") Optional<String> day,
+                                 @ApiParam(value = "Day filter") @QueryParam("day") Optional<DateTimeParam> day,
                                  @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -72,7 +73,8 @@ public class SearchResource {
             long[] epochs = Epochs.parseEpoch(epoch);
 
             if (day.isPresent()) {
-                epochs = Epochs.parseDay(day.get());
+                DateTimeParam dateTimeParam = day.get();
+                epochs = Epochs.parseDay(dateTimeParam.get());
             }
 
             TopDocuments results = searchManager.search(query, maxId, limit, retweets, epochs);
