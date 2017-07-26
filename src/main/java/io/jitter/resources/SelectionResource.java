@@ -62,6 +62,7 @@ public class SelectionResource {
                                     @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("true") Boolean retweets,
                                     @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
                                     @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
+                                    @ApiParam(value = "Day filter", allowableValues="yyyyMMdd") @QueryParam("day") Optional<String> day,
                                     @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean future,
                                     @ApiParam(value = "Resource selection method", allowableValues="taily,ranks,crcsexp,crcslin,votes,sizes") @QueryParam("method") @DefaultValue("crcsexp") String method,
                                     @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
@@ -80,6 +81,10 @@ public class SelectionResource {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
+
+            if (day.isPresent()) {
+                epochs = Epochs.parseDay(day.get());
+            }
 
             SelectionTopDocuments selectResults = selectionManager.search(maxId, epoch, limit, retweets, future, query, epochs);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);

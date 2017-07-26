@@ -58,6 +58,7 @@ public class SearchResource {
                                  @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
                                  @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
                                  @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
+                                 @ApiParam(value = "Day filter", allowableValues="yyyyMMdd") @QueryParam("day") Optional<String> day,
                                  @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -69,6 +70,10 @@ public class SearchResource {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
+
+            if (day.isPresent()) {
+                epochs = Epochs.parseDay(day.get());
+            }
 
             TopDocuments results = searchManager.search(query, maxId, limit, retweets, epochs);
             int totalHits = results != null ? results.totalHits : 0;
