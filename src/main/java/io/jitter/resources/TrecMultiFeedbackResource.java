@@ -121,7 +121,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
                 selected = topics ? fbTopicsEnabled : fbSourcesEnabled;
             }
 
-            SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, sRetweets, sFuture, limit, topics, query, selected);
+            SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, sRetweets, sFuture, limit, topics, query, filterQuery, selected);
             shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs, shardResults.scoreDocs.size()));
 
             FeatureVector shardsFV = null;
