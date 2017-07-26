@@ -103,6 +103,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
         try {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q, "UTF-8");
+            String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
             if (day.isPresent()) {
@@ -137,7 +138,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             FeatureVector feedbackFV = null;
             FeatureVector fbVector;
             if (fbMerge) {
-                TopDocuments selectResults = searchManager.search(query, maxId, limit, retweets, epochs);
+                TopDocuments selectResults = searchManager.search(query, filterQuery, maxId, limit, retweets, epochs);
                 feedbackFV = buildFeedbackFV(fbDocs, fbTerms, selectResults.scoreDocs, searchManager.getStopper(), searchManager.getCollectionStats());
                 fbVector = interpruneFV(fbTerms, fbWeight.floatValue(), shardsFV, feedbackFV);
             } else {
@@ -152,7 +153,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             double currentEpoch = System.currentTimeMillis() / 1000L;
             double queryEpoch = epoch.isPresent() ? epochs[1] : currentEpoch;
 
-            TopDocuments results = searchManager.search(finalQuery, maxId, limit, retweets, epochs);
+            TopDocuments results = searchManager.search(finalQuery, filterQuery, maxId, limit, retweets, epochs);
 
             RerankerCascade cascade = new RerankerCascade();
             cascade.add(new MaxTFFilter(5));

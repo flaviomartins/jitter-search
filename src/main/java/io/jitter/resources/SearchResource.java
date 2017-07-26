@@ -67,6 +67,7 @@ public class SearchResource {
         try {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q, "UTF-8");
+            String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
             if (day.isPresent()) {
@@ -74,7 +75,7 @@ public class SearchResource {
                 epochs = Epochs.parseDay(dateTimeParam.get());
             }
 
-            TopDocuments results = searchManager.search(query, maxId, limit, retweets, epochs);
+            TopDocuments results = searchManager.search(query, filterQuery, maxId, limit, retweets, epochs);
             int totalHits = results != null ? results.totalHits : 0;
             if (totalHits == 0) {
                 throw new NotFoundException("No results found");

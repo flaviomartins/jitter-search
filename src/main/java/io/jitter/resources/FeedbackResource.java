@@ -79,6 +79,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
         try {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q, "UTF-8");
+            String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
             if (day.isPresent()) {
@@ -86,7 +87,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
                 epochs = Epochs.parseDay(dateTimeParam.get());
             }
 
-            TopDocuments selectResults = searchManager.search(query, maxId, limit, sRetweets, epochs, sFuture);
+            TopDocuments selectResults = searchManager.search(query, filterQuery, maxId, limit, sRetweets, epochs, sFuture);
 
             String finalQuery = query;
             FeatureVector fbVector = null;
@@ -103,7 +104,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
                 List<StatusDocument> docs = SearchUtils.computeQLScores(searchManager.getCollectionStats(), qlModel, selectResults.scoreDocs, finalQuery, limit);
                 results = new TopDocuments(docs);
             } else {
-                results = searchManager.search(finalQuery, maxId, limit, retweets, epochs);
+                results = searchManager.search(finalQuery, filterQuery, maxId, limit, retweets, epochs);
             }
 
             int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
