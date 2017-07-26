@@ -96,7 +96,7 @@ public class TrecShardsFeedbackResource extends AbstractFeedbackResource {
             String query = URLDecoder.decode(q.orElse(""), "UTF-8");
             long[] epochs = Epochs.parseEpoch(epoch);
 
-            SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, limit, topics, query, epochs, null);
+            SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, sRetweets, sFuture, limit, topics, query, null);
             shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs, shardResults.scoreDocs.size()));
 
             FeatureVector shardsFV = null;

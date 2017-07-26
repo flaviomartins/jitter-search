@@ -115,7 +115,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             if ("taily".equalsIgnoreCase(method)) {
                 selection = tailyManager.selection(query, v);
             } else {
-                selection = selectionManager.selection(maxId, epoch, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query, epochs);
+                selection = selectionManager.selection(maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query);
             }
 
             Set<String> selected;
@@ -127,7 +127,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
                 selected = topics ? fbTopicsEnabled : fbSourcesEnabled;
             }
 
-            SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, sRetweets, sFuture, limit, topics, query, epochs, selected);
+            SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, sRetweets, sFuture, limit, topics, query, selected);
             shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs, shardResults.scoreDocs.size()));
 
             FeatureVector shardsFV = null;

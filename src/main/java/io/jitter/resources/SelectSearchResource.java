@@ -78,12 +78,12 @@ public class SelectSearchResource extends AbstractFeedbackResource {
         if ("taily".equalsIgnoreCase(method)) {
             selection = tailyManager.selection(query, v);
         } else {
-            selection = selectionManager.selection(maxId, epoch, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query, epochs);
+            selection = selectionManager.selection(maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query);
         }
 
         Set<String> selected = topics ? selection.getTopics().keySet() : selection.getSources().keySet();
 
-        SelectionTopDocuments shardResults = shardsManager.search(maxId, epoch, retweets, sFuture, limit, topics, query, epochs, selected);
+        SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, retweets, sFuture, limit, topics, query, selected);
 
         long endTime = System.currentTimeMillis();
 
