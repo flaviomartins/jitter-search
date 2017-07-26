@@ -249,7 +249,7 @@ public class SelectionManager implements Managed {
         return new SelectionTopDocuments(docs.size(), docs);
     }
 
-    public SelectionTopDocuments isearch(String query, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
+    public SelectionTopDocuments isearch(String query, String filterQuery, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
         int len = Math.min(MAX_RESULTS, 3 * n);
         int nDocsReturned;
         int totalHits;
@@ -261,8 +261,18 @@ public class SelectionManager implements Managed {
         CollectionStats collectionStats = getCollectionStats();
         Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
 
+        BooleanQuery.Builder b = new BooleanQuery.Builder();
+        b.add(q, BooleanClause.Occur.SHOULD);
+
+        if (!filterQuery.isEmpty()) {
+            Query fq = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(filterQuery);
+            b.add(fq, BooleanClause.Occur.FILTER);
+        }
+
+        Query bQuery = b.build();
+
         final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
-        indexSearcher.search(q, filter, hitsCollector);
+        indexSearcher.search(bQuery, filter, hitsCollector);
 
         totalHits = hitsCollector.getTotalHits();
         TopDocs topDocs = hitsCollector.topDocs(0, len);
@@ -307,32 +317,32 @@ public class SelectionManager implements Managed {
         return selectionTopDocuments;
     }
 
-    public SelectionTopDocuments isearch(String query, int n, boolean filterRT) throws IOException, ParseException {
-        return isearch(query, null, n, filterRT);
+    public SelectionTopDocuments isearch(String query, String filterQuery, int n, boolean filterRT) throws IOException, ParseException {
+        return isearch(query, filterQuery, null, n, filterRT);
     }
 
-    public SelectionTopDocuments isearch(String query, int n) throws IOException, ParseException {
-        return isearch(query, null, n, false);
+    public SelectionTopDocuments isearch(String query, String filterQuery, int n) throws IOException, ParseException {
+        return isearch(query, filterQuery, null, n, false);
     }
 
-    public SelectionTopDocuments search(String query, int n, boolean filterRT, long maxId) throws IOException, ParseException {
+    public SelectionTopDocuments search(String query, String filterQuery, int n, boolean filterRT, long maxId) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
-        return isearch(query, filter, n, filterRT);
+        return isearch(query, filterQuery, filter, n, filterRT);
     }
 
-    public SelectionTopDocuments search(String query, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
+    public SelectionTopDocuments search(String query, String filterQuery, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
         Filter filter =
                 NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
-        return isearch(query, filter, n, filterRT);
+        return isearch(query, filterQuery, filter, n, filterRT);
     }
 
-    public SelectionTopDocuments search(String query, int n, boolean filterRT) throws IOException, ParseException {
-        return isearch(query, n, filterRT);
+    public SelectionTopDocuments search(String query, String filterQuery, int n, boolean filterRT) throws IOException, ParseException {
+        return isearch(query, filterQuery, n, filterRT);
     }
 
-    public SelectionTopDocuments search(String query, int n) throws IOException, ParseException {
-        return isearch(query, n, false);
+    public SelectionTopDocuments search(String query, String filterQuery, int n) throws IOException, ParseException {
+        return isearch(query, filterQuery, n, false);
     }
 
     public void index() throws IOException {
@@ -404,18 +414,18 @@ public class SelectionManager implements Managed {
         return new IndexCollectionStats(indexReader, IndexStatuses.StatusField.TEXT.name);
     }
 
-    public SelectionTopDocuments search(Optional<Long> maxId, int limit, boolean retweets, long[] epochs, boolean future, String query) throws IOException, ParseException {
+    public SelectionTopDocuments search(String query, String filterQuery, Optional<Long> maxId, int limit, boolean retweets, long[] epochs, boolean future) throws IOException, ParseException {
         SelectionTopDocuments selectResults;
         if (!future) {
             if (maxId.isPresent()) {
-                selectResults = search(query, limit, !retweets, maxId.get());
+                selectResults = search(query, filterQuery, limit, !retweets, maxId.get());
             } else if (epochs[0] > 0 || epochs[1] > 0) {
-                selectResults = search(query, limit, !retweets, epochs[0], epochs[1]);
+                selectResults = search(query, filterQuery, limit, !retweets, epochs[0], epochs[1]);
             } else {
-                selectResults = search(query, limit, !retweets);
+                selectResults = search(query, filterQuery, limit, !retweets);
             }
         } else {
-            selectResults = search(query, limit, !retweets);
+            selectResults = search(query, filterQuery, limit, !retweets);
         }
         return selectResults;
     }
@@ -430,8 +440,8 @@ public class SelectionManager implements Managed {
         return selected;
     }
 
-    public CsiSelection selection(Optional<Long> maxId, long[] epochs, int limit, boolean retweets, boolean future, String method, int maxCol, Double minRanks, boolean normalize, String query) throws IOException, ParseException {
-        return new CsiSelection(maxId, epochs, limit, retweets, future, method, maxCol, minRanks, normalize, query).invoke();
+    public CsiSelection selection(String query, String filterQuery, Optional<Long> maxId, long[] epochs, int limit, boolean retweets, boolean future, String method, int maxCol, Double minRanks, boolean normalize) throws IOException, ParseException {
+        return new CsiSelection(query, filterQuery, maxId, epochs, limit, retweets, future, method, maxCol, minRanks, normalize).invoke();
     }
 
     public boolean isIndexing() {
@@ -439,7 +449,10 @@ public class SelectionManager implements Managed {
     }
 
     public class CsiSelection implements Selection {
+        private final String query;
+        private final String filterQuery;
         private final Optional<Long> maxId;
+        private final long[] epochs;
         private final int limit;
         private final boolean retweets;
         private final boolean future;
@@ -447,13 +460,13 @@ public class SelectionManager implements Managed {
         private final int maxCol;
         private final double minRanks;
         private final boolean normalize;
-        private final String query;
-        private final long[] epochs;
         private SelectionTopDocuments results;
         private Map<String, Double> sources;
         private Map<String, Double> topics;
 
-        public CsiSelection(Optional<Long> maxId, long[] epochs, int limit, boolean retweets,  boolean future, String method, int maxCol, double minRanks, boolean normalize, String query) {
+        public CsiSelection(String query, String filterQuery, Optional<Long> maxId, long[] epochs, int limit, boolean retweets, boolean future, String method, int maxCol, double minRanks, boolean normalize) {
+            this.query = query;
+            this.filterQuery = filterQuery;
             this.maxId = maxId;
             this.limit = limit;
             this.retweets = retweets;
@@ -462,7 +475,6 @@ public class SelectionManager implements Managed {
             this.maxCol = maxCol;
             this.minRanks = minRanks;
             this.normalize = normalize;
-            this.query = query;
             this.epochs = epochs;
         }
 
@@ -482,7 +494,7 @@ public class SelectionManager implements Managed {
         }
 
         public CsiSelection invoke() throws IOException, ParseException {
-            results = search(maxId, limit, retweets, epochs, future, query);
+            results = search(query, filterQuery, maxId, limit, retweets, epochs, future);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
             sources = select(results, limit, selectionMethod, maxCol, minRanks, normalize);
             topics = selectTopics(results, limit, selectionMethod, maxCol, minRanks, normalize);

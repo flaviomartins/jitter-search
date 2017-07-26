@@ -117,7 +117,7 @@ public class RMTSResource extends AbstractFeedbackResource {
             if ("taily".equalsIgnoreCase(method)) {
                 selection = tailyManager.selection(query, v);
             } else {
-                selection = selectionManager.selection(maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize, query);
+                selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize);
             }
 
             Set<String> selected;
