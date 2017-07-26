@@ -9,6 +9,7 @@ import io.jitter.core.twitter.manager.TwitterManagerFactory;
 import io.jitter.core.selection.SelectionManagerFactory;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapperFactory;
 import io.jitter.core.wikipedia.WikipediaManagerFactory;
+import io.jitter.core.wikipedia.WikipediaSelectionManagerFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -58,6 +59,7 @@ public class JitterSearchConfiguration extends Configuration {
     @Valid
     @NotNull
     private WikipediaManagerFactory wikipediaManagerFactory = new WikipediaManagerFactory();
+    private WikipediaSelectionManagerFactory wikipediaSelectionManagerFactory;
 
     @JsonProperty("apidocs")
     public ApiDocsFactory getApiDocsFactory() {
@@ -177,5 +179,9 @@ public class JitterSearchConfiguration extends Configuration {
     @JsonProperty("wikipedia")
     public void setWikipediaManagerFactory(WikipediaManagerFactory wikipediaManagerFactory) {
         this.wikipediaManagerFactory = wikipediaManagerFactory;
+    }
+
+    public WikipediaSelectionManagerFactory getWikipediaSelectionManagerFactory() {
+        return wikipediaSelectionManagerFactory;
     }
 }

@@ -21,6 +21,7 @@ public class StatusDocument extends AbstractRerankableDocument implements Sharde
     public long retweeted_status_id; // required
     public long retweeted_user_id; // required
     public int retweeted_count; // required
+    public String[] shardIds;
 
     public StatusDocument(StatusDocument other) {
         this.id = other.id;
@@ -36,6 +37,7 @@ public class StatusDocument extends AbstractRerankableDocument implements Sharde
         this.retweeted_status_id = other.retweeted_status_id;
         this.retweeted_user_id = other.retweeted_user_id;
         this.retweeted_count = other.retweeted_count;
+        this.setShardIds(other.getShardIds());
         this.setDocVector(other.getDocVector());
         this.setFeatures(other.getFeatures());
     }
@@ -54,6 +56,7 @@ public class StatusDocument extends AbstractRerankableDocument implements Sharde
         this.retweeted_status_id = other.retweeted_status_id;
         this.retweeted_user_id = other.retweeted_user_id;
         this.retweeted_count = other.retweeted_count;
+        this.setShardIds(new String[]{other.getScreen_name()});
     }
 
     public StatusDocument(org.apache.lucene.document.Document hit) {
@@ -220,12 +223,12 @@ public class StatusDocument extends AbstractRerankableDocument implements Sharde
     }
 
     @Override
-    public String getShardId() {
-        return getScreen_name();
+    public String[] getShardIds() {
+        return shardIds;
     }
 
     @Override
-    public void setShardId(String shardId) {
-        setScreen_name(shardId);
+    public void setShardIds(String[] shardIds) {
+        this.shardIds = shardIds;
     }
 }

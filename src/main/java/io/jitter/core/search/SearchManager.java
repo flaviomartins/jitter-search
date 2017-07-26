@@ -43,9 +43,9 @@ public class SearchManager implements Managed {
     private final QueryLikelihoodModel qlModel;
 
     private final String indexPath;
-    private final boolean live;
     private Stopper stopper;
     private final float mu;
+    private final boolean live;
 
     private DirectoryReader indexReader;
     private IndexSearcher searcher;
