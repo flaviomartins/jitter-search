@@ -63,8 +63,9 @@ public class WikipediaSearchResource {
         try {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q, "UTF-8");
+            String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
 
-            WikipediaTopDocuments results = wikipediaManager.search(query, limit, full);
+            WikipediaTopDocuments results = wikipediaManager.search(query, filterQuery, limit, full);
             int totalHits = results != null ? results.totalHits : 0;
             if (totalHits == 0) {
                 throw new NotFoundException("No results found");
