@@ -263,7 +263,7 @@ public class SelectionManager implements Managed {
         Query q = new QueryParser(IndexStatuses.StatusField.TEXT.name, analyzer).parse(query);
 
         BooleanQuery.Builder b = new BooleanQuery.Builder();
-        b.add(q, BooleanClause.Occur.SHOULD);
+        b.add(q, BooleanClause.Occur.MUST);
 
         if (!filterQuery.isEmpty()) {
             Query fq = new QueryParser(IndexStatuses.StatusField.TEXT.name, new WhitespaceAnalyzer()).parse(filterQuery);

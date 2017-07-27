@@ -122,7 +122,7 @@ public class WikipediaManager implements Managed {
         Query q = new QueryParser(TEXT_FIELD, ANALYZER).parse(query);
 
         BooleanQuery.Builder b = new BooleanQuery.Builder();
-        b.add(q, BooleanClause.Occur.SHOULD);
+        b.add(q, BooleanClause.Occur.MUST);
 
         if (!filterQuery.isEmpty()) {
             Query fq = new QueryParser(TEXT_FIELD, new WhitespaceAnalyzer()).parse(filterQuery);
