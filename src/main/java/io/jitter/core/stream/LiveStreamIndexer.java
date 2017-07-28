@@ -49,7 +49,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(ANALYZER, fieldAnalyzers);
 
         IndexWriterConfig config = new IndexWriterConfig(perFieldAnalyzerWrapper);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
         textOptions = new FieldType();
         textOptions.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
