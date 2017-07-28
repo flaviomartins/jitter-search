@@ -1,12 +1,9 @@
 package io.jitter.core.twitter.manager;
 
 import cc.twittertools.corpus.data.*;
-import cc.twittertools.index.IndexStatuses;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
+import io.jitter.core.analysis.LowercaseKeywordAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
@@ -21,6 +18,9 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static cc.twittertools.index.IndexStatuses.*;
+import static org.apache.lucene.document.Field.*;
 
 public class TwitterManager implements Managed {
 
@@ -56,7 +56,7 @@ public class TwitterManager implements Managed {
         Directory dir = FSDirectory.open(Paths.get(indexPath));
         
         Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
-        fieldAnalyzers.put(IndexStatuses.StatusField.SCREEN_NAME.name, new SimpleAnalyzer());
+        fieldAnalyzers.put(StatusField.SCREEN_NAME.name, new LowercaseKeywordAnalyzer());
         PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(analyzer, fieldAnalyzers);
 
         IndexWriterConfig config = new IndexWriterConfig(perFieldAnalyzerWrapper);
@@ -78,45 +78,41 @@ public class TwitterManager implements Managed {
         int commitEvery = 1000;
         try (IndexWriter writer = new IndexWriter(dir, config)) {
             while ((status = stream.next()) != null) {
-                if (status.getText() == null) {
-                    continue;
-                }
                 Document doc = new Document();
                 long id = status.getId();
-                doc.add(new LongField(IndexStatuses.StatusField.ID.name, id, Field.Store.YES));
-                doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getCreatedAt().getTime() / 1000L, Field.Store.YES));
-                doc.add(new Field(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), screenNameOptions));
+                doc.add(new LongField(StatusField.ID.name, id, Store.YES));
+                doc.add(new LongField(StatusField.EPOCH.name, status.getCreatedAt().getTime() / 1000L, Store.YES));
+                doc.add(new Field(StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), screenNameOptions));
 
-                doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
+                doc.add(new Field(StatusField.TEXT.name, status.getText(), textOptions));
 
-                doc.add(new IntField(IndexStatuses.StatusField.FRIENDS_COUNT.name, status.getUser().getFriendsCount(), Field.Store.YES));
-                doc.add(new IntField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name, status.getUser().getFollowersCount(), Field.Store.YES));
-                doc.add(new IntField(IndexStatuses.StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount(), Field.Store.YES));
+                doc.add(new IntField(StatusField.FRIENDS_COUNT.name, status.getUser().getFriendsCount(), Store.YES));
+                doc.add(new IntField(StatusField.FOLLOWERS_COUNT.name, status.getUser().getFollowersCount(), Store.YES));
+                doc.add(new IntField(StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount(), Store.YES));
 
                 long inReplyToStatusId = status.getInReplyToStatusId();
                 if (inReplyToStatusId > 0) {
-                    doc.add(new LongField(IndexStatuses.StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId, Field.Store.YES));
-                    doc.add(new LongField(IndexStatuses.StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId(), Field.Store.YES));
+                    doc.add(new LongField(StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId, Store.YES));
+                    doc.add(new LongField(StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId(), Store.YES));
                 }
 
                 String lang = status.getLang();
-                if (lang != null && !"unknown".equals(lang)) {
-                    doc.add(new TextField(IndexStatuses.StatusField.LANG.name, status.getLang(), Field.Store.YES));
+                if (lang != null) {
+                    doc.add(new TextField(StatusField.LANG.name, lang, Store.YES));
                 }
 
+                int retweetedStatusRetweetCount = -1;
                 Status retweetedStatus = status.getRetweetedStatus();
                 if (retweetedStatus != null) {
-                    doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name, status.getRetweetedStatus().getId(), Field.Store.YES));
-                    doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_USER_ID.name, status.getRetweetedStatus().getUser().getId(), Field.Store.YES));
-                    int retweetCount = status.getRetweetCount();
-                    doc.add(new IntField(IndexStatuses.StatusField.RETWEET_COUNT.name, retweetCount, Field.Store.YES));
-                    if (retweetCount < 0) {
-                        logger.warn("Error parsing retweet fields of {}", id);
-                    }
+                    retweetedStatusRetweetCount = retweetedStatus.getRetweetCount();
+                    doc.add(new LongField(StatusField.RETWEETED_STATUS_ID.name, retweetedStatus.getId(), Store.YES));
+                    doc.add(new LongField(StatusField.RETWEETED_USER_ID.name, retweetedStatus.getUser().getId(), Store.YES));
                 }
 
-                Term delTerm = new Term(IndexStatuses.StatusField.ID.name, Long.toString(status.getId()));
-                writer.updateDocument(delTerm, doc);
+                int retweetCount = status.getRetweetCount();
+                doc.add(new IntField(StatusField.RETWEET_COUNT.name, Math.max(retweetCount, retweetedStatusRetweetCount), Store.YES));
+
+                writer.addDocument(doc);
                 if (counter.incrementAndGet() % commitEvery == 0) {
                     logger.debug("{} {} statuses indexed", indexPath, counter.get());
                     writer.commit();
