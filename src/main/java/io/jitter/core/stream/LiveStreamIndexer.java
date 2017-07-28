@@ -1,9 +1,10 @@
 package io.jitter.core.stream;
 
-import cc.twittertools.index.IndexStatuses;
 import io.dropwizard.lifecycle.Managed;
+import io.jitter.core.analysis.LowercaseKeywordAnalyzer;
 import io.jitter.core.analysis.TweetAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.store.AlreadyClosedException;
@@ -15,7 +16,12 @@ import twitter4j.*;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static cc.twittertools.index.IndexStatuses.*;
+import static org.apache.lucene.document.Field.*;
 
 public class LiveStreamIndexer implements Managed, StatusListener, UserStreamListener {
 
@@ -29,6 +35,7 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
     private final boolean stringField;
 
     private final FieldType textOptions;
+    private final FieldType screenNameOptions;
     private final IndexWriter writer;
 
     public LiveStreamIndexer(String indexPath, int commitEvery, boolean stringField) throws IOException {
@@ -38,16 +45,24 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         this.stringField = stringField;
 
         Directory dir = FSDirectory.open(Paths.get(indexPath));
-        IndexWriterConfig config = new IndexWriterConfig(ANALYZER);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        config.setMergePolicy(new TieredMergePolicy());
-        config.setRAMBufferSizeMB(48);
+
+        Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
+        fieldAnalyzers.put(StatusField.SCREEN_NAME.name, new LowercaseKeywordAnalyzer());
+        PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(ANALYZER, fieldAnalyzers);
+
+        IndexWriterConfig config = new IndexWriterConfig(perFieldAnalyzerWrapper);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
         textOptions = new FieldType();
         textOptions.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         textOptions.setStored(true);
         textOptions.setTokenized(true);
         textOptions.setStoreTermVectors(true);
+
+        screenNameOptions = new FieldType();
+        screenNameOptions.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
+        screenNameOptions.setStored(true);
+        screenNameOptions.setTokenized(true);
 
         writer = new IndexWriter(dir, config);
     }
@@ -69,41 +84,41 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         try {
             Document doc = new Document();
             long id = status.getId();
-            doc.add(new LongField(IndexStatuses.StatusField.ID.name, id, Field.Store.YES));
-            doc.add(new LongField(IndexStatuses.StatusField.EPOCH.name, status.getCreatedAt().getTime() / 1000L, Field.Store.YES));
+            doc.add(new LongField(StatusField.ID.name, id, Store.YES));
+            doc.add(new LongField(StatusField.EPOCH.name, status.getCreatedAt().getTime() / 1000L, Store.YES));
             if (stringField) {
-                doc.add(new StringField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), Field.Store.YES));
+                doc.add(new StringField(StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), Store.YES));
             } else {
-                doc.add(new TextField(IndexStatuses.StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), Field.Store.YES));
+                doc.add(new Field(StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), screenNameOptions));
 
             }
-            doc.add(new Field(IndexStatuses.StatusField.TEXT.name, status.getText(), textOptions));
+            doc.add(new Field(StatusField.TEXT.name, status.getText(), textOptions));
 
-            doc.add(new IntField(IndexStatuses.StatusField.FRIENDS_COUNT.name, status.getUser().getFriendsCount(), Field.Store.YES));
-            doc.add(new IntField(IndexStatuses.StatusField.FOLLOWERS_COUNT.name, status.getUser().getFollowersCount(), Field.Store.YES));
-            doc.add(new IntField(IndexStatuses.StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount(), Field.Store.YES));
+            doc.add(new IntField(StatusField.FRIENDS_COUNT.name, status.getUser().getFriendsCount(), Store.YES));
+            doc.add(new IntField(StatusField.FOLLOWERS_COUNT.name, status.getUser().getFollowersCount(), Store.YES));
+            doc.add(new IntField(StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount(), Store.YES));
 
             long inReplyToStatusId = status.getInReplyToStatusId();
             if (inReplyToStatusId > 0) {
-                doc.add(new LongField(IndexStatuses.StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId, Field.Store.YES));
-                doc.add(new LongField(IndexStatuses.StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId(), Field.Store.YES));
+                doc.add(new LongField(StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId, Store.YES));
+                doc.add(new LongField(StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId(), Store.YES));
             }
 
             String lang = status.getLang();
-            if (lang != null && !"unknown".equals(lang)) {
-                doc.add(new TextField(IndexStatuses.StatusField.LANG.name, lang, Field.Store.YES));
+            if (lang != null) {
+                doc.add(new TextField(StatusField.LANG.name, lang, Store.YES));
             }
 
+            int retweetedStatusRetweetCount = -1;
             Status retweetedStatus = status.getRetweetedStatus();
             if (retweetedStatus != null) {
-                doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_STATUS_ID.name, status.getRetweetedStatus().getId(), Field.Store.YES));
-                doc.add(new LongField(IndexStatuses.StatusField.RETWEETED_USER_ID.name, status.getRetweetedStatus().getUser().getId(), Field.Store.YES));
-                int retweetCount = status.getRetweetCount();
-                doc.add(new IntField(IndexStatuses.StatusField.RETWEET_COUNT.name, retweetCount, Field.Store.YES));
-                if (retweetCount < 0) {
-                    logger.warn("Error parsing retweet fields of {}", id);
-                }
+                retweetedStatusRetweetCount = retweetedStatus.getRetweetCount();
+                doc.add(new LongField(StatusField.RETWEETED_STATUS_ID.name, retweetedStatus.getId(), Store.YES));
+                doc.add(new LongField(StatusField.RETWEETED_USER_ID.name, retweetedStatus.getUser().getId(), Store.YES));
             }
+
+            int retweetCount = status.getRetweetCount();
+            doc.add(new IntField(StatusField.RETWEET_COUNT.name, Math.max(retweetCount, retweetedStatusRetweetCount), Store.YES));
 
             writer.addDocument(doc);
             if (counter.incrementAndGet() % commitEvery == 0) {
