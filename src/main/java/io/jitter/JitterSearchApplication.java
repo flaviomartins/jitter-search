@@ -215,7 +215,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             final TimelineSseResource timelineSseResource = new TimelineSseResource();
             environment.jersey().register(timelineSseResource);
 
-            final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10, true);
+            final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10);
             final UserStream userStream = new UserStream(oAuth1,
                     Lists.newArrayList(timelineSseResource, userStreamIndexer),
                     Lists.newArrayList(timelineSseResource, userRawStreamLogger));
@@ -231,7 +231,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             environment.jersey().register(sampleSseResource);
 
 
-            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 10000, false);
+            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 10000);
             final SampleStream statusStream = new SampleStream(oAuth1,
                     Lists.newArrayList(sampleSseResource, statusStreamIndexer),
                     Lists.newArrayList(sampleSseResource, statusRawStreamLogger));
