@@ -49,6 +49,19 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
         }
     }
 
+    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> sources, Set<Map.Entry<String, Double>> topics, String method, int c_sel, int fbDocs, int fbTerms, Map<String, Float> shardsFV, Map<String, Float> feedbackFV, Map<String, Float> fbVector, int start, List<?> selectDocs, SelectionTopDocuments shardDocuments, TopDocuments topDocuments) {
+        super(sources, topics, method, c_sel, start, selectDocs, shardDocuments);
+        this.fbDocs = fbDocs;
+        this.fbTerms = fbTerms;
+        this.shardsFV = shardsFV;
+        this.feedbackFV = feedbackFV;
+        this.fbVector = fbVector;
+        if (topDocuments != null) {
+            this.numFound = topDocuments.totalHits;
+            this.docs = topDocuments.scoreDocs;
+        }
+    }
+
     @JsonProperty
     public int getFbDocs() {
         return fbDocs;
