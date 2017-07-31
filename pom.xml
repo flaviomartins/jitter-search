@@ -25,27 +25,27 @@
         <guava.version>21.0</guava.version>
         <jersey.version>2.25.1</jersey.version>
         <jackson.version>2.8.9</jackson.version>
-        <jetty.version>9.4.2.v20170220</jetty.version>
+        <jetty.version>9.4.6.v20170531</jetty.version>
         <servlet.version>3.0.0.v201112011016</servlet.version>
         <metrics3.version>3.2.2</metrics3.version>
         <slf4j.version>1.7.24</slf4j.version>
         <logback.version>1.2.1</logback.version>
 
-        <swagger.version>1.5.12</swagger.version>
-        <fastutil.version>7.1.0</fastutil.version>
+        <swagger.version>1.5.16</swagger.version>
+        <fastutil.version>7.2.1</fastutil.version>
         <commons-math3.version>3.6.1</commons-math3.version>
-        <jsat.version>0.0.7</jsat.version>
+        <jsat.version>0.0.8</jsat.version>
 
         <lucene.version>5.5.4</lucene.version>
 
         <twitter4j.version>4.0.6</twitter4j.version>
         <hbc.version>2.2.0</hbc.version>
 
-        <twitter-text.version>1.14.3</twitter-text.version>
+        <twitter-text.version>1.14.7</twitter-text.version>
         <ranklib.version>2.8</ranklib.version>
         <kstem.version>3.4</kstem.version>
 
-        <sqlite-jdbc.version>3.16.1</sqlite-jdbc.version>
+        <sqlite-jdbc.version>3.19.3</sqlite-jdbc.version>
         <je.version>7.0.6</je.version>
         <rocksdbjni.version>5.1.2</rocksdbjni.version>
 
@@ -110,7 +110,7 @@
             <dependency>
                 <groupId>org.objenesis</groupId>
                 <artifactId>objenesis</artifactId>
-                <version>2.4</version>
+                <version>2.5.1</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -480,6 +480,13 @@
                 </exclusions>
             </dependency>
 
+            <!-- Test dependencies -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+            </dependency>
+
             <!-- Utils -->
             <dependency>
                 <groupId>it.unimi.dsi</groupId>
@@ -550,14 +557,15 @@
     </dependencyManagement>
     
     <dependencies>
+        <!-- Dropwizard modules -->
         <dependency>
             <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-core</artifactId>
+            <artifactId>dropwizard-assets</artifactId>
             <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-assets</artifactId>
+            <artifactId>dropwizard-core</artifactId>
             <version>${dropwizard.version}</version>
         </dependency>
 
