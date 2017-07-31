@@ -55,6 +55,14 @@ public class TailyManager implements Managed {
         this.topics = topics;
     }
 
+    public List<String> getUsers() {
+        return users;
+    }
+
+    public Map<String, List<String>> getTopics() {
+        return topics;
+    }
+
     private Map<String,Double> limit(Map<String, Double> ranking, int v) {
         Map<String, Double> map = new LinkedHashMap<>();
         ranking.entrySet().stream().filter(entry -> entry.getValue() >= v).forEachOrdered(entry -> map.put(entry.getKey(), entry.getValue()));
