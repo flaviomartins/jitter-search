@@ -66,7 +66,7 @@ public class SelectionResource {
                                     @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
                                     @ApiParam(value = "Day filter") @QueryParam("day") Optional<DateTimeParam> day,
                                     @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean future,
-                                    @ApiParam(value = "Resource selection method", allowableValues="taily,ranks,crcsexp,crcslin,votes,sizes") @QueryParam("method") @DefaultValue("crcsexp") String method,
+                                    @ApiParam(value = "Resource selection method", allowableValues="taily,ranks,crcsexp,crcslin,votes,sizes") @QueryParam("method") @DefaultValue("ranks") String method,
                                     @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
                                     @ApiParam(value = "Maximum number of collections", allowableValues="range[0, 100]") @QueryParam("maxCol") @DefaultValue("3") Integer maxCol,
                                     @ApiParam(value = "Rank-S parameter", allowableValues="range[0, 1]") @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,

@@ -61,7 +61,7 @@ public class SelectSearchResource extends AbstractFeedbackResource {
                                           @QueryParam("sLimit") @DefaultValue("50") Integer sLimit,
                                           @QueryParam("sRetweets") @DefaultValue("true") Boolean sRetweets,
                                           @QueryParam("sFuture") @DefaultValue("false") Boolean sFuture,
-                                          @QueryParam("method") @DefaultValue("crcsexp") String method,
+                                          @QueryParam("method") @DefaultValue("ranks") String method,
                                           @QueryParam("topics") @DefaultValue("true") Boolean topics,
                                           @QueryParam("maxCol") @DefaultValue("3") Integer maxCol,
                                           @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
