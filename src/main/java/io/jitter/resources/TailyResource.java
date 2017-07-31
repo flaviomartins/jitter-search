@@ -59,13 +59,19 @@ public class TailyResource {
             long startTime = System.currentTimeMillis();
             String query = URLDecoder.decode(q, "UTF-8");
 
+            int c_sel;
             Map<String, Double> ranking = tailyManager.select(query, v, topics);
+            if (topics) {
+                c_sel = tailyManager.getTopics().size();
+            } else {
+                c_sel = tailyManager.getUsers().size();
+            }
 
             long endTime = System.currentTimeMillis();
             logger.info(String.format(Locale.ENGLISH, "%4dms %s", (endTime - startTime), query));
 
             ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-            SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(ranking.entrySet(), "Taily", 0, 0, 0);
+            SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(ranking.entrySet(), "Taily", c_sel, 0, 0);
             return new SelectionResponse(responseHeader, documentsResponse);
         } catch (IOException ioe) {
             throw new ServerErrorException(Response.Status.INTERNAL_SERVER_ERROR);
