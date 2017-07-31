@@ -8,10 +8,9 @@ import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.api.selection.SelectionDocumentsResponse;
 import io.jitter.api.selection.SelectionResponse;
+import io.jitter.core.selection.Selection;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.SelectionTopDocuments;
-import io.jitter.core.selection.methods.SelectionMethod;
-import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
 import io.swagger.annotations.*;
@@ -69,7 +68,9 @@ public class SelectionResource {
                                     @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
                                     @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
                                     @ApiParam(value = "Day filter") @QueryParam("day") Optional<DateTimeParam> day,
-                                    @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean future,
+                                    @ApiParam(value = "Limit feedback results", allowableValues="range[1, 10000]") @QueryParam("sLimit") @DefaultValue("1000") Integer sLimit,
+                                    @ApiParam(value = "Include retweets for feedback") @QueryParam("sRetweets") @DefaultValue("true") Boolean sRetweets,
+                                    @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean sFuture,
                                     @ApiParam(value = "Resource selection method", allowableValues="taily,ranks,crcsexp,crcslin,votes,sizes") @QueryParam("method") @DefaultValue("ranks") String method,
                                     @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
                                     @ApiParam(value = "Maximum number of collections", allowableValues="range[0, 100]") @QueryParam("maxCol") @DefaultValue("3") Integer maxCol,
@@ -91,26 +92,28 @@ public class SelectionResource {
                 epochs = Epochs.parseDay(dateTimeParam.get());
             }
 
-            int c_sel;
             int totalHits = 0;
-            SelectionTopDocuments selectResults;
-            Map<String, Double> selected;
+            int c_sel;
+            Selection selection;
             if ("taily".equalsIgnoreCase(method)) {
-                selected = tailyManager.select(query, v, topics);
+                selection = tailyManager.selection(query, v);
                 if (topics) {
                     c_sel = tailyManager.getTopics().size();
                 } else {
                     c_sel = tailyManager.getUsers().size();
                 }
             } else {
-                selectResults = selectionManager.search(query, filterQuery, maxId, limit, retweets, epochs, future);
-                totalHits = selectResults.totalHits;
-                if (totalHits == 0) {
-                    throw new NotFoundException("No results found");
-                }
-                c_sel = selectResults.c_sel;
-                SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-                selected = selectionManager.select(limit, topics, maxCol, minRanks, normalize, selectResults, selectionMethod);
+                selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize);
+                SelectionTopDocuments selectionTopDocuments = selection.getResults();
+                c_sel = selectionTopDocuments.getC_sel();
+                totalHits = selectionTopDocuments.totalHits;
+            }
+
+            Map<String, Double> selected;
+            if (topics) {
+                selected = selection.getTopics();
+            } else {
+                selected = selection.getSources();
             }
 
             long endTime = System.currentTimeMillis();

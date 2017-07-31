@@ -111,11 +111,19 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
                 epochs = Epochs.parseDay(dateTimeParam.get());
             }
 
+            int c_sel;
             Selection selection;
             if ("taily".equalsIgnoreCase(method)) {
                 selection = tailyManager.selection(query, v);
+                if (topics) {
+                    c_sel = tailyManager.getTopics().size();
+                } else {
+                    c_sel = tailyManager.getUsers().size();
+                }
             } else {
                 selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize);
+                SelectionTopDocuments selectionTopDocuments = selection.getResults();
+                c_sel = selectionTopDocuments.getC_sel();
             }
 
             Set<String> selected;
@@ -172,7 +180,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
             ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-            SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selection.getSources().entrySet(), selection.getTopics().entrySet(), method, totalFbDocs, fbTerms, shardsFV.getMap(), feedbackFV != null ? feedbackFV.getMap() : null, fbVector.getMap(), 0, selection.getResults(), shardResults, results);
+            SelectionFeedbackDocumentsResponse documentsResponse = new SelectionFeedbackDocumentsResponse(selection.getSources().entrySet(), selection.getTopics().entrySet(), method, c_sel, totalFbDocs, fbTerms, shardsFV.getMap(), feedbackFV != null ? feedbackFV.getMap() : null, fbVector.getMap(), 0, selection.getResults() != null ? selection.getResults().scoreDocs : null, shardResults, results);
             return new SelectionSearchResponse(responseHeader, documentsResponse);
         } catch (ParseException pe) {
             throw new BadRequestException(pe.getClass().getSimpleName());
