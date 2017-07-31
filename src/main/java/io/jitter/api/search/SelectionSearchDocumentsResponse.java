@@ -51,6 +51,20 @@ public class SelectionSearchDocumentsResponse {
         this.start = start;
     }
 
+    public SelectionSearchDocumentsResponse(Set<Map.Entry<String, Double>> sources, Set<Map.Entry<String, Double>> topics, String method, int c_sel, int start, List<?> selectDocs, SelectionTopDocuments shardTopDocuments) {
+        this.sources = sources;
+        this.topics = topics;
+        this.method = method;
+        this.selectDocs = selectDocs;
+        this.c_sel = c_sel;
+        if (shardTopDocuments != null) {
+            this.numFound = shardTopDocuments.totalHits;
+            this.shardDocs = shardTopDocuments.scoreDocs;
+            this.c_r = shardTopDocuments.getC_r();
+        }
+        this.start = start;
+    }
+
     @JsonProperty
     public int getNumFound() {
         return numFound;
