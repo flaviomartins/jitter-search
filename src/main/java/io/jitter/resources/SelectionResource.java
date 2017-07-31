@@ -12,6 +12,7 @@ import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
+import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
 import io.swagger.annotations.*;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -30,19 +31,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/select")
-@Api(value = "/select", description = "Collection-based resource selection")
+@Api(value = "/select", description = "Resource selection")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class SelectionResource {
     private static final Logger logger = LoggerFactory.getLogger(SelectionResource.class);
 
     private final AtomicLong counter;
     private final SelectionManager selectionManager;
+    private final TailyManager tailyManager;
 
-    public SelectionResource(SelectionManager selectionManager) throws IOException {
+    public SelectionResource(SelectionManager selectionManager, TailyManager tailyManager) throws IOException {
         Preconditions.checkNotNull(selectionManager);
+        Preconditions.checkNotNull(tailyManager);
 
         counter = new AtomicLong();
         this.selectionManager = selectionManager;
+        this.tailyManager = tailyManager;
     }
 
     @GET
@@ -71,6 +75,7 @@ public class SelectionResource {
                                     @ApiParam(value = "Maximum number of collections", allowableValues="range[0, 100]") @QueryParam("maxCol") @DefaultValue("3") Integer maxCol,
                                     @ApiParam(value = "Rank-S parameter", allowableValues="range[0, 1]") @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
                                     @ApiParam(value = "Use collection size normalization") @QueryParam("normalize") @DefaultValue("true") Boolean normalize,
+                                    @ApiParam(value = "Taily parameter", allowableValues="range[0, 100]") @QueryParam("v") @DefaultValue("10") Integer v,
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -86,21 +91,33 @@ public class SelectionResource {
                 epochs = Epochs.parseDay(dateTimeParam.get());
             }
 
-            SelectionTopDocuments selectResults = selectionManager.search(query, filterQuery, maxId, limit, retweets, epochs, future);
-            SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-
-            Map<String, Double> selected = selectionManager.select(limit, topics, maxCol, minRanks, normalize, selectResults, selectionMethod);
-
-            int totalHits = selectResults.totalHits;
-            if (totalHits == 0) {
-                throw new NotFoundException("No results found");
+            int c_sel;
+            int totalHits = 0;
+            SelectionTopDocuments selectResults;
+            Map<String, Double> selected;
+            if ("taily".equalsIgnoreCase(method)) {
+                selected = tailyManager.select(query, v, topics);
+                if (topics) {
+                    c_sel = tailyManager.getTopics().size();
+                } else {
+                    c_sel = tailyManager.getUsers().size();
+                }
+            } else {
+                selectResults = selectionManager.search(query, filterQuery, maxId, limit, retweets, epochs, future);
+                totalHits = selectResults.totalHits;
+                if (totalHits == 0) {
+                    throw new NotFoundException("No results found");
+                }
+                c_sel = selectResults.c_sel;
+                SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
+                selected = selectionManager.select(limit, topics, maxCol, minRanks, normalize, selectResults, selectionMethod);
             }
 
             long endTime = System.currentTimeMillis();
             logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
             ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-            SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(selected.entrySet(), method, 0, selectResults);
+            SelectionDocumentsResponse documentsResponse = new SelectionDocumentsResponse(selected.entrySet(), method, c_sel, totalHits, 0);
             return new SelectionResponse(responseHeader, documentsResponse);
         } catch (ParseException pe) {
             throw new BadRequestException(pe.getClass().getSimpleName());
