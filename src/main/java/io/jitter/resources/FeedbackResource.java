@@ -101,7 +101,7 @@ public class FeedbackResource extends AbstractFeedbackResource {
             TopDocuments results;
             if (fbRerankOnly) {
                 QueryLikelihoodModel qlModel = new QueryLikelihoodModel(searchManager.getMu());
-                List<StatusDocument> docs = SearchUtils.computeQLScores(searchManager.getCollectionStats(), qlModel, selectResults.scoreDocs, finalQuery, limit);
+                List<StatusDocument> docs = SearchUtils.computeQLScores(searchManager.getCollectionStats(), qlModel, (List<StatusDocument>) selectResults.scoreDocs, finalQuery, limit);
                 results = new TopDocuments(docs);
             } else {
                 results = searchManager.search(finalQuery, filterQuery, maxId, limit, retweets, epochs);

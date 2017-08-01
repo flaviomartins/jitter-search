@@ -2,10 +2,13 @@ package io.jitter.core.shards;
 
 import cc.twittertools.index.IndexStatuses;
 import cc.twittertools.util.QueryLikelihoodModel;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Sets;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
+import io.jitter.api.search.AbstractDocument;
 import io.jitter.api.search.StatusDocument;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.selection.SelectionTopDocuments;
@@ -32,7 +35,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ShardsManager implements Managed {
 
@@ -181,11 +183,16 @@ public class ShardsManager implements Managed {
     }
 
     private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) throws IOException {
-        List<StatusDocument> results = new ArrayList<>();
+        List<AbstractDocument> shardedDocs = new ArrayList<>();
         if (selectedSources != null && !selectedSources.isEmpty()) {
-            results.addAll(selectResults.scoreDocs.stream().filter(doc -> selectedSources.contains(doc.getShardIds().toLowerCase(Locale.ROOT))).collect(Collectors.toList()));
+            for (AbstractDocument doc : selectResults.scoreDocs) {
+                ImmutableSet<String[]> shardIds = ImmutableSet.of(doc.getShardIds());
+                if (Sets.intersection(selectedSources, shardIds).size() > 0) {
+                    shardedDocs.add(doc);
+                }
+            }
         } else {
-            results.addAll(selectResults.scoreDocs);
+            shardedDocs.addAll(selectResults.scoreDocs);
         }
 
         int c_r;
@@ -213,19 +220,24 @@ public class ShardsManager implements Managed {
             c_r = totalDF;
         }
 
-        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
+        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(shardedDocs.size(), shardedDocs);
         selectionTopDocuments.setC_r(c_r);
         return selectionTopDocuments;
     }
 
     private SelectionTopDocuments filterTopics(Query query, Set<String> selectedTopics, SelectionTopDocuments selectResults) throws IOException {
-        List<StatusDocument> results = new ArrayList<>();
+        List<AbstractDocument> shardedDocs = new ArrayList<>();
         if (selectedTopics != null && !selectedTopics.isEmpty()) {
-            for (StatusDocument doc : selectResults.scoreDocs) {
-                results.addAll(selectedTopics.stream().filter(selectedTopic -> topics.get(selectedTopic) != null && topics.get(selectedTopic).contains(doc.getScreen_name().toLowerCase(Locale.ROOT))).map(selectedTopic -> doc).collect(Collectors.toList()));
+            for (AbstractDocument doc : selectResults.scoreDocs) {
+                ImmutableSet<String[]> shardIds = ImmutableSet.of(doc.getShardIds());
+                for (String selectedTopic : selectedTopics) {
+                    if (topics.get(selectedTopic) != null && Sets.intersection(topics.get(selectedTopic), shardIds).size() > 0) {
+                        shardedDocs.add(doc);
+                    }
+                }
             }
         } else {
-            results.addAll(selectResults.scoreDocs);
+            shardedDocs.addAll(selectResults.scoreDocs);
         }
 
         int c_r;
@@ -253,7 +265,7 @@ public class ShardsManager implements Managed {
             c_r = totalDF;
         }
 
-        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(results.size(), results);
+        SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(shardedDocs.size(), shardedDocs);
         selectionTopDocuments.setC_r(c_r);
         return selectionTopDocuments;
     }

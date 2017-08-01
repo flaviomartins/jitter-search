@@ -1,6 +1,6 @@
 package io.jitter.core.selection.methods;
 
-import io.jitter.api.search.StatusDocument;
+import io.jitter.api.search.AbstractDocument;
 import io.jitter.core.shards.ShardStats;
 
 import java.util.HashMap;
@@ -13,7 +13,7 @@ public class Sizes extends SelectionMethod {
     }
 
     @Override
-    public Map<String, Double> rank(List<StatusDocument> results, ShardStats csiStats) {
+    public Map<String, Double> rank(List<? extends AbstractDocument> results, ShardStats csiStats) {
         Map<String, Double> sizes = new HashMap<>();
         for (Map.Entry<String, Integer> entry : csiStats.getSizes().entrySet()) {
             sizes.put(entry.getKey(), (double)entry.getValue());
@@ -22,7 +22,7 @@ public class Sizes extends SelectionMethod {
     }
 
     @Override
-    public Map<String, Double> rankTopics(List<StatusDocument> results, ShardStats csiStats, ShardStats shardStats, Map<String, String> reverseTopicMap) {
+    public Map<String, Double> rankTopics(List<? extends AbstractDocument> results, ShardStats csiStats, ShardStats shardStats, Map<String, String> reverseTopicMap) {
         Map<String, Double> sizes = new HashMap<>();
         for (Map.Entry<String, Integer> entry : shardStats.getSizes().entrySet()) {
             sizes.put(entry.getKey(), (double)entry.getValue());

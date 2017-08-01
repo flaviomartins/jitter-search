@@ -1,6 +1,6 @@
 package io.jitter.core.selection.methods;
 
-import io.jitter.api.search.StatusDocument;
+import io.jitter.api.search.AbstractDocument;
 import io.jitter.core.shards.ShardStats;
 
 import java.util.HashMap;
@@ -23,7 +23,7 @@ public class RankS extends SelectionMethod {
     }
 
     @Override
-    public Map<String, Double> rank(List<StatusDocument> results, ShardStats csiStats) {
+    public Map<String, Double> rank(List<? extends AbstractDocument> results, ShardStats csiStats) {
         Map<String, Double> counts = getCounts(results);
 
         double minRsv = 0;
@@ -34,10 +34,10 @@ public class RankS extends SelectionMethod {
         HashMap<String, Double> map = new HashMap<>();
         int j = 1;
         int step = 1;
-        String topShard = null;
-        for (StatusDocument result : results) {
+        String[] topShards = null;
+        for (AbstractDocument result : results) {
             if (j == 1) {
-                topShard = result.getShardId();
+                topShards = result.getShardIds();
             }
 
             double r = getStepFactor(step);
@@ -49,12 +49,14 @@ public class RankS extends SelectionMethod {
                 }
             }
 
-            String shardId = result.getShardId();
-            if (!map.containsKey(shardId)) {
-                map.put(shardId, r);
-            } else {
-                double cur = map.get(shardId);
-                map.put(shardId, cur + r);
+            String[] shardIds = result.getShardIds();
+            for (String shardId : shardIds) {
+                if (!map.containsKey(shardId)) {
+                    map.put(shardId, r);
+                } else {
+                    double cur = map.get(shardId);
+                    map.put(shardId, cur + r);
+                }
             }
 
             if (j > 1) {
@@ -63,18 +65,20 @@ public class RankS extends SelectionMethod {
             j++;
         }
 
-        if (counts.containsKey(topShard)) {
-            if (counts.get(topShard) == 1) {
-                map.remove(topShard);
+        for (String topShard : topShards) {
+            if (counts.containsKey(topShard)) {
+                if (counts.get(topShard) == 1) {
+                    map.remove(topShard);
+                }
             }
         }
 
         return map;
     }
 
-    private double getMinRsv(List<StatusDocument> results) {
+    private double getMinRsv(List<? extends AbstractDocument> results) {
         double minRsv = Double.MAX_VALUE;
-        for (StatusDocument result : results) {
+        for (AbstractDocument result : results) {
             if (result.getRsv() < minRsv) {
                 minRsv = result.getRsv();
             }
