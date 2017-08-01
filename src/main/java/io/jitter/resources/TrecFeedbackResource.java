@@ -92,7 +92,7 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
             TopDocuments results;
             if (fbRerankOnly) {
                 QueryLikelihoodModel qlModel = new QueryLikelihoodModel(trecMicroblogAPIWrapper.DEFAULT_MU);
-                List<StatusDocument> docs = SearchUtils.computeQLScores(trecMicroblogAPIWrapper.getCollectionStats(), qlModel, selectResults.scoreDocs, finalQuery, limit);
+                List<StatusDocument> docs = SearchUtils.computeQLScores(trecMicroblogAPIWrapper.getCollectionStats(), qlModel, (List<StatusDocument>) selectResults.scoreDocs, finalQuery, limit);
                 results = new TopDocuments(docs);
             } else {
                 results = trecMicroblogAPIWrapper.search(finalQuery, maxId, limit, retweets);

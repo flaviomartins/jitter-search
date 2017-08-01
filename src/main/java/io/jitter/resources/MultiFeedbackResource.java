@@ -9,6 +9,7 @@ import com.google.common.collect.Sets;
 import io.dropwizard.jersey.caching.CacheControl;
 import io.dropwizard.jersey.params.DateTimeParam;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.core.rerank.MaxTFFilter;
 import io.jitter.core.rerank.RerankerCascade;
 import io.jitter.core.rerank.RerankerContext;
@@ -168,7 +169,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
 
             RerankerContext context = new RerankerContext(null, null, "MB000", query,
                     queryEpoch, Lists.newArrayList(), IndexStatuses.StatusField.TEXT.name, null);
-            results.scoreDocs = cascade.run(results.scoreDocs, context);
+            results.scoreDocs = cascade.run((List<StatusDocument>) results.scoreDocs, context);
 
             int totalFbDocs = shardResults.totalHits;
             int totalHits = results.totalHits;

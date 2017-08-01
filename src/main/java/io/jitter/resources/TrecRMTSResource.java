@@ -10,6 +10,7 @@ import io.dropwizard.jersey.caching.CacheControl;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.RMTSDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
+import io.jitter.api.search.StatusDocument;
 import io.jitter.core.rerank.MaxTFFilter;
 import io.jitter.core.rerank.RMTSReranker;
 import io.jitter.core.rerank.RerankerCascade;
@@ -33,6 +34,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
@@ -132,12 +134,12 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
             TopDocuments results = trecMicroblogAPIWrapper.search(query, maxId, limit, retweets);
 
             RerankerCascade cascade = new RerankerCascade();
-            cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit, numRerank));
+            cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit, numRerank));
             cascade.add(new MaxTFFilter(5));
 
             RerankerContext context = new RerankerContext(null, null, "MB000", query,
                     queryEpoch, Lists.newArrayList(), IndexStatuses.StatusField.TEXT.name, null);
-            results.scoreDocs = cascade.run(results.scoreDocs, context);
+            results.scoreDocs = cascade.run((List<StatusDocument>) results.scoreDocs, context);
 
             int totalHits = results.totalHits;
             if (totalHits == 0) {
