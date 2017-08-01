@@ -183,16 +183,20 @@ public class ShardsManager implements Managed {
     }
 
     private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) throws IOException {
-        List<AbstractDocument> shardedDocs = new ArrayList<>();
+        List<StatusDocument> topDocs = (List<StatusDocument>) selectResults.scoreDocs;
+        List<StatusDocument> shardedDocs = new ArrayList<>();
+        for (StatusDocument topDoc : topDocs) {
+            topDoc.setShardIds(new String[]{topDoc.getScreen_name()});
+        }
         if (selectedSources != null && !selectedSources.isEmpty()) {
-            for (AbstractDocument doc : selectResults.scoreDocs) {
-                ImmutableSet<String[]> shardIds = ImmutableSet.of(doc.getShardIds());
+            for (StatusDocument doc : topDocs) {
+                ImmutableSet<String> shardIds = ImmutableSet.copyOf(doc.getShardIds());
                 if (Sets.intersection(selectedSources, shardIds).size() > 0) {
                     shardedDocs.add(doc);
                 }
             }
         } else {
-            shardedDocs.addAll(selectResults.scoreDocs);
+            shardedDocs.addAll(topDocs);
         }
 
         int c_r;
@@ -226,10 +230,14 @@ public class ShardsManager implements Managed {
     }
 
     private SelectionTopDocuments filterTopics(Query query, Set<String> selectedTopics, SelectionTopDocuments selectResults) throws IOException {
-        List<AbstractDocument> shardedDocs = new ArrayList<>();
+        List<StatusDocument> topDocs = (List<StatusDocument>) selectResults.scoreDocs;
+        List<StatusDocument> shardedDocs = new ArrayList<>();
+        for (StatusDocument topDoc : topDocs) {
+            topDoc.setShardIds(new String[]{topDoc.getScreen_name()});
+        }
         if (selectedTopics != null && !selectedTopics.isEmpty()) {
-            for (AbstractDocument doc : selectResults.scoreDocs) {
-                ImmutableSet<String[]> shardIds = ImmutableSet.of(doc.getShardIds());
+            for (StatusDocument doc : topDocs) {
+                ImmutableSet<String> shardIds = ImmutableSet.copyOf(doc.getShardIds());
                 for (String selectedTopic : selectedTopics) {
                     if (topics.get(selectedTopic) != null && Sets.intersection(topics.get(selectedTopic), shardIds).size() > 0) {
                         shardedDocs.add(doc);
@@ -237,7 +245,7 @@ public class ShardsManager implements Managed {
                 }
             }
         } else {
-            shardedDocs.addAll(selectResults.scoreDocs);
+            shardedDocs.addAll(topDocs);
         }
 
         int c_r;
