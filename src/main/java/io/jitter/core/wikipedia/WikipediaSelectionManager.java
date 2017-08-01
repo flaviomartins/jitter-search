@@ -4,7 +4,6 @@ import cc.twittertools.util.QueryLikelihoodModel;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
-import io.jitter.api.search.AbstractDocument;
 import io.jitter.api.wikipedia.WikipediaDocument;
 import io.jitter.core.selection.Selection;
 import io.jitter.core.selection.SelectionComparator;
@@ -73,7 +72,6 @@ public class WikipediaSelectionManager implements Managed {
     private FacetsConfig facetsConfig = new FacetsConfig();
 
     private ShardStatsBuilder shardStatsBuilder;
-    private Map<String, String> reverseTopicMap;
     private ShardStats csiStats;
     private ShardStats shardStats;
 
@@ -153,15 +151,21 @@ public class WikipediaSelectionManager implements Managed {
     }
 
     public Map<String, Double> select(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
-        List<? extends AbstractDocument> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
+        List<WikipediaDocument> topDocs = (List<WikipediaDocument>) selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
+        for (WikipediaDocument topDoc : topDocs) {
+            topDoc.setShardIds(topDoc.getCategories());
+        }
         Map<String, Double> rankedCollections = selectionMethod.rank(topDocs, csiStats);
         SortedMap<String, Double> ranking = getSortedMap(rankedCollections);
         return limit(selectionMethod, ranking, maxCol, minRanks);
     }
 
     public Map<String, Double> selectTopics(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
-        List<? extends AbstractDocument> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
-        Map<String, Double> rankedTopics = selectionMethod.rankTopics(topDocs, csiStats, shardStats, reverseTopicMap);
+        List<WikipediaDocument> topDocs = (List<WikipediaDocument>) selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
+        for (WikipediaDocument topDoc : topDocs) {
+            topDoc.setShardIds(topDoc.getTopics());
+        }
+        Map<String, Double> rankedTopics = selectionMethod.rank(topDocs, csiStats);
         SortedMap<String, Double> ranking = getSortedMap(rankedTopics);
         return limit(selectionMethod, ranking, maxCol, minRanks);
     }
