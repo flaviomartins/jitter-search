@@ -1,6 +1,6 @@
 package io.jitter.core.selection.methods;
 
-import io.jitter.api.search.AbstractDocument;
+import io.jitter.api.search.ShardedDocument;
 import io.jitter.core.shards.ShardStats;
 
 import java.util.HashMap;
@@ -23,7 +23,7 @@ public class RankS extends SelectionMethod {
     }
 
     @Override
-    public Map<String, Double> rank(List<? extends AbstractDocument> results, ShardStats csiStats) {
+    public Map<String, Double> rank(List<ShardedDocument> results, ShardStats csiStats) {
         Map<String, Double> counts = getCounts(results);
 
         double minRsv = 0;
@@ -35,7 +35,7 @@ public class RankS extends SelectionMethod {
         int j = 1;
         int step = 1;
         String[] topShards = null;
-        for (AbstractDocument result : results) {
+        for (ShardedDocument result : results) {
             if (j == 1) {
                 topShards = result.getShardIds();
             }
@@ -76,9 +76,9 @@ public class RankS extends SelectionMethod {
         return map;
     }
 
-    private double getMinRsv(List<? extends AbstractDocument> results) {
+    private double getMinRsv(List<ShardedDocument> results) {
         double minRsv = Double.MAX_VALUE;
-        for (AbstractDocument result : results) {
+        for (ShardedDocument result : results) {
             if (result.getRsv() < minRsv) {
                 minRsv = result.getRsv();
             }

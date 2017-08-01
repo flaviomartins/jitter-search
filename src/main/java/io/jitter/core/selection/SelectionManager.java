@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
+import io.jitter.api.search.ShardedDocument;
 import io.jitter.api.search.StatusDocument;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.selection.methods.RankS;
@@ -183,7 +184,9 @@ public class SelectionManager implements Managed {
         for (StatusDocument topDoc : topDocs) {
             topDoc.setShardIds(new String[]{topDoc.getScreen_name()});
         }
-        Map<String, Double> rankedCollections = selectionMethod.rank(topDocs, csiStats);
+        List<ShardedDocument> shardedDocuments = new ArrayList<>();
+        shardedDocuments.addAll(topDocs);
+        Map<String, Double> rankedCollections = selectionMethod.rank(shardedDocuments, csiStats);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getCollectionsShardStats() != null) {
             Map<String, Double> map = selectionMethod.normalize(rankedCollections, csiStats, shardsManager.getCollectionsShardStats());
@@ -205,7 +208,9 @@ public class SelectionManager implements Managed {
                 logger.error("{} not mapped to a topic!", topDoc.getScreen_name());
             }
         }
-        Map<String, Double> rankedTopics = selectionMethod.rank(topDocs, csiStats);
+        List<ShardedDocument> shardedDocuments = new ArrayList<>();
+        shardedDocuments.addAll(topDocs);
+        Map<String, Double> rankedTopics = selectionMethod.rank(shardedDocuments, csiStats);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getTopicsShardStats() != null) {
             Map<String, Double> map = selectionMethod.normalize(rankedTopics, shardStats, shardsManager.getTopicsShardStats());

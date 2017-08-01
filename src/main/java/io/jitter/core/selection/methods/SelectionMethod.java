@@ -1,6 +1,6 @@
 package io.jitter.core.selection.methods;
 
-import io.jitter.api.search.AbstractDocument;
+import io.jitter.api.search.ShardedDocument;
 import io.jitter.core.shards.ShardStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +15,9 @@ public abstract class SelectionMethod {
     SelectionMethod() {
     }
 
-    Map<String, Double> getCounts(List<? extends AbstractDocument> results) {
+    Map<String, Double> getCounts(List<ShardedDocument> results) {
         Map<String, Double> counts = new HashMap<>();
-        for (AbstractDocument result : results) {
+        for (ShardedDocument result : results) {
             String[] shardIds = result.getShardIds();
             for (String shardId : shardIds) {
                 if (!counts.containsKey(shardId)) {
@@ -31,7 +31,7 @@ public abstract class SelectionMethod {
         return counts;
     }
 
-    public abstract Map<String, Double> rank(List<? extends AbstractDocument> results, ShardStats csiStats);
+    public abstract Map<String, Double> rank(List<ShardedDocument> results, ShardStats csiStats);
 
     public Map<String, Double> normalize(Map<String, Double> rank, ShardStats csiStats, ShardStats shardStats) {
         double c_max = 1;

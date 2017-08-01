@@ -4,6 +4,7 @@ import cc.twittertools.util.QueryLikelihoodModel;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
+import io.jitter.api.search.ShardedDocument;
 import io.jitter.api.wikipedia.WikipediaDocument;
 import io.jitter.core.selection.Selection;
 import io.jitter.core.selection.SelectionComparator;
@@ -155,7 +156,9 @@ public class WikipediaSelectionManager implements Managed {
         for (WikipediaDocument topDoc : topDocs) {
             topDoc.setShardIds(topDoc.getCategories());
         }
-        Map<String, Double> rankedCollections = selectionMethod.rank(topDocs, csiStats);
+        List<ShardedDocument> shardedDocuments = new ArrayList<>();
+        shardedDocuments.addAll(topDocs);
+        Map<String, Double> rankedCollections = selectionMethod.rank(shardedDocuments, csiStats);
         SortedMap<String, Double> ranking = getSortedMap(rankedCollections);
         return limit(selectionMethod, ranking, maxCol, minRanks);
     }
@@ -165,7 +168,9 @@ public class WikipediaSelectionManager implements Managed {
         for (WikipediaDocument topDoc : topDocs) {
             topDoc.setShardIds(topDoc.getTopics());
         }
-        Map<String, Double> rankedTopics = selectionMethod.rank(topDocs, csiStats);
+        List<ShardedDocument> shardedDocuments = new ArrayList<>();
+        shardedDocuments.addAll(topDocs);
+        Map<String, Double> rankedTopics = selectionMethod.rank(shardedDocuments, csiStats);
         SortedMap<String, Double> ranking = getSortedMap(rankedTopics);
         return limit(selectionMethod, ranking, maxCol, minRanks);
     }
