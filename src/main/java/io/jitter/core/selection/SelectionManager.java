@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
-import io.jitter.api.search.AbstractDocument;
 import io.jitter.api.search.StatusDocument;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.selection.methods.RankS;
@@ -180,7 +179,10 @@ public class SelectionManager implements Managed {
     }
 
     public Map<String, Double> select(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
-        List<? extends AbstractDocument> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
+        List<StatusDocument> topDocs = (List<StatusDocument>) selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
+        for (StatusDocument topDoc : topDocs) {
+            topDoc.setShardIds(new String[]{topDoc.getScreen_name()});
+        }
         Map<String, Double> rankedCollections = selectionMethod.rank(topDocs, csiStats);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getCollectionsShardStats() != null) {
@@ -194,8 +196,16 @@ public class SelectionManager implements Managed {
     }
 
     public Map<String, Double> selectTopics(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
-        List<? extends AbstractDocument> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
-        Map<String, Double> rankedTopics = selectionMethod.rankTopics(topDocs, csiStats, shardStats, reverseTopicMap);
+        List<StatusDocument> topDocs = (List<StatusDocument>) selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
+        for (StatusDocument topDoc : topDocs) {
+            if (reverseTopicMap.containsKey(topDoc.getScreen_name().toLowerCase(Locale.ROOT))) {
+                String topic = reverseTopicMap.get(topDoc.getScreen_name().toLowerCase(Locale.ROOT)).toLowerCase(Locale.ROOT);
+                topDoc.setShardIds(new String[]{topic});
+            } else {
+                logger.error("{} not mapped to a topic!", topDoc.getScreen_name());
+            }
+        }
+        Map<String, Double> rankedTopics = selectionMethod.rank(topDocs, csiStats);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getTopicsShardStats() != null) {
             Map<String, Double> map = selectionMethod.normalize(rankedTopics, shardStats, shardsManager.getTopicsShardStats());

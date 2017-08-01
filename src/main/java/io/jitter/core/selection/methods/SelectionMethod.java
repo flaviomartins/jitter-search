@@ -33,28 +33,6 @@ public abstract class SelectionMethod {
 
     public abstract Map<String, Double> rank(List<? extends AbstractDocument> results, ShardStats csiStats);
 
-    public Map<String, Double> rankTopics(List<? extends AbstractDocument> results, ShardStats csiStats, ShardStats shardStats, Map<String, String> reverseTopicMap) {
-        Map<String, Double> rankedCollections = rank(results, csiStats);
-        Map<String, Double> rankedTopics = new HashMap<>();
-        for (String col : rankedCollections.keySet()) {
-            if (reverseTopicMap.containsKey(col.toLowerCase(Locale.ROOT))) {
-                String topic = reverseTopicMap.get(col.toLowerCase(Locale.ROOT)).toLowerCase(Locale.ROOT);
-                double cur = 0;
-
-                if (rankedTopics.containsKey(topic))
-                    cur = rankedTopics.get(topic);
-                else
-                    rankedTopics.put(topic, 0d);
-
-                double sum = cur + rankedCollections.get(col);
-                rankedTopics.put(topic, sum);
-            } else {
-                logger.warn("{} not mapped to a topic!", col);
-            }
-        }
-        return rankedTopics;
-    }
-
     public Map<String, Double> normalize(Map<String, Double> rank, ShardStats csiStats, ShardStats shardStats) {
         double c_max = 1;
         for (String shardId : rank.keySet()) {
