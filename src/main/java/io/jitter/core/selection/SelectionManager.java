@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
+import io.jitter.api.search.AbstractDocument;
 import io.jitter.api.search.StatusDocument;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.selection.methods.RankS;
@@ -179,7 +180,7 @@ public class SelectionManager implements Managed {
     }
 
     public Map<String, Double> select(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
-        List<StatusDocument> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
+        List<? extends AbstractDocument> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
         Map<String, Double> rankedCollections = selectionMethod.rank(topDocs, csiStats);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getCollectionsShardStats() != null) {
@@ -193,7 +194,7 @@ public class SelectionManager implements Managed {
     }
 
     public Map<String, Double> selectTopics(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
-        List<StatusDocument> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
+        List<? extends AbstractDocument> topDocs = selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
         Map<String, Double> rankedTopics = selectionMethod.rankTopics(topDocs, csiStats, shardStats, reverseTopicMap);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getTopicsShardStats() != null) {
@@ -233,21 +234,6 @@ public class SelectionManager implements Managed {
             }
         }
         return map;
-    }
-
-    public SelectionTopDocuments reScoreSelected(Iterable<Map.Entry<String, Double>> selectedTopics, List<StatusDocument> selectResults) {
-        List<StatusDocument> docs = new ArrayList<>();
-        for (StatusDocument doc : selectResults) {
-            StatusDocument updatedDocument = new StatusDocument(doc);
-            for (Map.Entry<String, Double> selectedTopic : selectedTopics) {
-                if (topics.get(selectedTopic.getKey()) != null && topics.get(selectedTopic.getKey()).contains(doc.getScreen_name())) {
-                    double newRsv = selectedTopic.getValue() * doc.getRsv();
-                    updatedDocument.setRsv(newRsv);
-                    docs.add(updatedDocument);
-                }
-            }
-        }
-        return new SelectionTopDocuments(docs.size(), docs);
     }
 
     public SelectionTopDocuments isearch(String query, String filterQuery, Filter filter, int n, boolean filterRT) throws IOException, ParseException {

@@ -1,6 +1,6 @@
 package io.jitter.core.selection.methods;
 
-import io.jitter.api.search.ShardedDocument;
+import io.jitter.api.search.AbstractDocument;
 import io.jitter.core.shards.ShardStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,23 +15,25 @@ public abstract class SelectionMethod {
     SelectionMethod() {
     }
 
-    Map<String, Double> getCounts(List<ShardedDocument> results) {
+    Map<String, Double> getCounts(List<? extends AbstractDocument> results) {
         Map<String, Double> counts = new HashMap<>();
-        for (ShardedDocument result : results) {
-            String shardId = result.getShardId();
-            if (!counts.containsKey(shardId)) {
-                counts.put(shardId, 1d);
-            } else {
-                double cur = counts.get(shardId);
-                counts.put(shardId, cur + 1d);
+        for (AbstractDocument result : results) {
+            String[] shardIds = result.getShardIds();
+            for (String shardId : shardIds) {
+                if (!counts.containsKey(shardId)) {
+                    counts.put(shardId, 1d);
+                } else {
+                    double cur = counts.get(shardId);
+                    counts.put(shardId, cur + 1d);
+                }
             }
         }
         return counts;
     }
 
-    public abstract Map<String, Double> rank(List<ShardedDocument> results, ShardStats csiStats);
+    public abstract Map<String, Double> rank(List<? extends AbstractDocument> results, ShardStats csiStats);
 
-    public Map<String, Double> rankTopics(List<ShardedDocument> results, ShardStats csiStats, ShardStats shardStats, Map<String, String> reverseTopicMap) {
+    public Map<String, Double> rankTopics(List<? extends AbstractDocument> results, ShardStats csiStats, ShardStats shardStats, Map<String, String> reverseTopicMap) {
         Map<String, Double> rankedCollections = rank(results, csiStats);
         Map<String, Double> rankedTopics = new HashMap<>();
         for (String col : rankedCollections.keySet()) {

@@ -1,6 +1,6 @@
 package io.jitter.core.selection;
 
-import io.jitter.api.search.ShardedDocument;
+import io.jitter.api.search.AbstractDocument;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ public class SelectionTopDocuments {
     public final int totalHits;
 
     /** The top hits for the query. */
-    public List<ShardedDocument> scoreDocs;
+    public List<? extends AbstractDocument> scoreDocs;
 
     /** The cost of selection for the query. */
     public int c_sel;
@@ -20,11 +20,11 @@ public class SelectionTopDocuments {
     public int c_r;
 
     /** Constructs a TopDocuments taking the size from the input */
-    public SelectionTopDocuments(List<ShardedDocument> scoreDocs) {
+    public SelectionTopDocuments(List<? extends AbstractDocument> scoreDocs) {
         this(scoreDocs.size(), scoreDocs);
     }
 
-    public SelectionTopDocuments(int totalHits, List<ShardedDocument> scoreDocs) {
+    public SelectionTopDocuments(int totalHits, List<? extends AbstractDocument> scoreDocs) {
         this.totalHits = totalHits;
         this.scoreDocs = scoreDocs;
     }

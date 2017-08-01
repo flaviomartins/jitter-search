@@ -1,6 +1,6 @@
 package io.jitter.core.selection.methods;
 
-import io.jitter.api.search.StatusDocument;
+import io.jitter.api.search.AbstractDocument;
 
 import java.util.HashMap;
 import java.util.List;
@@ -10,17 +10,19 @@ abstract class CRCS extends SelectionMethod {
     CRCS() {
     }
 
-    HashMap<String, Double> getScores(List<StatusDocument> results) {
+    HashMap<String, Double> getScores(List<? extends AbstractDocument> results) {
         HashMap<String, Double> scores = new HashMap<>();
         int j = 1;
-        for (StatusDocument result : results) {
+        for (AbstractDocument result : results) {
             double r = weight(j, results.size());
-            String shardId = result.getShardId();
-            if (!scores.containsKey(shardId)) {
-                scores.put(shardId, r);
-            } else {
-                double cur = scores.get(shardId);
-                scores.put(shardId, cur + r);
+            String[] shardIds = result.getShardIds();
+            for (String shardId : shardIds) {
+                if (!scores.containsKey(shardId)) {
+                    scores.put(shardId, r);
+                } else {
+                    double cur = scores.get(shardId);
+                    scores.put(shardId, cur + r);
+                }
             }
             j++;
         }

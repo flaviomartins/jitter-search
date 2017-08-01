@@ -7,7 +7,7 @@ import io.jitter.api.search.ShardedDocument;
 import io.jitter.core.wikipedia.WikipediaManager;
 
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"dataPoint", "docVector", "features"})
-public class WikipediaDocument extends AbstractDocument implements ShardedDocument {
+public class WikipediaDocument extends AbstractDocument implements Document, ShardedDocument {
 
     public String id; // required
     public double rsv; // required

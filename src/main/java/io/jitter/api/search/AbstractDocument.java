@@ -2,7 +2,7 @@ package io.jitter.api.search;
 
 import io.jitter.core.document.DocVector;
 
-public abstract class AbstractDocument implements Document {
+public abstract class AbstractDocument implements Document, ShardedDocument {
     private DocVector docVector;
 
     public abstract String getId();
@@ -24,4 +24,8 @@ public abstract class AbstractDocument implements Document {
     public void setDocVector(DocVector docVector) {
         this.docVector = docVector;
     }
+
+    public abstract String[] getShardIds();
+
+    public abstract void setShardIds(String[] shardIds);
 }

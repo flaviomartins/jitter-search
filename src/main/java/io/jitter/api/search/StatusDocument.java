@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.jitter.core.wikipedia.WikipediaManager;
 
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"docVector", "features"})
-public class StatusDocument extends AbstractRerankableDocument implements ShardedDocument {
+public class StatusDocument extends AbstractRerankableDocument implements Document, ShardedDocument {
 
     public long id; // required
     public double rsv; // required
