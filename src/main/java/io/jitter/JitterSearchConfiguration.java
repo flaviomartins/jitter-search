@@ -181,6 +181,7 @@ public class JitterSearchConfiguration extends Configuration {
         this.wikipediaManagerFactory = wikipediaManagerFactory;
     }
 
+    @JsonProperty("wikipediaselection")
     public WikipediaSelectionManagerFactory getWikipediaSelectionManagerFactory() {
         return wikipediaSelectionManagerFactory;
     }
