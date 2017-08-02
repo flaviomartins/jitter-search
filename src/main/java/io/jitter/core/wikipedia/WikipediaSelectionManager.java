@@ -334,8 +334,9 @@ public class WikipediaSelectionManager implements Managed {
         return selected;
     }
 
-    public CsiSelection selection(int limit, String method, int maxCol, Double minRanks, boolean normalize, String query, boolean full) throws IOException, ParseException {
-        return new CsiSelection(limit, method, maxCol, minRanks, normalize, query, full).invoke();
+    public CsiSelection selection(int limit, String method, int maxCol, Double minRanks, boolean normalize,
+                                  String query, boolean full, boolean topics) throws IOException, ParseException {
+        return new CsiSelection(limit, method, maxCol, minRanks, normalize, query, full, topics).invoke();
     }
 
     public class CsiSelection implements Selection {
@@ -346,11 +347,12 @@ public class WikipediaSelectionManager implements Managed {
         private final boolean normalize;
         private final String query;
         private final boolean full;
+        private final boolean topics;
         private SelectionTopDocuments results;
-        private Map<String, Double> sources;
-        private Map<String, Double> topics;
+        private Map<String, Double> collections;
 
-        public CsiSelection(int limit, String method, int maxCol, double minRanks, boolean normalize, String query, boolean full) {
+        public CsiSelection(int limit, String method, int maxCol, double minRanks, boolean normalize, String query,
+                            boolean full, boolean topics) {
             this.limit = limit;
             this.method = method;
             this.maxCol = maxCol;
@@ -358,6 +360,7 @@ public class WikipediaSelectionManager implements Managed {
             this.normalize = normalize;
             this.query = query;
             this.full = full;
+            this.topics = topics;
         }
 
         @Override
@@ -366,20 +369,18 @@ public class WikipediaSelectionManager implements Managed {
         }
 
         @Override
-        public Map<String, Double> getSources() {
-            return sources;
-        }
-
-        @Override
-        public Map<String, Double> getTopics() {
-            return topics;
+        public Map<String, Double> getCollections() {
+            return collections;
         }
 
         public CsiSelection invoke() throws IOException, ParseException {
             results = search(query, limit, full);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-            sources = select(results, limit, selectionMethod, maxCol, minRanks, normalize);
-            topics = selectTopics(results, limit, selectionMethod, maxCol, minRanks, normalize);
+            if (topics) {
+                collections = select(results, limit, selectionMethod, maxCol, minRanks, normalize);
+            } else {
+                collections = selectTopics(results, limit, selectionMethod, maxCol, minRanks, normalize);
+            }
             return this;
         }
     }

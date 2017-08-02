@@ -78,12 +78,13 @@ public class SelectSearchResource extends AbstractFeedbackResource {
 
         Selection selection;
         if ("taily".equalsIgnoreCase(method)) {
-            selection = tailyManager.selection(query, v);
+            selection = tailyManager.selection(query, v, topics);
         } else {
-            selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize);
+            selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture,
+                    method, maxCol, minRanks, normalize, topics);
         }
 
-        Set<String> selected = topics ? selection.getTopics().keySet() : selection.getSources().keySet();
+        Set<String> selected = selection.getCollections().keySet();
 
         SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, retweets, sFuture, limit, topics, query, filterQuery, selected);
 
@@ -92,7 +93,7 @@ public class SelectSearchResource extends AbstractFeedbackResource {
         logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), shardResults.totalHits, query));
 
         ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selection.getSources().entrySet(), selection.getTopics().entrySet(), method, 0, selection.getResults(), shardResults);
+        SelectionSearchDocumentsResponse documentsResponse = new SelectionSearchDocumentsResponse(selection.getCollections().entrySet(), method, 0, selection.getResults(), shardResults);
         return new SelectionSearchResponse(responseHeader, documentsResponse);
     }
 }

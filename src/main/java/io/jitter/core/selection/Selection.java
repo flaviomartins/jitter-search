@@ -6,7 +6,6 @@ public interface Selection {
 
     SelectionTopDocuments getResults();
 
-    Map<String, Double> getSources();
+    Map<String, Double> getCollections();
 
-    Map<String, Double> getTopics();
 }

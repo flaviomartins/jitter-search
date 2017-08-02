@@ -432,18 +432,8 @@ public class SelectionManager implements Managed {
         return selectResults;
     }
 
-    public Map<String, Double> select(int limit, boolean topics, int maxCol, Double minRanks, boolean normalize, SelectionTopDocuments selectResults, SelectionMethod selectionMethod) {
-        Map<String, Double> selected;
-        if (!topics) {
-            selected = select(selectResults, limit, selectionMethod, maxCol, minRanks, normalize);
-        } else {
-            selected = selectTopics(selectResults, limit, selectionMethod, maxCol, minRanks, normalize);
-        }
-        return selected;
-    }
-
-    public CsiSelection selection(String query, String filterQuery, Optional<Long> maxId, long[] epochs, int limit, boolean retweets, boolean future, String method, int maxCol, Double minRanks, boolean normalize) throws IOException, ParseException {
-        return new CsiSelection(query, filterQuery, maxId, epochs, limit, retweets, future, method, maxCol, minRanks, normalize).invoke();
+    public CsiSelection selection(String query, String filterQuery, Optional<Long> maxId, long[] epochs, int limit, boolean retweets, boolean future, String method, int maxCol, Double minRanks, boolean normalize, boolean topics) throws IOException, ParseException {
+        return new CsiSelection(query, filterQuery, maxId, epochs, limit, retweets, future, method, maxCol, minRanks, normalize, topics).invoke();
     }
 
     public boolean isIndexing() {
@@ -455,6 +445,7 @@ public class SelectionManager implements Managed {
         private final String filterQuery;
         private final Optional<Long> maxId;
         private final long[] epochs;
+        private final boolean topics;
         private final int limit;
         private final boolean retweets;
         private final boolean future;
@@ -463,10 +454,11 @@ public class SelectionManager implements Managed {
         private final double minRanks;
         private final boolean normalize;
         private SelectionTopDocuments results;
-        private Map<String, Double> sources;
-        private Map<String, Double> topics;
+        private Map<String, Double> collections;
 
-        public CsiSelection(String query, String filterQuery, Optional<Long> maxId, long[] epochs, int limit, boolean retweets, boolean future, String method, int maxCol, double minRanks, boolean normalize) {
+        public CsiSelection(String query, String filterQuery, Optional<Long> maxId, long[] epochs, int limit,
+                            boolean retweets, boolean future,
+                            String method, int maxCol, double minRanks, boolean normalize, boolean topics) {
             this.query = query;
             this.filterQuery = filterQuery;
             this.maxId = maxId;
@@ -478,6 +470,7 @@ public class SelectionManager implements Managed {
             this.minRanks = minRanks;
             this.normalize = normalize;
             this.epochs = epochs;
+            this.topics = topics;
         }
 
         @Override
@@ -486,20 +479,18 @@ public class SelectionManager implements Managed {
         }
 
         @Override
-        public Map<String, Double> getSources() {
-            return sources;
-        }
-
-        @Override
-        public Map<String, Double> getTopics() {
-            return topics;
+        public Map<String, Double> getCollections() {
+            return collections;
         }
 
         public CsiSelection invoke() throws IOException, ParseException {
             results = search(query, filterQuery, maxId, limit, retweets, epochs, future);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
-            sources = select(results, limit, selectionMethod, maxCol, minRanks, normalize);
-            topics = selectTopics(results, limit, selectionMethod, maxCol, minRanks, normalize);
+            if (topics) {
+                collections = selectTopics(results, limit, selectionMethod, maxCol, minRanks, normalize);
+            } else {
+                collections = select(results, limit, selectionMethod, maxCol, minRanks, normalize);
+            }
             return this;
         }
     }
