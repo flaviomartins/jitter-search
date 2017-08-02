@@ -8,11 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@JsonPropertyOrder({"method", "c_sel", "c_r", "sources", "topics", "numFound", "start", "selectDocs", "docs"})
+@JsonPropertyOrder({"method", "c_sel", "c_r", "collections", "numFound", "start", "selectDocs", "docs"})
 public class SelectionSearchDocumentsResponse {
 
-    private Set<Map.Entry<String, Double>> sources;
-    private Set<Map.Entry<String, Double>> topics;
+    private Set<Map.Entry<String, Double>> collections;
     private String method;
     private int c_sel;
     private int c_r;
@@ -25,9 +24,8 @@ public class SelectionSearchDocumentsResponse {
         // Jackson deserialization
     }
 
-    public SelectionSearchDocumentsResponse(Set<Map.Entry<String, Double>> sources, Set<Map.Entry<String, Double>> topics, String method, int numFound, int start, List<?> selectDocs, List<?> shardDocs) {
-        this.sources = sources;
-        this.topics = topics;
+    public SelectionSearchDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int numFound, int start, List<?> selectDocs, List<?> shardDocs) {
+        this.collections = collections;
         this.method = method;
         this.numFound = numFound;
         this.start = start;
@@ -35,9 +33,8 @@ public class SelectionSearchDocumentsResponse {
         this.shardDocs = shardDocs;
     }
 
-    public SelectionSearchDocumentsResponse(Set<Map.Entry<String, Double>> sources, Set<Map.Entry<String, Double>> topics, String method, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments shardTopDocuments) {
-        this.sources = sources;
-        this.topics = topics;
+    public SelectionSearchDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments shardTopDocuments) {
+        this.collections = collections;
         this.method = method;
         if (selectionTopDocuments != null) {
             this.selectDocs = selectionTopDocuments.scoreDocs;
@@ -51,9 +48,8 @@ public class SelectionSearchDocumentsResponse {
         this.start = start;
     }
 
-    public SelectionSearchDocumentsResponse(Set<Map.Entry<String, Double>> sources, Set<Map.Entry<String, Double>> topics, String method, int c_sel, int start, List<?> selectDocs, SelectionTopDocuments shardTopDocuments) {
-        this.sources = sources;
-        this.topics = topics;
+    public SelectionSearchDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int c_sel, int start, List<?> selectDocs, SelectionTopDocuments shardTopDocuments) {
+        this.collections = collections;
         this.method = method;
         this.selectDocs = selectDocs;
         this.c_sel = c_sel;
@@ -76,8 +72,8 @@ public class SelectionSearchDocumentsResponse {
     }
 
     @JsonProperty
-    public Set<Map.Entry<String, Double>> getSources() {
-        return sources;
+    public Set<Map.Entry<String, Double>> getCollections() {
+        return collections;
     }
 
     @JsonProperty
@@ -88,11 +84,6 @@ public class SelectionSearchDocumentsResponse {
     @JsonProperty
     public String getMethod() {
         return method;
-    }
-
-    @JsonProperty
-    public Set<Map.Entry<String, Double>> getTopics() {
-        return topics;
     }
 
     @JsonProperty

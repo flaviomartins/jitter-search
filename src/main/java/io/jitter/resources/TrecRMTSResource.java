@@ -111,18 +111,17 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
 
             Selection selection;
             if ("taily".equalsIgnoreCase(method)) {
-                selection = tailyManager.selection(query, v);
+                selection = tailyManager.selection(query, v, topics);
             } else {
-                selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize);
+                selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture,
+                        method, maxCol, minRanks, normalize, topics);
             }
 
             Set<String> selected;
             if (topic.isPresent()) {
                 selected = Sets.newHashSet(topic.get());
             } else {
-                Set<String> fbSourcesEnabled = Sets.newHashSet(Iterables.limit(selection.getSources().keySet(), fbCols));
-                Set<String> fbTopicsEnabled = Sets.newHashSet(Iterables.limit(selection.getTopics().keySet(), fbCols));
-                selected = topics ? fbTopicsEnabled : fbSourcesEnabled;
+                selected = Sets.newHashSet(Iterables.limit(selection.getCollections().keySet(), fbCols));
             }
 
             SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, sRetweets, sFuture, fbDocs, topics, query, filterQuery, selected);
@@ -150,7 +149,7 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
             logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
 
             ResponseHeader responseHeader = new ResponseHeader(counter.incrementAndGet(), 0, (endTime - startTime), params);
-            RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selection.getSources().entrySet(), selection.getTopics().entrySet(), method, 0, selection.getResults(), shardResults, results);
+            RMTSDocumentsResponse documentsResponse = new RMTSDocumentsResponse(selection.getCollections().entrySet(), method, 0, selection.getResults(), shardResults, results);
             return new SelectionSearchResponse(responseHeader, documentsResponse);
         } catch (ParseException pe) {
             throw new BadRequestException(pe.getClass().getSimpleName());

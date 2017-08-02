@@ -135,8 +135,8 @@ public class TailyManager implements Managed {
         return ranking;
     }
 
-    public TailySelection selection(String query, int v) {
-        return new TailySelection(query, v).invoke();
+    public TailySelection selection(String query, int v, boolean topics) {
+        return new TailySelection(query, v, topics).invoke();
     }
 
     public boolean isIndexing() {
@@ -146,12 +146,13 @@ public class TailyManager implements Managed {
     public class TailySelection implements Selection {
         private final String query;
         private final int v;
-        private Map<String, Double> sources;
-        private Map<String, Double> topics;
+        private final boolean topics;
+        private Map<String, Double> collections;
 
-        public TailySelection(String query, int v) {
+        public TailySelection(String query, int v, boolean topics) {
             this.query = query;
             this.v = v;
+            this.topics = topics;
         }
 
         @Override
@@ -160,18 +161,16 @@ public class TailyManager implements Managed {
         }
 
         @Override
-        public Map<String, Double> getSources() {
-            return sources;
-        }
-
-        @Override
-        public Map<String, Double> getTopics() {
-            return topics;
+        public Map<String, Double> getCollections() {
+            return collections;
         }
 
         public TailySelection invoke() {
-            sources = select(query, v);
-            topics = selectTopics(query, v);
+            if (topics) {
+                collections = selectTopics(query, v);
+            } else {
+                collections = select(query, v);
+            }
             return this;
         }
     }

@@ -96,25 +96,21 @@ public class SelectionResource {
             int c_sel;
             Selection selection;
             if ("taily".equalsIgnoreCase(method)) {
-                selection = tailyManager.selection(query, v);
+                selection = tailyManager.selection(query, v, topics);
                 if (topics) {
                     c_sel = tailyManager.getTopics().size();
                 } else {
                     c_sel = tailyManager.getUsers().size();
                 }
             } else {
-                selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture, method, maxCol, minRanks, normalize);
+                selection = selectionManager.selection(query, filterQuery, maxId, epochs, sLimit, sRetweets, sFuture,
+                        method, maxCol, minRanks, normalize, topics);
                 SelectionTopDocuments selectionTopDocuments = selection.getResults();
                 c_sel = selectionTopDocuments.getC_sel();
                 totalHits = selectionTopDocuments.totalHits;
             }
 
-            Map<String, Double> selected;
-            if (topics) {
-                selected = selection.getTopics();
-            } else {
-                selected = selection.getSources();
-            }
+            Map<String, Double> selected = selection.getCollections();
 
             long endTime = System.currentTimeMillis();
             logger.info(String.format(Locale.ENGLISH, "%4dms %4dhits %s", (endTime - startTime), totalHits, query));
