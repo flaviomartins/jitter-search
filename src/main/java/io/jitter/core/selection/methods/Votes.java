@@ -6,13 +6,13 @@ import io.jitter.core.shards.ShardStats;
 import java.util.List;
 import java.util.Map;
 
-public class Votes extends SelectionMethod {
+public class Votes<E extends ShardedDocument> extends SelectionMethod<E> {
 
     Votes() {
     }
 
     @Override
-    public Map<String, Double> rank(List<ShardedDocument> results, ShardStats csiStats) {
+    public Map<String, Double> rank(List<E> results, ShardStats csiStats) {
         return getCounts(results);
     }
 }

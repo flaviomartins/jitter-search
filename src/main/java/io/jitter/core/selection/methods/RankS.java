@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class RankS extends SelectionMethod {
+public class RankS<E extends ShardedDocument> extends SelectionMethod<E> {
     // Recommended range for the exponent base is [10, 100]
     private final int B;
     private final boolean useScores;
@@ -23,7 +23,7 @@ public class RankS extends SelectionMethod {
     }
 
     @Override
-    public Map<String, Double> rank(List<ShardedDocument> results, ShardStats csiStats) {
+    public Map<String, Double> rank(List<E> results, ShardStats csiStats) {
         Map<String, Double> counts = getCounts(results);
 
         double minRsv = 0;
@@ -76,7 +76,7 @@ public class RankS extends SelectionMethod {
         return map;
     }
 
-    private double getMinRsv(List<ShardedDocument> results) {
+    private double getMinRsv(List<E> results) {
         double minRsv = Double.MAX_VALUE;
         for (ShardedDocument result : results) {
             if (result.getRsv() < minRsv) {

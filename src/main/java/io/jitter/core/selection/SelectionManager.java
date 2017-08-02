@@ -184,9 +184,7 @@ public class SelectionManager implements Managed {
         for (StatusDocument topDoc : topDocs) {
             topDoc.setShardIds(new String[]{topDoc.getScreen_name()});
         }
-        List<ShardedDocument> shardedDocuments = new ArrayList<>();
-        shardedDocuments.addAll(topDocs);
-        Map<String, Double> rankedCollections = selectionMethod.rank(shardedDocuments, csiStats);
+        Map<String, Double> rankedCollections = selectionMethod.rank(topDocs, csiStats);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getCollectionsShardStats() != null) {
             Map<String, Double> map = selectionMethod.normalize(rankedCollections, csiStats, shardsManager.getCollectionsShardStats());
@@ -208,9 +206,7 @@ public class SelectionManager implements Managed {
                 logger.error("{} not mapped to a topic!", topDoc.getScreen_name());
             }
         }
-        List<ShardedDocument> shardedDocuments = new ArrayList<>();
-        shardedDocuments.addAll(topDocs);
-        Map<String, Double> rankedTopics = selectionMethod.rank(shardedDocuments, shardStats);
+        Map<String, Double> rankedTopics = selectionMethod.rank(topDocs, shardStats);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getTopicsShardStats() != null) {
             Map<String, Double> map = selectionMethod.normalize(rankedTopics, shardStats, shardsManager.getTopicsShardStats());

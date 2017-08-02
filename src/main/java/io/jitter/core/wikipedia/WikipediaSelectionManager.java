@@ -156,9 +156,7 @@ public class WikipediaSelectionManager implements Managed {
         for (WikipediaDocument topDoc : topDocs) {
             topDoc.setShardIds(topDoc.getCategories());
         }
-        List<ShardedDocument> shardedDocuments = new ArrayList<>();
-        shardedDocuments.addAll(topDocs);
-        Map<String, Double> rankedCollections = selectionMethod.rank(shardedDocuments, csiStats);
+        Map<String, Double> rankedCollections = selectionMethod.rank(topDocs, csiStats);
         SortedMap<String, Double> ranking = getSortedMap(rankedCollections);
         return limit(selectionMethod, ranking, maxCol, minRanks);
     }
@@ -168,9 +166,7 @@ public class WikipediaSelectionManager implements Managed {
         for (WikipediaDocument topDoc : topDocs) {
             topDoc.setShardIds(topDoc.getTopics());
         }
-        List<ShardedDocument> shardedDocuments = new ArrayList<>();
-        shardedDocuments.addAll(topDocs);
-        Map<String, Double> rankedTopics = selectionMethod.rank(shardedDocuments, shardStats);
+        Map<String, Double> rankedTopics = selectionMethod.rank(topDocs, shardStats);
         SortedMap<String, Double> ranking = getSortedMap(rankedTopics);
         return limit(selectionMethod, ranking, maxCol, minRanks);
     }
