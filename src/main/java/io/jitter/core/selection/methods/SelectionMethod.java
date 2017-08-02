@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public abstract class SelectionMethod {
+public abstract class SelectionMethod<E extends ShardedDocument> {
 
     private static final Logger logger = LoggerFactory.getLogger(SelectionMethod.class);
 
@@ -15,7 +15,7 @@ public abstract class SelectionMethod {
     SelectionMethod() {
     }
 
-    Map<String, Double> getCounts(List<ShardedDocument> results) {
+    Map<String, Double> getCounts(List<E> results) {
         Map<String, Double> counts = new HashMap<>();
         for (ShardedDocument result : results) {
             String[] shardIds = result.getShardIds();
@@ -31,7 +31,7 @@ public abstract class SelectionMethod {
         return counts;
     }
 
-    public abstract Map<String, Double> rank(List<ShardedDocument> results, ShardStats csiStats);
+    public abstract Map<String, Double> rank(List<E> results, ShardStats csiStats);
 
     public Map<String, Double> normalize(Map<String, Double> rank, ShardStats csiStats, ShardStats shardStats) {
         double c_max = 1;

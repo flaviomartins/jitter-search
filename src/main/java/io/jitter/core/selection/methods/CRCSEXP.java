@@ -6,7 +6,7 @@ import io.jitter.core.shards.ShardStats;
 import java.util.List;
 import java.util.Map;
 
-public class CRCSEXP extends CRCS {
+public class CRCSEXP<E extends ShardedDocument> extends CRCS<E> {
 
     private float alpha = 1.2f;
     private float beta = 0.28f;
@@ -15,7 +15,7 @@ public class CRCSEXP extends CRCS {
     }
 
     @Override
-    public Map<String, Double> rank(List<ShardedDocument> results, ShardStats csiStats) {
+    public Map<String, Double> rank(List<E> results, ShardStats csiStats) {
         return getScores(results);
     }
 

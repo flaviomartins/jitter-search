@@ -5,15 +5,15 @@ import io.jitter.api.search.ShardedDocument;
 import java.util.HashMap;
 import java.util.List;
 
-abstract class CRCS extends SelectionMethod {
+abstract class CRCS<E extends ShardedDocument> extends SelectionMethod<E> {
 
     CRCS() {
     }
 
-    HashMap<String, Double> getScores(List<ShardedDocument> results) {
+    HashMap<String, Double> getScores(List<E> results) {
         HashMap<String, Double> scores = new HashMap<>();
         int j = 1;
-        for (ShardedDocument result : results) {
+        for (E result : results) {
             double r = weight(j, results.size());
             String[] shardIds = result.getShardIds();
             for (String shardId : shardIds) {
