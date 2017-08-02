@@ -210,7 +210,7 @@ public class SelectionManager implements Managed {
         }
         List<ShardedDocument> shardedDocuments = new ArrayList<>();
         shardedDocuments.addAll(topDocs);
-        Map<String, Double> rankedTopics = selectionMethod.rank(shardedDocuments, csiStats);
+        Map<String, Double> rankedTopics = selectionMethod.rank(shardedDocuments, shardStats);
         SortedMap<String, Double> ranking;
         if (normalize && shardsManager.getTopicsShardStats() != null) {
             Map<String, Double> map = selectionMethod.normalize(rankedTopics, shardStats, shardsManager.getTopicsShardStats());
