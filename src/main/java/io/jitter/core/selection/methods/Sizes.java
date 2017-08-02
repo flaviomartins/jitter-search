@@ -20,9 +20,4 @@ public class Sizes extends SelectionMethod {
         }
         return sizes;
     }
-
-    @Override
-    public Map<String, Double> normalize(Map<String, Double> rank, ShardStats csiStats, ShardStats shardStats) {
-        return rank;
-    }
 }
