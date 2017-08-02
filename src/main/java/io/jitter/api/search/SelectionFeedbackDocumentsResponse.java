@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@JsonPropertyOrder({"method", "c_sel", "c_r", "sources", "topics", "fbDocs", "fbTerms", "fbFeatures", "fbFeaturesSize", "fbJaccSimilarity", "shardsFV", "feedbackFV", "fbVector", "numFound", "start", "selectDocs", "shardDocs", "docs"})
+@JsonPropertyOrder({"method", "c_sel", "c_r", "collection", "fbDocs", "fbTerms", "fbFeatures", "fbFeaturesSize", "fbJaccSimilarity", "shardsFV", "feedbackFV", "fbVector", "numFound", "start", "selectDocs", "shardDocs", "docs"})
 public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocumentsResponse {
 
     private int fbDocs;
@@ -27,8 +27,8 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
         // Jackson deserialization
     }
 
-    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> sources, Set<Map.Entry<String, Double>> topics, String method, int fbDocs, int fbTerms, Map<String, Float> shardsFV, Map<String, Float> feedbackFV, Map<String, Float> fbVector, int numFound, int start, List<?> selectDocs, List<?> shardDocs) {
-        super(sources, topics, method, numFound, start, selectDocs, shardDocs);
+    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int fbDocs, int fbTerms, Map<String, Float> shardsFV, Map<String, Float> feedbackFV, Map<String, Float> fbVector, int numFound, int start, List<?> selectDocs, List<?> shardDocs) {
+        super(collections, method, numFound, start, selectDocs, shardDocs);
         this.fbDocs = fbDocs;
         this.fbTerms = fbTerms;
         this.shardsFV = shardsFV;
@@ -36,8 +36,8 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
         this.fbVector = fbVector;
     }
 
-    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> sources, Set<Map.Entry<String, Double>> topics, String method, int fbDocs, int fbTerms, Map<String, Float> shardsFV, Map<String, Float> feedbackFV, Map<String, Float> fbVector, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments shardDocuments, TopDocuments topDocuments) {
-        super(sources, topics, method, start, selectionTopDocuments, shardDocuments);
+    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int fbDocs, int fbTerms, Map<String, Float> shardsFV, Map<String, Float> feedbackFV, Map<String, Float> fbVector, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments shardDocuments, TopDocuments topDocuments) {
+        super(collections, method, start, selectionTopDocuments, shardDocuments);
         this.fbDocs = fbDocs;
         this.fbTerms = fbTerms;
         this.shardsFV = shardsFV;
@@ -49,8 +49,8 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
         }
     }
 
-    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> sources, Set<Map.Entry<String, Double>> topics, String method, int c_sel, int fbDocs, int fbTerms, Map<String, Float> shardsFV, Map<String, Float> feedbackFV, Map<String, Float> fbVector, int start, List<?> selectDocs, SelectionTopDocuments shardDocuments, TopDocuments topDocuments) {
-        super(sources, topics, method, c_sel, start, selectDocs, shardDocuments);
+    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int c_sel, int fbDocs, int fbTerms, Map<String, Float> shardsFV, Map<String, Float> feedbackFV, Map<String, Float> fbVector, int start, List<?> selectDocs, SelectionTopDocuments shardDocuments, TopDocuments topDocuments) {
+        super(collections, method, c_sel, start, selectDocs, shardDocuments);
         this.fbDocs = fbDocs;
         this.fbTerms = fbTerms;
         this.shardsFV = shardsFV;
