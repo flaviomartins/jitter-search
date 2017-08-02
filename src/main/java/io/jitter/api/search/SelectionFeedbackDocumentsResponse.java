@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@JsonPropertyOrder({"method", "c_sel", "c_r", "collection", "fbDocs", "fbTerms", "fbFeatures", "fbFeaturesSize", "fbJaccSimilarity", "shardsFV", "feedbackFV", "fbVector", "numFound", "start", "selectDocs", "shardDocs", "docs"})
+@JsonPropertyOrder({"method", "c_sel", "c_r", "collections", "fbDocs", "fbTerms", "fbFeatures", "fbFeaturesSize", "fbJaccSimilarity", "shardsFV", "feedbackFV", "fbVector", "numFound", "start", "selectDocs", "shardDocs", "docs"})
 public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocumentsResponse {
 
     private int fbDocs;
