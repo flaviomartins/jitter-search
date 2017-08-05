@@ -10,6 +10,7 @@ import io.dropwizard.jersey.caching.CacheControl;
 import io.dropwizard.jersey.params.DateTimeParam;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.core.rerank.MaxTFFilter;
+import io.jitter.core.rerank.RMTSReranker;
 import io.jitter.core.rerank.RerankerCascade;
 import io.jitter.core.rerank.RerankerContext;
 import io.jitter.core.search.TopDocuments;
@@ -97,6 +98,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
                                           @ApiParam(value = "Number of feedback collections") @QueryParam("fbCols") @DefaultValue("3") Integer fbCols,
                                           @ApiParam(hidden = true) @QueryParam("fbMerge") @DefaultValue("false") Boolean fbMerge,
                                           @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
+                                          @ApiParam(value = "Use temporal reranking") @QueryParam("temporal") @DefaultValue("false") Boolean temporal,
                                           @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -164,6 +166,9 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             TopDocuments results = searchManager.search(finalQuery, filterQuery, maxId, limit, retweets, epochs);
 
             RerankerCascade cascade = new RerankerCascade();
+            if (temporal) {
+                cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, shardResults.scoreDocs, searchManager.getCollectionStats(), limit, limit));
+            }
             cascade.add(new MaxTFFilter(5));
 
             RerankerContext context = new RerankerContext(null, null, "MB000", query,
