@@ -190,7 +190,9 @@ public class ShardsManager implements Managed {
         }
         if (selectedSources != null && !selectedSources.isEmpty()) {
             for (StatusDocument doc : topDocs) {
-                ImmutableSet<String> shardIds = ImmutableSet.copyOf(doc.getShardIds());
+                ImmutableSortedSet<String> shardIds = new ImmutableSortedSet.Builder<>(String.CASE_INSENSITIVE_ORDER)
+                        .addAll(ImmutableSet.copyOf(doc.getShardIds()))
+                        .build();
                 if (Sets.intersection(selectedSources, shardIds).size() > 0) {
                     shardedDocs.add(doc);
                 }
@@ -237,7 +239,9 @@ public class ShardsManager implements Managed {
         }
         if (selectedTopics != null && !selectedTopics.isEmpty()) {
             for (StatusDocument doc : topDocs) {
-                ImmutableSet<String> shardIds = ImmutableSet.copyOf(doc.getShardIds());
+                ImmutableSortedSet<String> shardIds = new ImmutableSortedSet.Builder<>(String.CASE_INSENSITIVE_ORDER)
+                        .addAll(ImmutableSet.copyOf(doc.getShardIds()))
+                        .build();
                 for (String selectedTopic : selectedTopics) {
                     if (topics.get(selectedTopic) != null && Sets.intersection(topics.get(selectedTopic), shardIds).size() > 0) {
                         shardedDocs.add(doc);
