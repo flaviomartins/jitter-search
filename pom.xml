@@ -21,10 +21,10 @@
         <jitter.url>http://www.jitter.io</jitter.url>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <dropwizard.version>1.1.3</dropwizard.version>
+        <dropwizard.version>1.1.4</dropwizard.version>
         <guava.version>21.0</guava.version>
         <jersey.version>2.25.1</jersey.version>
-        <jackson.version>2.8.9</jackson.version>
+        <jackson.version>2.8.10</jackson.version>
         <jetty.version>9.4.6.v20170531</jetty.version>
         <servlet.version>3.0.0.v201112011016</servlet.version>
         <metrics3.version>3.2.2</metrics3.version>
@@ -45,9 +45,9 @@
         <ranklib.version>2.8</ranklib.version>
         <kstem.version>3.4</kstem.version>
 
-        <sqlite-jdbc.version>3.19.3</sqlite-jdbc.version>
+        <sqlite-jdbc.version>3.20.0</sqlite-jdbc.version>
         <je.version>7.0.6</je.version>
-        <rocksdbjni.version>5.1.2</rocksdbjni.version>
+        <rocksdbjni.version>5.7.2</rocksdbjni.version>
 
         <twittertools.version>1.4.6-SNAPSHOT</twittertools.version>
         <!--
