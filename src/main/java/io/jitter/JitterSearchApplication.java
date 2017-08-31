@@ -125,11 +125,15 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final WikipediaFeedbackResource wikipediaFeedbackResource = new WikipediaFeedbackResource(searchManager, wikipediaManager);
         environment.jersey().register(wikipediaFeedbackResource);
 
+        final WikipediaShardsManager wikipediaShardsManager = configuration.getWikipediaShardsManagerFactory().build(environment, configuration.isLive());
+
         final WikipediaSelectionManager wikipediaSelectionManager = configuration.getWikipediaSelectionManagerFactory().build(environment, configuration.isLive());
+        // sharding
+        wikipediaSelectionManager.setShardsManager(wikipediaShardsManager);
+
         final WikipediaSelectionResource wikipediaSelectionResource = new WikipediaSelectionResource(wikipediaSelectionManager);
         environment.jersey().register(wikipediaSelectionResource);
 
-        final WikipediaShardsManager wikipediaShardsManager = configuration.getWikipediaShardsManagerFactory().build(environment, configuration.isLive());
         final WikipediaSelectSearchResource wikipediaSelectSearchResource = new WikipediaSelectSearchResource(wikipediaSelectionManager, wikipediaShardsManager);
         environment.jersey().register(wikipediaSelectSearchResource);
 
