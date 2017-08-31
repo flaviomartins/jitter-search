@@ -1,10 +1,14 @@
 package io.jitter.core.wikipedia;
 
 import io.jitter.core.shards.ShardStats;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +52,7 @@ public class WikipediaShardStatsBuilder {
     public void collectStats() throws IOException {
         Map<String, Integer> collectionsSizes = new HashMap<>();
         Map<String, Integer> topicsSizes = new HashMap<>();
+        Map<String, IntSet> topicPostings = new HashMap<>();
 
         Terms terms = MultiFields.getTerms(reader, WikipediaSelectionManager.CATEGORIES_FIELD);
         TermsEnum termEnum = terms.iterator();
@@ -68,12 +73,14 @@ public class WikipediaShardStatsBuilder {
 
             Set<String> catTopics = categoryMapper.getMap().get(collection);
             if (catTopics != null ) {
-                for (String catTopic : catTopics) {
-                    if (topicsSizes.get(catTopic) == null) {
-                        topicsSizes.put(catTopic, docFreq);
-                    } else {
-                        int sz = topicsSizes.get(catTopic);
-                        topicsSizes.put(catTopic, sz + docFreq);
+                PostingsEnum postingsEnum = termEnum.postings(null, PostingsEnum.NONE);
+                int docId;
+                while ((docId = postingsEnum.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+                    for (String catTopic : catTopics) {
+                        if (topicPostings.get(catTopic) == null) {
+                            topicPostings.put(catTopic, new IntOpenHashSet());
+                        }
+                        topicPostings.get(catTopic).add(docId);
                     }
                 }
             }
@@ -82,13 +89,14 @@ public class WikipediaShardStatsBuilder {
         }
         logger.info("total collections: " + colCnt);
 
-        for (String topic : topicsSizes.keySet()) {
+        for (String topic : topicPostings.keySet()) {
+            topicsSizes.put(topic, topicPostings.get(topic).size());
             logger.info("topic {}: {} = {}", topic, "#d", topicsSizes.get(topic));
         }
         logger.info("total topics: " + topicsSizes.size());
 
-        collectionsShardStats = new ShardStats(collectionsSizes);
-        topicsShardStats = new ShardStats(topicsSizes);
+        collectionsShardStats = new ShardStats(collectionsSizes, reader.numDocs());
+        topicsShardStats = new ShardStats(topicsSizes, reader.numDocs());
 
         logger.info("total docs: " + collectionsShardStats.getTotalDocs() + " - " + topicsShardStats.getTotalDocs());
     }
