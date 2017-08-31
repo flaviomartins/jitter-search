@@ -239,14 +239,14 @@ public class WikipediaSelectionManager implements Managed {
         List<WikipediaDocument> docs = WikipediaSearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n);
 
         for (WikipediaDocument doc : docs) {
-            HashSet<Object> topics = new HashSet<>();
+            HashSet<Object> docTopics = new HashSet<>();
             for (String cat : doc.getCategories()) {
                 Set<String> catTopics = categoryMapper.getMap().get(cat);
                 if (catTopics != null) {
-                    topics.addAll(catTopics);
+                    docTopics.addAll(catTopics);
                 }
             }
-            doc.setTopics(topics.toArray(new String[topics.size()]));
+            doc.setTopics(docTopics.toArray(new String[docTopics.size()]));
 
             if (!full) {
                 doc.setText(StringUtils.abbreviate(doc.getText(), 500));
@@ -373,9 +373,9 @@ public class WikipediaSelectionManager implements Managed {
             results = search(query, limit, full);
             SelectionMethod selectionMethod = SelectionMethodFactory.getMethod(method);
             if (topics) {
-                collections = select(results, limit, selectionMethod, maxCol, minRanks, normalize);
-            } else {
                 collections = selectTopics(results, limit, selectionMethod, maxCol, minRanks, normalize);
+            } else {
+                collections = select(results, limit, selectionMethod, maxCol, minRanks, normalize);
             }
             return this;
         }
