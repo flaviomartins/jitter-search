@@ -68,9 +68,9 @@ public class WikipediaShardsManager implements Managed {
     private TaxonomyReader taxoReader;
     private FacetsConfig facetsConfig = new FacetsConfig();
 
-    private ShardStatsBuilder shardStatsBuilder;
-    private ShardStats csiStats;
-    private ShardStats shardStats;
+    private WikipediaShardStatsBuilder wikipediaShardStatsBuilder;
+    private ShardStats collectionsShardStats;
+    private ShardStats topicsShardStats;
 
     public WikipediaShardsManager(String indexPath, String stopwords, float mu, String method, String cat2Topic, boolean live) throws IOException {
         this.indexPath = indexPath;
@@ -97,15 +97,17 @@ public class WikipediaShardsManager implements Managed {
     public void start() throws Exception {
         try {
             searcher = getIndexSearcher();
+            wikipediaShardStatsBuilder = new WikipediaShardStatsBuilder(indexReader, categoryMapper);
+            collectStats();
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
     }
 
     public void collectStats() throws IOException {
-        shardStatsBuilder.collectStats();
-        csiStats = shardStatsBuilder.getCollectionsShardStats();
-        shardStats = shardStatsBuilder.getTopicsShardStats();
+        wikipediaShardStatsBuilder.collectStats();
+        collectionsShardStats = wikipediaShardStatsBuilder.getCollectionsShardStats();
+        topicsShardStats = wikipediaShardStatsBuilder.getTopicsShardStats();
     }
 
     @Override
@@ -131,20 +133,20 @@ public class WikipediaShardsManager implements Managed {
         return mu;
     }
 
-    public ShardStats getCsiStats() {
-        return csiStats;
+    public ShardStats getCollectionsShardStats() {
+        return collectionsShardStats;
     }
 
-    public ShardStats getShardStats() {
-        return shardStats;
+    public ShardStats getTopicsShardStats() {
+        return topicsShardStats;
     }
 
-    public void setCsiStats(ShardStats csiStats) {
-        this.csiStats = csiStats;
+    public void setCollectionsShardStats(ShardStats collectionsShardStats) {
+        this.collectionsShardStats = collectionsShardStats;
     }
 
-    public void setShardStats(ShardStats shardStats) {
-        this.shardStats = shardStats;
+    public void setTopicsShardStats(ShardStats topicsShardStats) {
+        this.topicsShardStats = topicsShardStats;
     }
 
     private SelectionTopDocuments filter(Query query, Set<String> selectedSources, SelectionTopDocuments selectResults) throws IOException {

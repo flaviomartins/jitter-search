@@ -4,7 +4,6 @@ import cc.twittertools.util.QueryLikelihoodModel;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
-import io.jitter.api.search.ShardedDocument;
 import io.jitter.api.wikipedia.WikipediaDocument;
 import io.jitter.core.selection.Selection;
 import io.jitter.core.selection.SelectionComparator;
@@ -13,7 +12,6 @@ import io.jitter.core.selection.methods.RankS;
 import io.jitter.core.selection.methods.SelectionMethod;
 import io.jitter.core.selection.methods.SelectionMethodFactory;
 import io.jitter.core.shards.ShardStats;
-import io.jitter.core.shards.ShardStatsBuilder;
 import io.jitter.core.utils.Stopper;
 import io.jitter.core.utils.WikipediaSearchUtils;
 import org.apache.commons.lang.StringUtils;
@@ -72,9 +70,10 @@ public class WikipediaSelectionManager implements Managed {
     private TaxonomyReader taxoReader;
     private FacetsConfig facetsConfig = new FacetsConfig();
 
-    private ShardStatsBuilder shardStatsBuilder;
+    private WikipediaShardStatsBuilder wikipediaShardStatsBuilder;
     private ShardStats csiStats;
     private ShardStats shardStats;
+    private WikipediaShardsManager shardsManager;
 
     public WikipediaSelectionManager(String indexPath, String stopwords, float mu, String method, String cat2Topic, boolean live) throws IOException {
         this.indexPath = indexPath;
@@ -101,15 +100,17 @@ public class WikipediaSelectionManager implements Managed {
     public void start() throws Exception {
         try {
             searcher = getIndexSearcher();
+            wikipediaShardStatsBuilder = new WikipediaShardStatsBuilder(indexReader, categoryMapper);
+            collectStats();
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
     }
 
     public void collectStats() throws IOException {
-        shardStatsBuilder.collectStats();
-        csiStats = shardStatsBuilder.getCollectionsShardStats();
-        shardStats = shardStatsBuilder.getTopicsShardStats();
+        wikipediaShardStatsBuilder.collectStats();
+        csiStats = wikipediaShardStatsBuilder.getCollectionsShardStats();
+        shardStats = wikipediaShardStatsBuilder.getTopicsShardStats();
     }
 
     @Override
@@ -151,13 +152,23 @@ public class WikipediaSelectionManager implements Managed {
         this.shardStats = shardStats;
     }
 
+    public void setShardsManager(WikipediaShardsManager shardsManager) {
+        this.shardsManager = shardsManager;
+    }
+
     public Map<String, Double> select(SelectionTopDocuments selectionTopDocuments, int limit, SelectionMethod selectionMethod, int maxCol, double minRanks, boolean normalize) {
         List<WikipediaDocument> topDocs = (List<WikipediaDocument>) selectionTopDocuments.scoreDocs.subList(0, Math.min(limit, selectionTopDocuments.scoreDocs.size()));
         for (WikipediaDocument topDoc : topDocs) {
             topDoc.setShardIds(topDoc.getCategories());
         }
         Map<String, Double> rankedCollections = selectionMethod.rank(topDocs, csiStats);
-        SortedMap<String, Double> ranking = getSortedMap(rankedCollections);
+        SortedMap<String, Double> ranking;
+        if (normalize && shardsManager.getCollectionsShardStats() != null) {
+            Map<String, Double> map = selectionMethod.normalize(rankedCollections, csiStats, shardsManager.getCollectionsShardStats());
+            ranking = getSortedMap(map);
+        } else {
+            ranking = getSortedMap(rankedCollections);
+        }
         return limit(selectionMethod, ranking, maxCol, minRanks);
     }
 
@@ -167,7 +178,13 @@ public class WikipediaSelectionManager implements Managed {
             topDoc.setShardIds(topDoc.getTopics());
         }
         Map<String, Double> rankedTopics = selectionMethod.rank(topDocs, shardStats);
-        SortedMap<String, Double> ranking = getSortedMap(rankedTopics);
+        SortedMap<String, Double> ranking;
+        if (normalize && shardsManager.getTopicsShardStats() != null) {
+            Map<String, Double> map = selectionMethod.normalize(rankedTopics, shardStats, shardsManager.getTopicsShardStats());
+            ranking = getSortedMap(map);
+        } else {
+            ranking = getSortedMap(rankedTopics);
+        }
         return limit(selectionMethod, ranking, maxCol, minRanks);
     }
 
