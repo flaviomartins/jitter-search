@@ -29,6 +29,17 @@ public class ShardStats {
         sortedSizes = sortedMap.entrySet();
     }
 
+    public ShardStats(Map<String, Integer> sizes, int totalDocs) {
+        this.sizes = sizes;
+        maxSize = Collections.max(sizes.values());
+        this.totalDocs = totalDocs;
+
+        ShardSizeComparator comparator = new ShardSizeComparator(sizes);
+        TreeMap<String, Integer> sortedMap = new TreeMap<>(comparator);
+        sortedMap.putAll(sizes);
+        sortedSizes = sortedMap.entrySet();
+    }
+
     @JsonProperty("sizes")
     public Set<Map.Entry<String, Integer>> getSortedSizes() {
         return sortedSizes;

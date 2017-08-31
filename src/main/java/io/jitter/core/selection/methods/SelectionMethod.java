@@ -36,9 +36,8 @@ public abstract class SelectionMethod<E extends ShardedDocument> {
     public Map<String, Double> normalize(Map<String, Double> rank, ShardStats csiStats, ShardStats shardStats) {
         double c_max = 1;
         for (String shardId : rank.keySet()) {
-            String shardIdLower = shardId.toLowerCase(Locale.ROOT);
-            if (shardStats.getSizes().containsKey(shardIdLower)) {
-                int sz = shardStats.getSizes().get(shardIdLower);
+            if (shardStats.getSizes().containsKey(shardId)) {
+                int sz = shardStats.getSizes().get(shardId);
                 if (sz > c_max)
                     c_max = sz;
             }
@@ -46,10 +45,10 @@ public abstract class SelectionMethod<E extends ShardedDocument> {
 
         HashMap<String, Double> map = new HashMap<>();
         for (Map.Entry<String, Double> shardScoreEntry : rank.entrySet()) {
-            String shardIdLower = shardScoreEntry.getKey().toLowerCase(Locale.ROOT);
-            if (shardStats.getSizes().containsKey(shardIdLower)) {
-                double c_i = shardStats.getSizes().get(shardIdLower);
-                double s_i = csiStats.getSizes().get(shardIdLower);
+            String shardId = shardScoreEntry.getKey();
+            if (shardStats.getSizes().containsKey(shardId)) {
+                double c_i = shardStats.getSizes().get(shardId);
+                double s_i = csiStats.getSizes().get(shardId);
                 double norm = (1.0 / c_max) * (c_i / s_i);
                 double origScore = shardScoreEntry.getValue();
                 double newScore = norm * origScore;

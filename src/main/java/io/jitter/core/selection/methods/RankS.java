@@ -94,10 +94,10 @@ public class RankS<E extends ShardedDocument> extends SelectionMethod<E> {
     public Map<String, Double> normalize(Map<String, Double> rank, ShardStats csiStats, ShardStats shardStats) {
         HashMap<String, Double> map = new HashMap<>();
         for (Map.Entry<String, Double> shardScoreEntry : rank.entrySet()) {
-            String shardIdLower = shardScoreEntry.getKey().toLowerCase(Locale.ROOT);
-            if (shardStats.getSizes().containsKey(shardIdLower)) {
-                double c_i = shardStats.getSizes().get(shardIdLower);
-                double s_i = csiStats.getSizes().get(shardIdLower);
+            String shardId = shardScoreEntry.getKey();
+            if (shardStats.getSizes().containsKey(shardId)) {
+                double c_i = shardStats.getSizes().get(shardId);
+                double s_i = csiStats.getSizes().get(shardId);
                 double norm = c_i / s_i;
                 double origScore = shardScoreEntry.getValue();
                 double newScore = norm * origScore;
