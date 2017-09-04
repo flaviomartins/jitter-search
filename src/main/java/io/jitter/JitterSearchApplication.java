@@ -217,6 +217,8 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final TrecWikipediaFeedbackResource trecWikipediaFeedbackResource = new TrecWikipediaFeedbackResource(trecMicroblogAPIWrapper, wikipediaManager);
         environment.jersey().register(trecWikipediaFeedbackResource);
 
+        final TrecWikipediaMultiFeedbackResource trecWikipediaMultiFeedbackResource = new TrecWikipediaMultiFeedbackResource(trecMicroblogAPIWrapper, wikipediaSelectionManager, wikipediaShardsManager);
+        environment.jersey().register(trecWikipediaMultiFeedbackResource);
 
         if (configuration.isLive()) {
             OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getOAuth1Factory().build();
