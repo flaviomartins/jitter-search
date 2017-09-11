@@ -98,7 +98,7 @@ public class TrecFeedbackResource extends AbstractFeedbackResource {
                 results = trecMicroblogAPIWrapper.search(finalQuery, maxId, limit, retweets);
             }
 
-            int totalFbDocs = selectResults != null ? selectResults.scoreDocs.size() : 0;
+            int totalFbDocs = selectResults != null ? selectResults.totalHits : 0;
             int totalHits = results != null ? results.totalHits : 0;
             if (totalHits == 0) {
                 throw new NotFoundException("No results found");
