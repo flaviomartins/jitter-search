@@ -14,8 +14,6 @@ import io.jitter.core.twitter.OAuth1;
 import io.jitter.core.twitter.manager.TwitterManager;
 import io.jitter.core.utils.NoExitSecurityManager;
 import io.jitter.core.wikipedia.WikipediaManager;
-import io.jitter.core.wikipedia.WikipediaSelectionManager;
-import io.jitter.core.wikipedia.WikipediaShardsManager;
 import io.jitter.health.*;
 import io.jitter.resources.*;
 import io.jitter.tasks.*;
@@ -125,18 +123,6 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
         final WikipediaFeedbackResource wikipediaFeedbackResource = new WikipediaFeedbackResource(searchManager, wikipediaManager);
         environment.jersey().register(wikipediaFeedbackResource);
 
-        final WikipediaShardsManager wikipediaShardsManager = configuration.getWikipediaShardsManagerFactory().build(environment, configuration.isLive());
-
-        final WikipediaSelectionManager wikipediaSelectionManager = configuration.getWikipediaSelectionManagerFactory().build(environment, configuration.isLive());
-        // sharding
-        wikipediaSelectionManager.setShardsManager(wikipediaShardsManager);
-
-        final WikipediaSelectionResource wikipediaSelectionResource = new WikipediaSelectionResource(wikipediaSelectionManager);
-        environment.jersey().register(wikipediaSelectionResource);
-
-        final WikipediaSelectSearchResource wikipediaSelectSearchResource = new WikipediaSelectSearchResource(wikipediaSelectionManager, wikipediaShardsManager);
-        environment.jersey().register(wikipediaSelectSearchResource);
-
         final TailyManager tailyManager = configuration.getTailyManagerFactory().build(environment);
         final TailyManagerHealthCheck tailyManagerHealthCheck =
                 new TailyManagerHealthCheck(tailyManager);
@@ -216,9 +202,6 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         final TrecWikipediaFeedbackResource trecWikipediaFeedbackResource = new TrecWikipediaFeedbackResource(trecMicroblogAPIWrapper, wikipediaManager);
         environment.jersey().register(trecWikipediaFeedbackResource);
-
-        final TrecWikipediaMultiFeedbackResource trecWikipediaMultiFeedbackResource = new TrecWikipediaMultiFeedbackResource(trecMicroblogAPIWrapper, wikipediaSelectionManager, wikipediaShardsManager);
-        environment.jersey().register(trecWikipediaMultiFeedbackResource);
 
         if (configuration.isLive()) {
             OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getOAuth1Factory().build();

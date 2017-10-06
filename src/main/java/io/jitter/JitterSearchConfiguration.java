@@ -9,8 +9,6 @@ import io.jitter.core.twitter.manager.TwitterManagerFactory;
 import io.jitter.core.selection.SelectionManagerFactory;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapperFactory;
 import io.jitter.core.wikipedia.WikipediaManagerFactory;
-import io.jitter.core.wikipedia.WikipediaSelectionManagerFactory;
-import io.jitter.core.wikipedia.WikipediaShardsManagerFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -60,14 +58,6 @@ public class JitterSearchConfiguration extends Configuration {
     @Valid
     @NotNull
     private WikipediaManagerFactory wikipediaManagerFactory = new WikipediaManagerFactory();
-
-    @Valid
-    @NotNull
-    private WikipediaSelectionManagerFactory wikipediaSelectionManagerFactory = new WikipediaSelectionManagerFactory();
-
-    @Valid
-    @NotNull
-    private WikipediaShardsManagerFactory wikipediaShardsManagerFactory = new WikipediaShardsManagerFactory();
 
     @JsonProperty("apidocs")
     public ApiDocsFactory getApiDocsFactory() {
@@ -187,25 +177,5 @@ public class JitterSearchConfiguration extends Configuration {
     @JsonProperty("wikipedia")
     public void setWikipediaManagerFactory(WikipediaManagerFactory wikipediaManagerFactory) {
         this.wikipediaManagerFactory = wikipediaManagerFactory;
-    }
-
-    @JsonProperty("wikipediaselection")
-    public WikipediaSelectionManagerFactory getWikipediaSelectionManagerFactory() {
-        return wikipediaSelectionManagerFactory;
-    }
-
-    @JsonProperty("wikipediaselection")
-    public void setWikipediaSelectionManagerFactory(WikipediaSelectionManagerFactory wikipediaSelectionManagerFactory) {
-        this.wikipediaSelectionManagerFactory = wikipediaSelectionManagerFactory;
-    }
-
-    @JsonProperty("wikipediashards")
-    public WikipediaShardsManagerFactory getWikipediaShardsManagerFactory() {
-        return wikipediaShardsManagerFactory;
-    }
-
-    @JsonProperty("wikipediashards")
-    public void setWikipediaShardsManagerFactory(WikipediaShardsManagerFactory wikipediaShardsManagerFactory) {
-        this.wikipediaShardsManagerFactory = wikipediaShardsManagerFactory;
     }
 }
