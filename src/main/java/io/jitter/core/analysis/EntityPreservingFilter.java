@@ -18,7 +18,10 @@ package io.jitter.core.analysis;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import cc.twittertools.index.LowerCaseEntityPreservingFilter;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -27,6 +30,16 @@ import org.apache.lucene.analysis.tokenattributes.KeywordAttribute;
 import com.twitter.Regex;
 
 public final class EntityPreservingFilter extends TokenFilter {
+
+    private static final String HTTP_URL = "https?://";
+
+    private static final Pattern HTTP_URL_PATTERN;
+
+    static {
+        synchronized (LowerCaseEntityPreservingFilter.class) {
+            HTTP_URL_PATTERN = Pattern.compile(HTTP_URL);
+        }
+    }
 
     private static final int INVALID_ENTITY = 0;
     private static final int VALID_HASHTAG = 1;
@@ -106,7 +119,17 @@ public final class EntityPreservingFilter extends TokenFilter {
             }
 
         } else {
-
+            // Check for URLs
+            Matcher m = HTTP_URL_PATTERN.matcher(termAtt.toString());
+            if (m.find()) {
+                int pos = m.start();
+                if (pos > 0) {
+                    // Remove the tail of the string from the buffer and save it
+                    // for the next iteration
+                    tailBuffer = Arrays.copyOfRange(buffer, pos, termAtt.length());
+                    termAtt.setLength(pos);
+                }
+            }
             // Check for non-whitespace, non-entity (@, #, _) delimiters in the
             // term
             for (int i = 0; i < termAtt.length(); i++) {
