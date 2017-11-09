@@ -22,7 +22,7 @@ public class CommonsKDE implements KDE {
         this.bw = bw;
 
         if (bw <= 0.0) {
-            this.bw = KDE.silvermanBandwidthEstimate(data);
+            this.bw = KDE.scottsBandwidthEstimate(data);
         }
 
         DescriptiveStatistics ds = new DescriptiveStatistics(weights);

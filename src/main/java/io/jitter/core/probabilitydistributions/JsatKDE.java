@@ -19,7 +19,7 @@ public class JsatKDE implements KDE {
         DenseVector dataPoints = new DenseVector(data);
         if (bw <= 0.0) {
             // this.bw = BandwithGuassEstimate(dataPoints); // not normalized (IQR)
-            this.bw = KDE.silvermanBandwidthEstimate(data);
+            this.bw = KDE.scottsBandwidthEstimate(data);
         }
 
         kernelDensityEstimator = new KernelDensityEstimator(dataPoints, GaussKF.getInstance(), this.bw, weights);
