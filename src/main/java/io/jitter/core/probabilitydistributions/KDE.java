@@ -18,7 +18,7 @@ public interface KDE extends ContinuousDistribution {
         return Math.min(ds.getStandardDeviation(), IQR);
     }
 
-    static double silvermanBandwidthEstimate(double[] X) {
+    static double scottsBandwidthEstimate(double[] X) {
         double A = selectSigma(X);
 
         if (X.length == 1)
@@ -28,4 +28,14 @@ public interface KDE extends ContinuousDistribution {
         return 1.06 * A * Math.pow(X.length, -1.0/5.0);
     }
 
+
+    static double silvermanBandwidthEstimate(double[] X) {
+        double A = selectSigma(X);
+
+        if (X.length == 1)
+            return 1;
+        else if (A == 0)
+            return 0.9 * Math.pow(X.length, -1.0/5.0);
+        return 0.9 * A * Math.pow(X.length, -1.0/5.0);
+    }
 }
