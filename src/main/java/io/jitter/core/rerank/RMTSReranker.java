@@ -73,7 +73,7 @@ public class RMTSReranker implements Reranker {
         RecencyReranker reranker = new RecencyReranker(lambda);
         results = reranker.rerank(results, context);
 
-        KDE.METHOD method = KDE.METHOD.STANDARD;
+        KDE.METHOD method = KDE.METHOD.REFLECTION;
 //        if (kdeMethod != null) {
 //            method = KDE.METHOD.valueOf(kdeMethod);
 //        }
