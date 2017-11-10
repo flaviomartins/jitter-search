@@ -1,7 +1,7 @@
 package io.jitter.core.rerank;
 
 import io.jitter.api.search.StatusDocument;
-import io.jitter.core.probabilitydistributions.JsatKDE;
+import io.jitter.core.probabilitydistributions.CommonsKDE;
 import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.utils.TimeUtils;
 
@@ -32,7 +32,7 @@ public class KernelDensityReranker implements Reranker {
         // groom our hit times wrt to query time
         List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
 
-        KDE kde = new JsatKDE(trainingData, trainingWeights, -1.0, method);
+        KDE kde = new CommonsKDE(trainingData, trainingWeights, -1.0, method);
 
         Iterator<StatusDocument> resultIt = docs.iterator();
         Iterator<Double> epochIt = scaledEpochs.iterator();
