@@ -8,6 +8,7 @@ import io.jitter.api.search.StatusDocument;
 import io.jitter.api.search.Document;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.*;
@@ -25,6 +26,7 @@ public class SearchUtils {
         IndexReader indexReader = indexSearcher.getIndexReader();
 
         int count = 0;
+        LongOpenHashSet seenSet = new LongOpenHashSet();
         List<StatusDocument> topDocuments = Lists.newArrayList();
         for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
             if (count >= limit)
@@ -60,6 +62,11 @@ public class SearchUtils {
                 }
                 doc.setDocVector(newDocVector);
             }
+
+            if (seenSet.contains(Long.parseLong(doc.getId())))
+                continue;
+
+            seenSet.add(Long.parseLong(doc.getId()));
 
             topDocuments.add(doc);
             count += 1;
