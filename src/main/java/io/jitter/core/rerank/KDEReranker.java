@@ -2,7 +2,7 @@ package io.jitter.core.rerank;
 
 import com.google.common.primitives.Doubles;
 import io.jitter.api.search.StatusDocument;
-import io.jitter.core.probabilitydistributions.JsatKDE;
+import io.jitter.core.probabilitydistributions.CommonsKDE;
 import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.commons.math3.util.FastMath;
@@ -74,7 +74,7 @@ public class KDEReranker implements Reranker {
                 Arrays.fill(densityWeights, 1.0 / (double) densityWeights.length);
         }
 
-        KDE kde = new JsatKDE(densityTrainingData, densityWeights, -1.0, method);
+        KDE kde = new CommonsKDE(densityTrainingData, densityWeights, -1.0, method);
 
         Iterator<StatusDocument> resultIt = docs.iterator();
         Iterator<Double> epochIt = scaledEpochs.iterator();
