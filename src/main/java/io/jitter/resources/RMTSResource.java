@@ -139,8 +139,8 @@ public class RMTSResource extends AbstractFeedbackResource {
             TopDocuments results = searchManager.search(query, filterQuery, maxId, limit, retweets, epochs);
 
             RerankerCascade cascade = new RerankerCascade();
-            cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, searchManager.getCollectionStats(), limit, numRerank));
-            cascade.add(new MaxTFFilter(5));
+            cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, searchManager.getCollectionStats(), limit, numRerank, false));
+//            cascade.add(new MaxTFFilter(5));
 
             RerankerContext context = new RerankerContext(null, null, "MB000", query,
                     queryEpoch, Lists.newArrayList(), IndexStatuses.StatusField.TEXT.name, null);

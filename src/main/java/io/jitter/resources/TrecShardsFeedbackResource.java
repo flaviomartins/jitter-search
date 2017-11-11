@@ -124,7 +124,7 @@ public class TrecShardsFeedbackResource extends AbstractFeedbackResource {
             TopDocuments results = trecMicroblogAPIWrapper.search(finalQuery, maxId, limit, retweets);
 
             RerankerCascade cascade = new RerankerCascade();
-            cascade.add(new MaxTFFilter(5));
+//            cascade.add(new MaxTFFilter(5));
 
             RerankerContext context = new RerankerContext(null, null, "MB000", query,
                     queryEpoch, Lists.newArrayList(), IndexStatuses.StatusField.TEXT.name, null);

@@ -167,9 +167,9 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
 
             RerankerCascade cascade = new RerankerCascade();
             if (temporal) {
-                cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, searchManager.getCollectionStats(), limit, limit));
+                cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, searchManager.getCollectionStats(), limit, limit, false));
             }
-            cascade.add(new MaxTFFilter(5));
+//            cascade.add(new MaxTFFilter(5));
 
             RerankerContext context = new RerankerContext(null, null, "MB000", query,
                     queryEpoch, Lists.newArrayList(), IndexStatuses.StatusField.TEXT.name, null);
