@@ -42,8 +42,9 @@ public class RMTSReranker implements Reranker {
     private final CollectionStats collectionStats;
     private final int numResults;
     private final int numRerank;
+    private final boolean rank;
 
-    public RMTSReranker(String rankerModel, String query, double queryEpoch, List<StatusDocument> shardResults, CollectionStats collectionStats, int numResults, int numRerank) {
+    public RMTSReranker(String rankerModel, String query, double queryEpoch, List<StatusDocument> shardResults, CollectionStats collectionStats, int numResults, int numRerank, boolean rank) {
         this.rankerModel = rankerModel;
         this.query = query;
         this.queryEpoch = queryEpoch;
@@ -51,6 +52,7 @@ public class RMTSReranker implements Reranker {
         this.collectionStats = collectionStats;
         this.numResults = numResults;
         this.numRerank = numRerank;
+        this.rank = rank;
     }
 
     @Override
@@ -73,7 +75,7 @@ public class RMTSReranker implements Reranker {
         RecencyReranker reranker = new RecencyReranker(lambda);
         results = reranker.rerank(results, context);
 
-        KDE.METHOD method = KDE.METHOD.REFLECTION;
+        KDE.METHOD method = KDE.METHOD.STANDARD;
 //        if (kdeMethod != null) {
 //            method = KDE.METHOD.valueOf(kdeMethod);
 //        }
@@ -270,12 +272,14 @@ public class RMTSReranker implements Reranker {
             result.getFeatures().add((float) tfMax);
         }
 
-        try {
-            RankerFactory rFact = new RankerFactory();
-            Ranker ranker = rFact.loadRankerFromFile(rankerModel);
-            results = rankRankLib(ranker, query, results, numResults, numRerank);
-        } catch (SecurityException e) {
-            logger.warn("RankLib caught calling System.exit(int).");
+        if (rank) {
+            try {
+                RankerFactory rFact = new RankerFactory();
+                Ranker ranker = rFact.loadRankerFromFile(rankerModel);
+                results = rankRankLib(ranker, query, results, numResults, numRerank);
+            } catch (SecurityException e) {
+                logger.warn("RankLib caught calling System.exit(int).");
+            }
         }
         return results;
     }
