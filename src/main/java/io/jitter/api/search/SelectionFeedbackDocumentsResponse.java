@@ -15,9 +15,9 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
 
     private int fbDocs;
     private int fbTerms;
-    private Map<String, Float> shardsFV;
-    private Map<String, Float> feedbackFV;
-    private Map<String, Float> fbVector;
+    private Set<Map.Entry<String, Float>> shardsFV;
+    private Set<Map.Entry<String, Float>> feedbackFV;
+    private Set<Map.Entry<String, Float>> fbVector;
     private List<?> docs;
     private Sets.SetView<String> fbFeatures;
     private double fbFeaturesSize;
@@ -27,7 +27,7 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
         // Jackson deserialization
     }
 
-    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int fbDocs, int fbTerms, Map<String, Float> shardsFV, Map<String, Float> feedbackFV, Map<String, Float> fbVector, int numFound, int start, List<?> selectDocs, List<?> shardDocs) {
+    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int fbDocs, int fbTerms, Set<Map.Entry<String, Float>> shardsFV, Set<Map.Entry<String, Float>> feedbackFV, Set<Map.Entry<String, Float>> fbVector, int numFound, int start, List<?> selectDocs, List<?> shardDocs) {
         super(collections, method, numFound, start, selectDocs, shardDocs);
         this.fbDocs = fbDocs;
         this.fbTerms = fbTerms;
@@ -36,7 +36,7 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
         this.fbVector = fbVector;
     }
 
-    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int fbDocs, int fbTerms, Map<String, Float> shardsFV, Map<String, Float> feedbackFV, Map<String, Float> fbVector, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments shardDocuments, TopDocuments topDocuments) {
+    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int fbDocs, int fbTerms, Set<Map.Entry<String, Float>> shardsFV, Set<Map.Entry<String, Float>> feedbackFV, Set<Map.Entry<String, Float>> fbVector, int start, SelectionTopDocuments selectionTopDocuments, SelectionTopDocuments shardDocuments, TopDocuments topDocuments) {
         super(collections, method, start, selectionTopDocuments, shardDocuments);
         this.fbDocs = fbDocs;
         this.fbTerms = fbTerms;
@@ -49,7 +49,7 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
         }
     }
 
-    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int c_sel, int fbDocs, int fbTerms, Map<String, Float> shardsFV, Map<String, Float> feedbackFV, Map<String, Float> fbVector, int start, List<?> selectDocs, SelectionTopDocuments shardDocuments, TopDocuments topDocuments) {
+    public SelectionFeedbackDocumentsResponse(Set<Map.Entry<String, Double>> collections, String method, int c_sel, int fbDocs, int fbTerms, Set<Map.Entry<String, Float>> shardsFV, Set<Map.Entry<String, Float>> feedbackFV, Set<Map.Entry<String, Float>> fbVector, int start, List<?> selectDocs, SelectionTopDocuments shardDocuments, TopDocuments topDocuments) {
         super(collections, method, c_sel, start, selectDocs, shardDocuments);
         this.fbDocs = fbDocs;
         this.fbTerms = fbTerms;
@@ -73,17 +73,17 @@ public class SelectionFeedbackDocumentsResponse extends SelectionSearchDocuments
     }
 
     @JsonProperty
-    public Map<String, Float> getShardsFV() {
+    public Set<Map.Entry<String, Float>> getShardsFV() {
         return shardsFV;
     }
 
     @JsonProperty
-    public Map<String, Float> getFeedbackFV() {
+    public Set<Map.Entry<String, Float>> getFeedbackFV() {
         return feedbackFV;
     }
 
     @JsonProperty
-    public Map<String, Float> getFbVector() {
+    public Set<Map.Entry<String, Float>> getFbVector() {
         return fbVector;
     }
 
