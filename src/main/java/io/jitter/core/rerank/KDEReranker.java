@@ -56,22 +56,18 @@ public class KDEReranker implements Reranker {
                 }
                 break;
             case RANK:
-                Iterator<StatusDocument> resultIt1 = docs.iterator();
-                int jj = 0;
-//                (n/2)(n+1)
-//                double lambda = 1.0 / (results.size()/2.0)*(results.size()+1);
-//                double lambda = 1.0 / (results.size()/2.0);
-                while (resultIt1.hasNext()) {
-                    resultIt1.next();
-//                    double weight = lambda * Math.exp(-1.0 * lambda * (j+1));
-//                    double weight = 1.0 / Math.pow(j+1, 2);
-                    double weight = 1.0 / (jj+1 + 60);
-                    densityWeights[jj++] = weight;
+                double mean = 0;
+                for (int i = 1; i <= densityWeights.length; i++) {
+                    mean += i * 1.0 / densityWeights.length;
+                }
+                double lambda = 1.0 / mean;
+                for (int i = 1; i <= densityWeights.length; i++) {
+                    densityWeights[i - 1] = lambda * FastMath.exp(-i);
                 }
                 break;
             case UNIFORM:
             default:
-                Arrays.fill(densityWeights, 1.0 / (double) densityWeights.length);
+                Arrays.fill(densityWeights, 1.0 / densityWeights.length);
         }
 
         KDE kde = new CommonsKDE(densityTrainingData, densityWeights, -1.0, method);
