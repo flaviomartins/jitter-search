@@ -18,11 +18,13 @@ public class KDEReranker implements Reranker {
 
     public enum WEIGHT {UNIFORM, SCORE, RANK}
 
+    private final List<StatusDocument> sourceDocs;
     private final KDE.METHOD method;
     private final WEIGHT scheme;
     private double beta = 1.0;
 
-    public KDEReranker(KDE.METHOD method, WEIGHT scheme, double beta) {
+    public KDEReranker(List<StatusDocument> sourceDocs, KDE.METHOD method, WEIGHT scheme, double beta) {
+        this.sourceDocs = sourceDocs;
         this.method = method;
         this.scheme = scheme;
         this.beta = beta;
@@ -31,17 +33,17 @@ public class KDEReranker implements Reranker {
     @Override
     public List<StatusDocument> rerank(List<StatusDocument> docs, RerankerContext context) {
         double queryEpoch = context.getQueryEpoch();
-        // extract raw epochs from results
-        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(docs);
+        // extract raw epochs from sourceDocs
+        List<Double> sourceRawEpochs = TimeUtils.extractEpochsFromResults(sourceDocs);
         // groom our hit times wrt to query time
-        List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
+        List<Double> sourceScaledEpochs = TimeUtils.adjustEpochsToLandmark(sourceRawEpochs, queryEpoch, DAY);
 
-        double[] densityTrainingData = Doubles.toArray(scaledEpochs);
+        double[] densityTrainingData = Doubles.toArray(sourceScaledEpochs);
         double[] densityWeights = new double[densityTrainingData.length];
 
         switch (scheme) {
             case SCORE:
-                Iterator<StatusDocument> resultIt = docs.iterator();
+                Iterator<StatusDocument> resultIt = sourceDocs.iterator();
                 int j = 0;
                 double maxRsv = Double.NEGATIVE_INFINITY;
                 while (resultIt.hasNext()) {
@@ -71,6 +73,11 @@ public class KDEReranker implements Reranker {
         }
 
         KDE kde = new CommonsKDE(densityTrainingData, densityWeights, -1.0, method);
+
+        // extract raw epochs from results
+        List<Double> rawEpochs = TimeUtils.extractEpochsFromResults(docs);
+        // groom our hit times wrt to query time
+        List<Double> scaledEpochs = TimeUtils.adjustEpochsToLandmark(rawEpochs, queryEpoch, DAY);
 
         Iterator<StatusDocument> resultIt = docs.iterator();
         Iterator<Double> epochIt = scaledEpochs.iterator();
