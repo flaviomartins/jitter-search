@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import cc.twittertools.index.LowerCaseEntityPreservingFilter;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -36,7 +35,7 @@ public final class EntityPreservingFilter extends TokenFilter {
     private static final Pattern HTTP_URL_PATTERN;
 
     static {
-        synchronized (LowerCaseEntityPreservingFilter.class) {
+        synchronized (EntityPreservingFilter.class) {
             HTTP_URL_PATTERN = Pattern.compile(HTTP_URL);
         }
     }
