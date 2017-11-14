@@ -88,6 +88,7 @@ public class TrecShardsFeedbackResource extends AbstractFeedbackResource {
                                           @ApiParam(hidden = true) @QueryParam("fbMerge") @DefaultValue("false") Boolean fbMerge,
                                           @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
                                           @ApiParam(value = "Use temporal reranking") @QueryParam("temporal") @DefaultValue("false") Boolean temporal,
+                                          @ApiParam(hidden = true) @QueryParam("rerank") @DefaultValue("true") Boolean rerank,
                                           @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -127,7 +128,7 @@ public class TrecShardsFeedbackResource extends AbstractFeedbackResource {
 
             RerankerCascade cascade = new RerankerCascade();
             if (temporal) {
-                cascade.add(new RMTSReranker("mf.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit, limit, false));
+                cascade.add(new RMTSReranker("mf.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit, limit, rerank));
             }
 //            cascade.add(new MaxTFFilter(5));
 
