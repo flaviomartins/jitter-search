@@ -7,7 +7,6 @@ import ciir.umass.edu.learning.Ranker;
 import ciir.umass.edu.learning.RankerFactory;
 import ciir.umass.edu.utilities.MergeSorter;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.twitter.Extractor;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.StatusDocument;
@@ -85,78 +84,21 @@ public class RMTSReranker implements Reranker {
         }
 //        KDEReranker kdeReranker = new KDEReranker(results, queryEpoch, method, KDEReranker.WEIGHT.UNIFORM, 1.0);
 //        results = kdeReranker.getReranked();
-        KDEReranker kdeReranker1 = new KDEReranker(method, KDEReranker.WEIGHT.SCORE, 1.0);
+        KDEReranker kdeReranker1 = new KDEReranker(results, method, KDEReranker.WEIGHT.RANK, 1.0);
         results = kdeReranker1.rerank(results, context);
 
-//        KDERerank(retrievalOracle, query, method, bRet); // USE KDE RERANKER
         for (StatusDocument result : results) {
             result.getFeatures().add(0f);
             result.getFeatures().add(0f);
 //            result.getFeatures().add(0f);
         }
-//        KDEReranker kdeReranker2 = new KDEReranker(results, shardResults, queryEpoch, method, KDEReranker.WEIGHT.SCORE, 1.0);
-//        results = kdeReranker2.getReranked();
 
 //        KDERerank(viewsOracle, query, method, bViews);
 //        KDERerank(editsOracle, query, method, bEdits);
 
-
-//        KrovetzStemmer kstem = new KrovetzStemmer();
-//
-//        Set<String> kstemQTerms = new HashSet<>();
-//        for (String term : qTerms) {
-//            String stem = kstem.stem(term);
-//            kstemQTerms.add(stem);
-//        }
-
         // KDE News
-        List<Double> newsOracle = Lists.newArrayList();
-        List<Double> newsWeights = Lists.newArrayList();
-        for (StatusDocument shardResult : shardResults) {
-            DocVector docVector = shardResult.getDocVector();
-            // if the term vectors are unavailable generate it here
-            if (docVector == null) {
-                DocVector aDocVector = new DocVector();
-                List<String> docTerms = AnalyzerUtils.analyze(ANALYZER, shardResult.getText());
-
-                for (String t : docTerms) {
-                    if (!t.isEmpty()) {
-                        Integer n = aDocVector.vector.get(t);
-                        n = (n == null) ? 1 : ++n;
-                        aDocVector.vector.put(t, n);
-                    }
-                }
-
-                docVector = aDocVector;
-            }
-            Set<String> nTerms = docVector.vector.keySet();
-
-            double n = (double) Sets.intersection(qTerms, nTerms).size();
-            double jaccardSimilarity = n / (qTerms.size() + nTerms.size() - n);
-
-//            // Using Krovetz stemmer
-//            Set<String> kstemNTerms = new HashSet<>();
-//            for (String term : nTerms) {
-//                String stem = kstem.stem(term);
-//                kstemNTerms.add(stem);
-//            }
-//
-//            // faster version
-//            double n = (double) Sets.intersection(kstemQTerms, kstemNTerms).size();
-//            double jaccardSimilarity = n / (kstemQTerms.size() + kstemNTerms.size() - n);
-
-            newsOracle.add((double) shardResult.getEpoch());
-            newsWeights.add(jaccardSimilarity);
-        }
-
-        if (newsOracle.size() > 1 && newsWeights.size() > 1) {
-            results = KDERerank(newsOracle, newsWeights, results, queryEpoch, method, 1.0, context);
-        } else {
-            // set feature to 0f for all documents
-            for (StatusDocument result : results) {
-                result.getFeatures().add(0f);
-            }
-        }
+        KDEReranker kdeReranker2 = new KDEReranker(shardResults, method, KDEReranker.WEIGHT.RANK, 1.0);
+        results = kdeReranker2.rerank(results, context);
 
         int numDocs = collectionStats.numDocs();
         HashMap<String, Integer> dfs = new HashMap<>();
