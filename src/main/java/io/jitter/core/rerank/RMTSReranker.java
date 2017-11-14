@@ -84,7 +84,7 @@ public class RMTSReranker implements Reranker {
         }
 //        KDEReranker kdeReranker = new KDEReranker(results, queryEpoch, method, KDEReranker.WEIGHT.UNIFORM, 1.0);
 //        results = kdeReranker.getReranked();
-        KDEReranker kdeReranker1 = new KDEReranker(results, method, KDEReranker.WEIGHT.RANK, 1.0);
+        KDEReranker kdeReranker1 = new KDEReranker(results, method, KDEReranker.WEIGHT.SCORE, 1.0);
         results = kdeReranker1.rerank(results, context);
 
         for (StatusDocument result : results) {
@@ -97,7 +97,7 @@ public class RMTSReranker implements Reranker {
 //        KDERerank(editsOracle, query, method, bEdits);
 
         // KDE News
-        KDEReranker kdeReranker2 = new KDEReranker(shardResults, method, KDEReranker.WEIGHT.RANK, 1.0);
+        KDEReranker kdeReranker2 = new KDEReranker(shardResults, method, KDEReranker.WEIGHT.SCORE, 1.0);
         results = kdeReranker2.rerank(results, context);
 
         int numDocs = collectionStats.numDocs();

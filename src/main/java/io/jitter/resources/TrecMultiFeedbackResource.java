@@ -161,7 +161,7 @@ public class TrecMultiFeedbackResource extends AbstractFeedbackResource {
 
             RerankerCascade cascade = new RerankerCascade();
             if (temporal) {
-                cascade.add(new RMTSReranker("ltr-all.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit, limit, false));
+                cascade.add(new RMTSReranker("mf.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit, limit, false));
             }
 //            cascade.add(new MaxTFFilter(5));
 
