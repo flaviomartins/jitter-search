@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableSortedSet;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
-import io.jitter.api.search.ShardedDocument;
 import io.jitter.api.search.StatusDocument;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.selection.methods.RankS;
