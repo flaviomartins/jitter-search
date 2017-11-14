@@ -100,6 +100,7 @@ public class RMTSResource extends AbstractFeedbackResource {
                                           @ApiParam(value = "Original query weight", allowableValues="range[0, 1]") @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
                                           @ApiParam(value = "Number of feedback collections") @QueryParam("fbCols") @DefaultValue("3") Integer fbCols,
                                           @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
+                                          @ApiParam(hidden = true) @QueryParam("rerank") @DefaultValue("true") Boolean rerank,
                                           @ApiParam(value = "Number of documents to rerank", allowableValues="range[1, 1000]") @QueryParam("numRerank") @DefaultValue("1000") Integer numRerank,
                                           @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
@@ -139,7 +140,7 @@ public class RMTSResource extends AbstractFeedbackResource {
             TopDocuments results = searchManager.search(query, filterQuery, maxId, limit, retweets, epochs);
 
             RerankerCascade cascade = new RerankerCascade();
-            cascade.add(new RMTSReranker("rmts.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, searchManager.getCollectionStats(), limit, numRerank, false));
+            cascade.add(new RMTSReranker("rmts.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, searchManager.getCollectionStats(), limit, numRerank, rerank));
 //            cascade.add(new MaxTFFilter(5));
 
             RerankerContext context = new RerankerContext(null, null, "MB000", query,
