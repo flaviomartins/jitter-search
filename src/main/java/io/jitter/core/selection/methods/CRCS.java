@@ -16,12 +16,14 @@ abstract class CRCS<E extends ShardedDocument> extends SelectionMethod<E> {
         for (E result : results) {
             double r = weight(j, results.size());
             String[] shardIds = result.getShardIds();
-            for (String shardId : shardIds) {
-                if (!scores.containsKey(shardId)) {
-                    scores.put(shardId, r);
-                } else {
-                    double cur = scores.get(shardId);
-                    scores.put(shardId, cur + r);
+            if (shardIds != null) {
+                for (String shardId : shardIds) {
+                    if (!scores.containsKey(shardId)) {
+                        scores.put(shardId, r);
+                    } else {
+                        double cur = scores.get(shardId);
+                        scores.put(shardId, cur + r);
+                    }
                 }
             }
             j++;

@@ -19,12 +19,14 @@ public abstract class SelectionMethod<E extends ShardedDocument> {
         Map<String, Double> counts = new HashMap<>();
         for (ShardedDocument result : results) {
             String[] shardIds = result.getShardIds();
-            for (String shardId : shardIds) {
-                if (!counts.containsKey(shardId)) {
-                    counts.put(shardId, 1d);
-                } else {
-                    double cur = counts.get(shardId);
-                    counts.put(shardId, cur + 1d);
+            if (shardIds != null) {
+                for (String shardId : shardIds) {
+                    if (!counts.containsKey(shardId)) {
+                        counts.put(shardId, 1d);
+                    } else {
+                        double cur = counts.get(shardId);
+                        counts.put(shardId, cur + 1d);
+                    }
                 }
             }
         }
@@ -35,7 +37,8 @@ public abstract class SelectionMethod<E extends ShardedDocument> {
 
     public Map<String, Double> normalize(Map<String, Double> rank, ShardStats csiStats, ShardStats shardStats) {
         double c_max = 1;
-        for (String shardId : rank.keySet()) {
+        Set<String> shardIds = rank.keySet();
+        for (String shardId : shardIds) {
             if (shardStats.getSizes().containsKey(shardId)) {
                 int sz = shardStats.getSizes().get(shardId);
                 if (sz > c_max)
