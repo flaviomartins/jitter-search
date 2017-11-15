@@ -50,12 +50,14 @@ public class RankS<E extends ShardedDocument> extends SelectionMethod<E> {
             }
 
             String[] shardIds = result.getShardIds();
-            for (String shardId : shardIds) {
-                if (!map.containsKey(shardId)) {
-                    map.put(shardId, r);
-                } else {
-                    double cur = map.get(shardId);
-                    map.put(shardId, cur + r);
+            if (shardIds != null) {
+                for (String shardId : shardIds) {
+                    if (!map.containsKey(shardId)) {
+                        map.put(shardId, r);
+                    } else {
+                        double cur = map.get(shardId);
+                        map.put(shardId, cur + r);
+                    }
                 }
             }
 
