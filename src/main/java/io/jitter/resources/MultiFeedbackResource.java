@@ -10,10 +10,8 @@ import io.dropwizard.jersey.caching.CacheControl;
 import io.dropwizard.jersey.params.DateTimeParam;
 import io.jitter.api.search.SelectionFeedbackDocumentsResponse;
 import io.jitter.api.search.StatusDocument;
-import io.jitter.core.rerank.MaxTFFilter;
-import io.jitter.core.rerank.RMTSReranker;
-import io.jitter.core.rerank.RerankerCascade;
-import io.jitter.core.rerank.RerankerContext;
+import io.jitter.core.probabilitydistributions.KDE;
+import io.jitter.core.rerank.*;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.Selection;
 import io.jitter.core.selection.SelectionTopDocuments;
@@ -115,7 +113,11 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
                 epochs = Epochs.parseDay(dateTimeParam.get());
             }
 
-            int c_sel;
+            // get the query epoch
+            double currentEpoch = System.currentTimeMillis() / 1000L;
+            double queryEpoch = epoch.isPresent() ? epochs[1] : currentEpoch;
+
+            int c_sel = 0;
             Selection selection;
             if ("taily".equalsIgnoreCase(method)) {
                 selection = tailyManager.selection(query, v, topics);
@@ -141,6 +143,13 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             SelectionTopDocuments shardResults = shardsManager.search(maxId, epochs, sRetweets, sFuture, limit, topics, query, filterQuery, selected);
             shardResults.scoreDocs = shardResults.scoreDocs.subList(0, Math.min(fbDocs, shardResults.scoreDocs.size()));
 
+            RerankerContext shardContext = new RerankerContext(null, null, "MB000", query,
+                    queryEpoch, Lists.newArrayList(), IndexStatuses.StatusField.TEXT.name, null);
+            if (temporal) {
+                KDEReranker kdeReranker = new KDEReranker((List<StatusDocument>) shardResults.scoreDocs, KDE.METHOD.REFLECTION, KDEReranker.WEIGHT.SCORE, 1.0);
+                shardResults.scoreDocs = kdeReranker.rerank((List<StatusDocument>) shardResults.scoreDocs, shardContext);
+            }
+
             FeatureVector shardsFV = null;
             if (shardResults.totalHits > 0) {
                 shardsFV = buildFeedbackFV(fbDocs, fbTerms, shardResults.scoreDocs, shardsManager.getStopper(), searchManager.getCollectionStats());
@@ -159,10 +168,6 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
             FeatureVector queryFV = buildQueryFV(query, searchManager.getStopper());
             fbVector = interpruneFV(fbTerms, fbWeight.floatValue(), queryFV, fbVector);
             String finalQuery = buildQuery(fbVector);
-
-            // get the query epoch
-            double currentEpoch = System.currentTimeMillis() / 1000L;
-            double queryEpoch = epoch.isPresent() ? epochs[1] : currentEpoch;
 
             TopDocuments results = searchManager.search(finalQuery, filterQuery, maxId, limit, retweets, epochs);
 
