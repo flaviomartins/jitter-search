@@ -97,8 +97,14 @@ public class RMTSReranker implements Reranker {
 //        KDERerank(editsOracle, query, method, bEdits);
 
         // KDE News
-        KDEReranker kdeReranker2 = new KDEReranker(shardResults, method, KDEReranker.WEIGHT.SCORE, 1.0);
-        results = kdeReranker2.rerank(results, context);
+        if (shardResults.size() > 1) {
+            KDEReranker kdeReranker2 = new KDEReranker(shardResults, method, KDEReranker.WEIGHT.SCORE, 1.0);
+            results = kdeReranker2.rerank(results, context);
+        } else {
+            for (StatusDocument result : results) {
+                result.getFeatures().add(0f);
+            }
+        }
 
         int numDocs = collectionStats.numDocs();
         HashMap<String, Integer> dfs = new HashMap<>();
@@ -114,6 +120,8 @@ public class RMTSReranker implements Reranker {
             double bm25 = 0;
             double coord = 0;
             double tfMax = 0;
+            double tfTotal = 0;
+            double tfMean;
 
             DocVector docVector = result.getDocVector();
             // if the term vectors are unavailable generate it here
@@ -144,9 +152,11 @@ public class RMTSReranker implements Reranker {
                         bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, docFreq, numDocs);
                         coord += 1;
                         tfMax = Math.max(tfMax, tfValue);
+                        tfTotal += tfValue;
                     }
                 }
             }
+            tfMean = tfTotal / coord;
 
             result.getFeatures().add((float) idf);
 
@@ -211,10 +221,10 @@ public class RMTSReranker implements Reranker {
 
             result.getFeatures().add((float) bm25);
 
-            result.getFeatures().add((float) tfMax);
+            result.getFeatures().add((float) tfMean);
         }
 
-        if (rank) {
+        if (rank && results.size() > 0) {
             try {
                 RankerFactory rFact = new RankerFactory();
                 Ranker ranker = rFact.loadRankerFromFile(rankerModel);
