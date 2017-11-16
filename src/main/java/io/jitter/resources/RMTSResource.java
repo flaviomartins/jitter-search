@@ -12,10 +12,7 @@ import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.RMTSDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.api.search.StatusDocument;
-import io.jitter.core.rerank.MaxTFFilter;
-import io.jitter.core.rerank.RMTSReranker;
-import io.jitter.core.rerank.RerankerCascade;
-import io.jitter.core.rerank.RerankerContext;
+import io.jitter.core.rerank.*;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.Selection;
@@ -141,7 +138,7 @@ public class RMTSResource extends AbstractFeedbackResource {
 
             RerankerCascade cascade = new RerankerCascade();
             cascade.add(new RMTSReranker("rmts.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, searchManager.getCollectionStats(), limit, numRerank, rerank));
-//            cascade.add(new MaxTFFilter(5));
+            cascade.add(new MeanTFFilter(3));
 
             RerankerContext context = new RerankerContext(null, null, "MB000", query,
                     queryEpoch, Lists.newArrayList(), IndexStatuses.StatusField.TEXT.name, null);
