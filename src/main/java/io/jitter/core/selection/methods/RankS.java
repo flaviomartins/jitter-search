@@ -67,10 +67,12 @@ public class RankS<E extends ShardedDocument> extends SelectionMethod<E> {
             j++;
         }
 
-        for (String topShard : topShards) {
-            if (counts.containsKey(topShard)) {
-                if (counts.get(topShard) == 1) {
-                    map.remove(topShard);
+        if (topShards != null) {
+            for (String topShard : topShards) {
+                if (counts.containsKey(topShard)) {
+                    if (counts.get(topShard) == 1) {
+                        map.remove(topShard);
+                    }
                 }
             }
         }
