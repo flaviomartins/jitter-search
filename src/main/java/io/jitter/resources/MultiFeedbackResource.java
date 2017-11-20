@@ -99,6 +99,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
                                           @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
                                           @ApiParam(value = "Use temporal reranking") @QueryParam("temporal") @DefaultValue("false") Boolean temporal,
                                           @ApiParam(hidden = true) @QueryParam("rerank") @DefaultValue("true") Boolean rerank,
+                                          @ApiParam(value = "Number of documents to rerank", allowableValues="range[1, 1000]") @QueryParam("numRerank") @DefaultValue("1000") Integer numRerank,
                                           @ApiParam(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
@@ -173,7 +174,7 @@ public class MultiFeedbackResource extends AbstractFeedbackResource {
 
             RerankerCascade cascade = new RerankerCascade();
             if (temporal) {
-                cascade.add(new RMTSReranker("mf.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, searchManager.getCollectionStats(), limit, limit, rerank));
+                cascade.add(new RMTSReranker("mf.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, searchManager.getCollectionStats(), limit, numRerank, rerank));
             }
             cascade.add(new MeanTFFilter(3));
 
