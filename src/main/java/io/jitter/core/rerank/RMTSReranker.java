@@ -84,7 +84,7 @@ public class RMTSReranker implements Reranker {
         }
 //        KDEReranker kdeReranker = new KDEReranker(results, queryEpoch, method, KDEReranker.WEIGHT.UNIFORM, 1.0);
 //        results = kdeReranker.getReranked();
-        KDEReranker kdeReranker1 = new KDEReranker(results, method, KDEReranker.WEIGHT.SCORE, 1.0);
+        KDEReranker kdeReranker1 = new KDEReranker(results.subList(0, Math.min(results.size(), numRerank)), method, KDEReranker.WEIGHT.SCORE, 1.0);
         results = kdeReranker1.rerank(results, context);
 
         for (StatusDocument result : results) {
@@ -228,7 +228,7 @@ public class RMTSReranker implements Reranker {
             try {
                 RankerFactory rFact = new RankerFactory();
                 Ranker ranker = rFact.loadRankerFromFile(rankerModel);
-                results = rankRankLib(ranker, query, results, numResults, numRerank);
+                results = rankRankLib(ranker, query, results, numResults);
             } catch (SecurityException e) {
                 logger.warn("RankLib caught calling System.exit(int).");
             }
@@ -248,7 +248,7 @@ public class RMTSReranker implements Reranker {
     }
 
     @SuppressWarnings("UnusedAssignment")
-    private List<StatusDocument> rankRankLib(Ranker ranker, String query, List<StatusDocument> results, int numResults, int numRerank) {
+    private List<StatusDocument> rankRankLib(Ranker ranker, String query, List<StatusDocument> results, int numResults) {
         int[] features = ranker.getFeatures();
         List<DataPoint> rl = new ArrayList<>();
 
@@ -260,8 +260,6 @@ public class RMTSReranker implements Reranker {
 //            DataPoint dp = hit.getDataPoint(rel, qid);
             DataPoint dp = hit.getDataPoint();
             rl.add(dp);
-            if (i++ >= numRerank)
-                break;
         }
         RankList l = new RankList(rl);
 
