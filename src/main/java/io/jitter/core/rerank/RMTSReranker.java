@@ -63,7 +63,7 @@ public class RMTSReranker implements Reranker {
             }
         }
 
-        BM25Feature bm25Feature = new BM25Feature(1.2D, 1.0D);
+        BM25Feature bm25Feature = new BM25Feature(1.2D, 0.75D);
         Extractor extractor = new Extractor();
 
         for (StatusDocument result : results) {
@@ -221,7 +221,7 @@ public class RMTSReranker implements Reranker {
 
             result.getFeatures().add((float) bm25);
 
-            result.getFeatures().add((float) tfMean);
+            result.getFeatures().add((float) tfTotal);
         }
 
         if (rank && results.size() > 0) {

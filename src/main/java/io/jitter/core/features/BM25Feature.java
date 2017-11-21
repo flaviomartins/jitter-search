@@ -2,7 +2,7 @@ package io.jitter.core.features;
 
 public class BM25Feature {
     public static final double DEFAULT_K_1 = 1.2;
-    public static final double DEFAULT_B = 1.0;
+    public static final double DEFAULT_B = 0.75;
 
     private double k_1;
     private double b;
