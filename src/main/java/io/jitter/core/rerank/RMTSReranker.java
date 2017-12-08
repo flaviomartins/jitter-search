@@ -17,6 +17,7 @@ import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.ListUtils;
 import io.jitter.core.utils.TimeUtils;
+import org.apache.commons.math3.util.FastMath;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.similarities.DefaultSimilarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
@@ -67,7 +68,7 @@ public class RMTSReranker implements Reranker {
         Extractor extractor = new Extractor();
 
         for (StatusDocument result : results) {
-            result.getFeatures().add((float) result.getRsv());
+            result.getFeatures().add((float) FastMath.exp(result.getRsv()));
         }
 
         double lambda = 0.01;
