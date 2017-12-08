@@ -2,6 +2,7 @@ package io.jitter.core.selection.methods;
 
 import io.jitter.api.search.ShardedDocument;
 import io.jitter.core.shards.ShardStats;
+import org.apache.commons.math3.util.FastMath;
 
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,7 @@ public class CRCSEXP<E extends ShardedDocument> extends CRCS<E> {
 
     @Override
     double weight(int j, int size) {
-        return alpha * Math.exp(-beta * j);
+        return alpha * FastMath.exp(-beta * j);
     }
 
     public float getAlpha() {

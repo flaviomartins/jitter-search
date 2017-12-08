@@ -9,6 +9,7 @@ import io.jitter.core.search.TopDocuments;
 import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.Stopper;
 import org.apache.commons.math3.distribution.EnumeratedDistribution;
+import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Pair;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
@@ -55,7 +56,7 @@ public class AbstractFeedbackResource {
             if (rsv >= 0) {
                 prob = 1.0;
             } else {
-                prob = Math.exp(rsv);
+                prob = FastMath.exp(rsv);
             }
             probabilities.add(new Pair<>(i, prob));
         }

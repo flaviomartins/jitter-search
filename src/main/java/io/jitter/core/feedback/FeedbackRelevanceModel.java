@@ -7,6 +7,7 @@ import io.jitter.api.search.StatusDocument;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.utils.AnalyzerUtils;
+import org.apache.commons.math3.util.FastMath;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -508,7 +509,7 @@ public class FeedbackRelevanceModel {
             if (rsv >= 0) {
                 scores[i] = rsv;
             } else {
-                scores[i] = Math.exp(rsv);
+                scores[i] = FastMath.exp(rsv);
             }
 
             DocVector docVector = new DocVector();
