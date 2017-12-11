@@ -1,5 +1,6 @@
 package io.jitter.core.rerank;
 
+import cc.twittertools.util.QueryLikelihoodModel;
 import ciir.umass.edu.features.LinearNormalizer;
 import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.learning.RankList;
@@ -10,12 +11,11 @@ import com.google.common.collect.Lists;
 import com.twitter.Extractor;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.StatusDocument;
-import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.features.BM25Feature;
 import io.jitter.core.probabilitydistributions.KDE;
-import io.jitter.core.utils.AnalyzerUtils;
 import io.jitter.core.utils.ListUtils;
+import io.jitter.core.utils.SearchUtils;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.lucene.analysis.Analyzer;
@@ -24,6 +24,7 @@ import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 
 public class RMTSReranker implements Reranker {
@@ -32,8 +33,9 @@ public class RMTSReranker implements Reranker {
 
     private static final double DAY = 60.0 * 60.0 * 24.0;
 
-    private static final Analyzer ANALYZER = new TweetAnalyzer();
-    private static final TFIDFSimilarity SIMILARITY = new DefaultSimilarity();
+    private final Analyzer analyzer;
+    private final TFIDFSimilarity tfidfSimilarity;
+    private final QueryLikelihoodModel qlModel;
 
     private final String rankerModel;
     private final String query;
@@ -44,27 +46,44 @@ public class RMTSReranker implements Reranker {
     private final int numRerank;
     private final boolean rank;
 
-    public RMTSReranker(String rankerModel, String query, double queryEpoch, List<StatusDocument> shardResults, CollectionStats collectionStats, int numResults, int numRerank, boolean rank) {
+    public RMTSReranker(String rankerModel, String query, double queryEpoch, List<StatusDocument> shardResults, Analyzer analyzer, CollectionStats collectionStats, int numResults, int numRerank, boolean rank) {
         this.rankerModel = rankerModel;
         this.query = query;
         this.queryEpoch = queryEpoch;
         this.shardResults = shardResults;
+        this.analyzer = analyzer;
         this.collectionStats = collectionStats;
         this.numResults = numResults;
         this.numRerank = numRerank;
         this.rank = rank;
+
+        tfidfSimilarity = new DefaultSimilarity();
+        qlModel = new QueryLikelihoodModel(2500.0f);
     }
 
     @Override
-    public List<StatusDocument> rerank(List<StatusDocument> results, RerankerContext context) {
-        Set<String> qTerms = new LinkedHashSet<>();
-        for (String term : AnalyzerUtils.analyze(ANALYZER, query)) {
-            if (!term.isEmpty()) {
-                qTerms.add(term);
+    public List<StatusDocument> rerank(List<StatusDocument> results, RerankerContext context) throws IOException {
+        Map<String, Float> weights = null;
+        HashMap<String, Long> ctfs = null;
+        HashMap<String, Integer> dfs = null;
+        int numDocs = collectionStats.numDocs();
+        long sumTotalTermFreq = -1;
+        if (qlModel != null) {
+            weights = qlModel.parseQuery(analyzer, query);
+            ctfs = new HashMap<>();
+            dfs = new HashMap<>();
+
+            for(String term: weights.keySet()) {
+                long ctf = collectionStats.totalTermFreq(term);
+                ctfs.put(term, ctf);
+                int df = collectionStats.docFreq(term);
+                dfs.put(term, df);
             }
+            sumTotalTermFreq = collectionStats.getSumTotalTermFreq();
         }
 
-        BM25Feature bm25Feature = new BM25Feature(1.2D, 0.75D);
+        // Ferguson et al. BM25 with k_1 = b = 0 <-> IDF
+        BM25Feature bm25Feature = new BM25Feature(0.1D, 0D);
         Extractor extractor = new Extractor();
 
         for (StatusDocument result : results) {
@@ -107,13 +126,6 @@ public class RMTSReranker implements Reranker {
             }
         }
 
-        int numDocs = collectionStats.numDocs();
-        HashMap<String, Integer> dfs = new HashMap<>();
-        for (String term : qTerms) {
-            int docFreq = collectionStats.docFreq(term);
-            dfs.put(term, docFreq);
-        }
-
         for (StatusDocument result : results) {
             double averageDocumentLength = 28;
             double docLength;
@@ -127,29 +139,18 @@ public class RMTSReranker implements Reranker {
             DocVector docVector = result.getDocVector();
             // if the term vectors are unavailable generate it here
             if (docVector == null) {
-                DocVector aDocVector = new DocVector();
-                List<String> docTerms = AnalyzerUtils.analyze(ANALYZER, result.getText());
-
-                for (String t : docTerms) {
-                    if (!t.isEmpty()) {
-                        Integer n = aDocVector.vector.get(t);
-                        n = (n == null) ? 1 : ++n;
-                        aDocVector.vector.put(t, n);
-                    }
-                }
-
-                docVector = aDocVector;
+                docVector = SearchUtils.buildDocVector(analyzer, result.getText());
             }
 
             docLength = docVector.getLength();
 
-            for (Map.Entry<String, Integer> tf : docVector.vector.entrySet()) {
-                String term = tf.getKey();
-                if (qTerms.contains(term)) {
-                    double tfValue = tf.getValue();
+            for (Map.Entry<String, Float> termWeight : weights.entrySet()) {
+                String term = termWeight.getKey();
+                if (docVector.vector.keySet().contains(term)) {
+                    double tfValue = docVector.vector.get(term);
                     if (tfValue > 0) {
                         int docFreq = dfs.get(term);
-                        idf += SIMILARITY.idf(docFreq, numDocs);
+                        idf += tfidfSimilarity.idf(docFreq, numDocs);
                         bm25 += bm25Feature.value(tfValue, docLength, averageDocumentLength, docFreq, numDocs);
                         coord += 1;
                         tfMax = Math.max(tfMax, tfValue);
@@ -222,7 +223,9 @@ public class RMTSReranker implements Reranker {
 
             result.getFeatures().add((float) bm25);
 
-            result.getFeatures().add((float) tfTotal);
+            double ql = qlModel.computeQLScore(weights, ctfs, docVector.vector, sumTotalTermFreq);
+
+            result.getFeatures().add((float) FastMath.exp(ql));
         }
 
         if (rank && results.size() > 0) {

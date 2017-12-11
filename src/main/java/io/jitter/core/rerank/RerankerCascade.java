@@ -3,6 +3,7 @@ package io.jitter.core.rerank;
 import com.google.common.collect.Lists;
 import io.jitter.api.search.StatusDocument;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -29,7 +30,7 @@ public class RerankerCascade {
    * @param docs input documents
    * @return reranked results
    */
-  public List<StatusDocument> run(List<StatusDocument> docs, RerankerContext context) {
+  public List<StatusDocument> run(List<StatusDocument> docs, RerankerContext context) throws IOException {
     List<StatusDocument> results = docs;
 
     for (Reranker reranker : rerankers) {
