@@ -22,7 +22,7 @@ import java.util.*;
 
 public class SearchUtils {
 
-    public static List<StatusDocument> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean filterRT, boolean computeQLScores) throws IOException {
+    public static List<StatusDocument> getDocs(IndexSearcher indexSearcher, Analyzer analyzer, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean filterRT, boolean computeQLScores) throws IOException {
         IndexReader indexReader = indexSearcher.getIndexReader();
 
         int count = 0;
@@ -58,7 +58,7 @@ public class SearchUtils {
                 try {
                     newDocVector = buildDocVector(indexReader, scoreDoc.doc);
                 } catch (IOException e) {
-                    newDocVector = buildDocVector(IndexStatuses.ANALYZER, doc.getText());
+                    newDocVector = buildDocVector(analyzer, doc.getText());
                 }
                 doc.setDocVector(newDocVector);
             }
@@ -73,22 +73,22 @@ public class SearchUtils {
         }
 
         if (computeQLScores) {
-            return computeQLScores(collectionStats, qlModel, topDocuments, query, limit);
+            return computeQLScores(analyzer, collectionStats, qlModel, topDocuments, query, limit);
         } else {
             return topDocuments;
         }
     }
 
-    public static List<StatusDocument> getDocs(IndexSearcher indexSearcher, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean filterRT) throws IOException {
-        return getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, limit, filterRT, true);
+    public static List<StatusDocument> getDocs(IndexSearcher indexSearcher, Analyzer analyzer, CollectionStats collectionStats, QueryLikelihoodModel qlModel, TopDocs topDocs, String query, int limit, boolean filterRT) throws IOException {
+        return getDocs(indexSearcher, analyzer, collectionStats, qlModel, topDocs, query, limit, filterRT, true);
     }
 
-    public static List<StatusDocument> computeQLScores(CollectionStats collectionStats, QueryLikelihoodModel qlModel, List<StatusDocument> topDocuments, String query, int limit) throws IOException {
+    public static List<StatusDocument> computeQLScores(Analyzer analyzer, CollectionStats collectionStats, QueryLikelihoodModel qlModel, List<StatusDocument> topDocuments, String query, int limit) throws IOException {
         Map<String, Float> weights = null;
         HashMap<String, Long> ctfs = null;
         long sumTotalTermFreq = -1;
         if (qlModel != null) {
-            weights = qlModel.parseQuery(IndexStatuses.ANALYZER, query);
+            weights = qlModel.parseQuery(analyzer, query);
             ctfs = new HashMap<>();
             for(String queryTerm: weights.keySet()) {
                 long ctf = collectionStats.totalTermFreq(queryTerm);
@@ -100,7 +100,7 @@ public class SearchUtils {
         for (StatusDocument doc : topDocuments) {
             DocVector docVector = doc.getDocVector();
             if (docVector == null && doc.getText() != null) {
-                DocVector newDocVector = buildDocVector(IndexStatuses.ANALYZER, doc.getText());
+                DocVector newDocVector = buildDocVector(analyzer, doc.getText());
                 docVector = newDocVector;
                 doc.setDocVector(newDocVector);
             }
@@ -147,7 +147,7 @@ public class SearchUtils {
         return docVector;
     }
 
-    private static DocVector buildDocVector(Analyzer analyzer, String text) throws IOException {
+    public static DocVector buildDocVector(Analyzer analyzer, String text) throws IOException {
         DocVector docVector = new DocVector();
         List<String> docTerms = AnalyzerUtils.analyze(analyzer, text);
         for (String t : docTerms) {
