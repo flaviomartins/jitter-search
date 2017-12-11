@@ -89,6 +89,10 @@ public class SearchManager implements Managed {
         return indexPath;
     }
 
+    public Analyzer getAnalyzer() {
+        return analyzer;
+    }
+
     public Stopper getStopper() {
         return stopper;
     }
@@ -137,7 +141,7 @@ public class SearchManager implements Managed {
         }
 
         // Compute real QL scores even when live to build termVectors
-        List<StatusDocument> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT, true);
+        List<StatusDocument> docs = SearchUtils.getDocs(indexSearcher, analyzer, collectionStats, qlModel, topDocs, query, n, filterRT, true);
 
         return new TopDocuments(totalHits, docs);
     }
