@@ -36,7 +36,7 @@
         <commons-math3.version>3.6.1</commons-math3.version>
         <jsat.version>0.0.8</jsat.version>
 
-        <lucene.version>5.5.4</lucene.version>
+        <lucene.version>5.5.5</lucene.version>
 
         <twitter4j.version>4.0.6</twitter4j.version>
         <hbc.version>2.2.0</hbc.version>
@@ -45,7 +45,7 @@
         <ranklib.version>2.8</ranklib.version>
         <kstem.version>3.4</kstem.version>
 
-        <sqlite-jdbc.version>3.20.0</sqlite-jdbc.version>
+        <sqlite-jdbc.version>3.20.1</sqlite-jdbc.version>
         <je.version>7.0.6</je.version>
         <rocksdbjni.version>5.7.2</rocksdbjni.version>
 
