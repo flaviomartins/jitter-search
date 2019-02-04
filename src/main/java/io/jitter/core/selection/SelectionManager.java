@@ -285,7 +285,7 @@ public class SelectionManager implements Managed {
             scores[i] = scoreDoc.score;
         }
 
-        List<StatusDocument> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT);
+        List<StatusDocument> docs = SearchUtils.getDocs(indexSearcher, analyzer, collectionStats, qlModel, topDocs, query, n, filterRT);
 
         int c_sel;
         if (live) {

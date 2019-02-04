@@ -90,7 +90,7 @@ public class ShardsManager implements Managed {
             stopper = new Stopper(stopwords);
         }
         if (stopper == null || stopper.asSet().isEmpty()) {
-            analyzer = new TweetAnalyzer(CharArraySet.EMPTY_SET);
+            analyzer = new TweetAnalyzer();
         } else {
             CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
             analyzer = new TweetAnalyzer(charArraySet);
@@ -331,7 +331,7 @@ public class ShardsManager implements Managed {
             scores[i] = scoreDoc.score;
         }
 
-        List<StatusDocument> docs = SearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n, filterRT);
+        List<StatusDocument> docs = SearchUtils.getDocs(indexSearcher, analyzer, collectionStats, qlModel, topDocs, query, n, filterRT);
 
         SelectionTopDocuments selectionTopDocuments = new SelectionTopDocuments(totalHits, docs);
 
