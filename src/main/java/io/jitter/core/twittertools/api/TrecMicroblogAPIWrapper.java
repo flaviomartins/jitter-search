@@ -15,6 +15,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.thrift.TException;
 
@@ -30,18 +31,18 @@ public class TrecMicroblogAPIWrapper implements Managed {
     private static final int MAX_NUM_RESULTS = 10000;
     private static final int DEFAULT_NUM_RESULTS = 3000;
 
-    private static final Analyzer ANALYZER = new TweetAnalyzer();
-
     private final String host;
     private final int port;
     private final TrecSearchThriftClient client;
     private final String cacheDir;
     private final boolean useCache;
     private Stopper stopper;
+    private Analyzer analyzer;
     private CollectionStats collectionStats;
 
     public TrecMicroblogAPIWrapper(String host, int port, @Nullable String group,
-                                   @Nullable String token, @Nullable String cacheDir, boolean useCache) {
+                                   @Nullable String token, @Nullable String cacheDir, boolean useCache,
+                                   String stopwords, @Nullable String stats, @Nullable String statsDb) {
         Preconditions.checkNotNull(host);
         Preconditions.checkArgument(port > 0);
         this.host = host;
@@ -49,11 +50,15 @@ public class TrecMicroblogAPIWrapper implements Managed {
         this.client = new TrecSearchThriftClient(host, port, group, token);
         this.cacheDir = cacheDir;
         this.useCache = useCache;
-    }
-
-    public TrecMicroblogAPIWrapper(String host, int port, String group, String token, String cacheDir, boolean useCache, String stopwords, @Nullable String stats, @Nullable String statsDb) {
-        this(host, port, group, token, cacheDir, useCache);
-        stopper = new Stopper(stopwords);
+        if (!stopwords.isEmpty()) {
+            stopper = new Stopper(stopwords);
+        }
+        if (stopper == null || stopper.asSet().isEmpty()) {
+            analyzer = new TweetAnalyzer();
+        } else {
+            CharArraySet charArraySet = new CharArraySet(stopper.asSet(), true);
+            analyzer = new TweetAnalyzer(charArraySet);
+        }
         if (stats != null && statsDb != null) {
             collectionStats = new TrecCollectionStats(stats, statsDb);
         }
@@ -67,6 +72,10 @@ public class TrecMicroblogAPIWrapper implements Managed {
     @Override
     public void stop() throws Exception {
 
+    }
+
+    public Analyzer getAnalyzer() {
+        return analyzer;
     }
 
     public Stopper getStopper() {
@@ -150,7 +159,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
         int totalDF = 0;
         if (collectionStats != null) {
             Set<String> qTerms = new LinkedHashSet<>();
-            for (String term : AnalyzerUtils.analyze(ANALYZER, query)) {
+            for (String term : AnalyzerUtils.analyze(analyzer, query)) {
                 if (!term.isEmpty()) {
                     qTerms.add(term);
                 }

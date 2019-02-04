@@ -134,7 +134,7 @@ public class TrecRMTSResource extends AbstractFeedbackResource {
             TopDocuments results = trecMicroblogAPIWrapper.search(query, maxId, limit, retweets);
 
             RerankerCascade cascade = new RerankerCascade();
-            cascade.add(new RMTSReranker("rmts.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, trecMicroblogAPIWrapper.getCollectionStats(), limit, numRerank, rerank));
+            cascade.add(new RMTSReranker("rmts.model", query, queryEpoch, (List<StatusDocument>) shardResults.scoreDocs, trecMicroblogAPIWrapper.getAnalyzer(), trecMicroblogAPIWrapper.getCollectionStats(), limit, numRerank, rerank));
 //            cascade.add(new MaxTFFilter(5));
 
             RerankerContext context = new RerankerContext(null, null, "MB000", query,
