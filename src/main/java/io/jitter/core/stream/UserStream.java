@@ -66,6 +66,10 @@ public class UserStream implements Managed {
                             te.printStackTrace();
                         }
                         logger.error("Failed to get timeline: " + te.getMessage());
+                    } catch (IllegalStateException ise) {
+                        logger.error("Failed to get rawJSON: " + ise.getMessage());
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             }, 0, 1, TimeUnit.MINUTES);
