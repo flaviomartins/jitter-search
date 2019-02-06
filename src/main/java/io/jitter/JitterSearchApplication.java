@@ -214,12 +214,12 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             final TimelineSseResource timelineSseResource = new TimelineSseResource();
             environment.jersey().register(timelineSseResource);
 
-            final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10);
+//            final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10);
             final UserStream userStream = new UserStream(oAuth1,
-                    Lists.newArrayList(timelineSseResource, userStreamIndexer),
-                    Lists.newArrayList(timelineSseResource, userRawStreamLogger));
+                    Lists.newArrayList(timelineSseResource),
+                    Lists.newArrayList(timelineSseResource));
             environment.lifecycle().manage(userStream);
-            environment.lifecycle().manage(userStreamIndexer);
+//            environment.lifecycle().manage(userStreamIndexer);
             
             String statusLogPath = "./data/archive/sample";
             if (StringUtils.isNotBlank(configuration.getStatusStreamLogPath()))
@@ -230,12 +230,12 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             environment.jersey().register(sampleSseResource);
 
 
-            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 10000);
+//            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 10000);
             final SampleStream statusStream = new SampleStream(oAuth1,
-                    Lists.newArrayList(sampleSseResource, statusStreamIndexer),
-                    Lists.newArrayList(sampleSseResource, statusRawStreamLogger));
+                    Lists.newArrayList(sampleSseResource),
+                    Lists.newArrayList(sampleSseResource));
             environment.lifecycle().manage(statusStream);
-            environment.lifecycle().manage(statusStreamIndexer);
+//            environment.lifecycle().manage(statusStreamIndexer);
         }
     }
 }
