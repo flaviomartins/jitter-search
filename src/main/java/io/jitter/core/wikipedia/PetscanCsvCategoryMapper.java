@@ -1,7 +1,7 @@
 package io.jitter.core.wikipedia;
 
 import com.google.common.base.Preconditions;
-import jersey.repackaged.com.google.common.collect.Sets;
+import com.google.common.collect.Sets;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.csv.QuoteMode;

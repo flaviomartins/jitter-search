@@ -5,6 +5,8 @@ import io.dropwizard.servlets.tasks.Task;
 import io.jitter.core.shards.ShardsManager;
 
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 
 public class ShardsManagerStatsTask extends Task {
 
@@ -16,7 +18,7 @@ public class ShardsManagerStatsTask extends Task {
     }
 
     @Override
-    public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
+    public void execute(Map<String, List<String>> parameters, PrintWriter output) throws Exception {
         shardsManager.collectStats();
     }
 }
