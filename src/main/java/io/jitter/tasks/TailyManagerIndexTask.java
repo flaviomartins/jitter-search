@@ -7,6 +7,8 @@ import io.dropwizard.servlets.tasks.Task;
 import io.jitter.core.taily.TailyManager;
 
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 
 public class TailyManagerIndexTask extends Task {
 
@@ -20,7 +22,7 @@ public class TailyManagerIndexTask extends Task {
     @Timed
     @ExceptionMetered
     @Override
-    public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
+    public void execute(Map<String, List<String>> parameters, PrintWriter output) throws Exception {
         if (tailyManager.isIndexing())
             throw new TaskIsAlreadyRunningException(getName() + " is already running.");
 

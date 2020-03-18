@@ -4,10 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.novasearch.jitter</groupId>
     <artifactId>jitter-search</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <version>0.11.0-SNAPSHOT</version>
+    <groupId>org.novasearch.jitter</groupId>
     <name>Jitter Search</name>
     <url>http://www.jitter.io</url>
     <description>
@@ -19,9 +18,19 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <argLine>-Duser.language=en -Duser.region=US -Duser.timezone=UTC</argLine>
 
-        <dropwizard.version>1.3.20</dropwizard.version>
-        <jersey.version>2.25.1</jersey.version>
+        <!-- You'll probably want to remove this for your project. We're just using it here
+             so that dropwizard-example doesn't get deployed as a library. -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <!-- You'll probably want to remove this for your project. We're just using it here
+             so that dropwizard-example site doesn't get staged and deployed. -->
+        <maven.site.skip>true</maven.site.skip>
+        <maven.site.deploy.skip>true</maven.site.deploy.skip>
+        <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+
+        <dropwizard.version>2.0.2</dropwizard.version>
+        <jersey.version>2.30.1</jersey.version>
 
         <swagger.version>1.5.16</swagger.version>
         <fastutil.version>7.2.1</fastutil.version>
@@ -88,7 +97,7 @@
         <dependencies>
             <dependency>
                 <groupId>io.dropwizard</groupId>
-                <artifactId>dropwizard-bom</artifactId>
+                <artifactId>dropwizard-dependencies</artifactId>
                 <version>${dropwizard.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -268,7 +277,15 @@
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-auth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-assets</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-http2</artifactId>
         </dependency>
 
         <!-- Jersey Server-Sent Events -->
@@ -378,7 +395,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -393,7 +410,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.0.2</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -403,22 +420,22 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.7.0</version>
+                    <version>3.8.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.2.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.0.2</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.2.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -428,12 +445,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.6</version>
+                    <version>3.9.0</version>
                 </plugin>
                 <plugin>
                     <groupId>de.thetaphi</groupId>
                     <artifactId>forbiddenapis</artifactId>
-                    <version>2.6</version>
+                    <version>2.7</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -445,9 +462,8 @@
             <plugin>
                 <groupId>de.thetaphi</groupId>
                 <artifactId>forbiddenapis</artifactId>
+                <version>2.7</version>
                 <configuration>
-                    <!-- disallow undocumented classes like sun.misc.Unsafe: -->
-                    <internalRuntimeForbidden>true</internalRuntimeForbidden>
                     <!--
                       if the used Java version is too new,
                       don't fail, just do nothing:
@@ -460,8 +476,10 @@
                         -->
                         <bundledSignature>jdk-unsafe</bundledSignature>
                         <bundledSignature>jdk-deprecated</bundledSignature>
-                        <bundledSignature>jdk-system-out</bundledSignature>
-                        <bundledSignature>commons-io-unsafe-2.5</bundledSignature>
+                        <!-- disallow undocumented classes like sun.misc.Unsafe: -->
+                        <bundledSignature>jdk-non-portable</bundledSignature>
+                        <!-- don't allow unsafe reflective access: -->
+                        <bundledSignature>jdk-reflection</bundledSignature>
                     </bundledSignatures>
                 </configuration>
                 <executions>
@@ -528,6 +546,12 @@
                             </excludes>
                         </filter>
                     </filters>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>com.example.helloworld.HelloWorldApplication</mainClass>
+                        </transformer>
+                    </transformers>
                 </configuration>
                 <executions>
                     <execution>
@@ -535,14 +559,19 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                        <configuration>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>io.jitter.JitterSearchApplication</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.5</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -566,42 +595,40 @@
                 </plugins>
             </build>
         </profile>
-        <profile>
-            <id>jdk8</id>
+         <profile>
+            <id>jdk11</id>
             <activation>
-                <jdk>1.8</jdk>
+                <jdk>11</jdk>
             </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <source>1.8</source>
-                            <target>1.8</target>
-                            <optimize>true</optimize>
-                            <debug>true</debug>
-                            <compilerId>javac-with-errorprone</compilerId>
-                            <forceJavacCompilerUse>true</forceJavacCompilerUse>
-                            <showWarnings>true</showWarnings>
-                            <fork>true</fork>
-                            <compilerArgument>-XepDisableWarningsInGeneratedCode</compilerArgument>
-                        </configuration>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.codehaus.plexus</groupId>
-                                <artifactId>plexus-compiler-javac-errorprone</artifactId>
-                                <version>2.8.2</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>com.google.errorprone</groupId>
-                                <artifactId>error_prone_core</artifactId>
-                                <version>2.1.1</version>
-                            </dependency>
-                        </dependencies>
-                    </plugin>
-                </plugins>
-            </build>
+            <properties>
+                <maven.compiler.release>11</maven.compiler.release>
+                <maven.compiler.source>11</maven.compiler.source>
+                <maven.compiler.target>11</maven.compiler.target>
+            </properties>
+             <build>
+                 <plugins>
+                     <plugin>
+                         <groupId>org.apache.maven.plugins</groupId>
+                         <artifactId>maven-compiler-plugin</artifactId>
+                         <version>3.8.0</version>
+                         <configuration>
+                             <source>8</source>
+                             <target>8</target>
+                             <compilerArgs>
+                                 <arg>-XDcompilePolicy=simple</arg>
+                                 <arg>-Xplugin:ErrorProne</arg>
+                             </compilerArgs>
+                             <annotationProcessorPaths>
+                                 <path>
+                                     <groupId>com.google.errorprone</groupId>
+                                     <artifactId>error_prone_core</artifactId>
+                                     <version>2.3.4</version>
+                                 </path>
+                             </annotationProcessorPaths>
+                         </configuration>
+                     </plugin>
+                 </plugins>
+             </build>
         </profile>
     </profiles>
 </project>

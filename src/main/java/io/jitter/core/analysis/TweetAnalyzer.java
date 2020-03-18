@@ -139,7 +139,7 @@ public final class TweetAnalyzer extends StopwordAnalyzerBase {
     final Tokenizer source = new CharTokenizer() {
             @Override
             protected boolean isTokenChar(int c) {
-        return !CharMatcher.WHITESPACE.matches((char) c);
+        return !CharMatcher.whitespace().matches((char) c);
             }
         };
         TokenStream result = new StandardFilter(source);
