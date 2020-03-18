@@ -59,25 +59,23 @@ public class WikipediaManager implements Managed {
     private final boolean live;
     private Stopper stopper;
     private final float mu;
-    private final PetscanCsvCategoryMapper categoryMapper;
 
     private DirectoryReader indexReader;
     private IndexSearcher searcher;
     private TaxonomyReader taxoReader;
     private FacetsConfig facetsConfig = new FacetsConfig();
 
-    public WikipediaManager(String indexPath, boolean live, float mu, String cat2Topic) throws IOException {
+    public WikipediaManager(String indexPath, boolean live, float mu) throws IOException {
         this.indexPath = indexPath;
         this.live = live;
         this.mu = mu;
-        categoryMapper = new PetscanCsvCategoryMapper(new File(cat2Topic));
 
         similarity = new LMDirichletSimilarity(mu);
         qlModel = new QueryLikelihoodModel(mu);
     }
 
-    public WikipediaManager(String indexPath, boolean live, String stopwords, float mu, String cat2Topic) throws IOException {
-        this(indexPath, live, mu, cat2Topic);
+    public WikipediaManager(String indexPath, boolean live, String stopwords, float mu) throws IOException {
+        this(indexPath, live, mu);
         stopper = new Stopper(stopwords);
     }
 
@@ -158,15 +156,6 @@ public class WikipediaManager implements Managed {
         List<WikipediaDocument> docs = WikipediaSearchUtils.getDocs(indexSearcher, collectionStats, qlModel, topDocs, query, n);
 
         for (WikipediaDocument doc : docs) {
-            HashSet<Object> topics = new HashSet<>();
-            for (String cat : doc.getCategories()) {
-                Set<String> catTopics = categoryMapper.getMap().get(cat);
-                if (catTopics != null ) {
-                    topics.addAll(catTopics);
-                }
-            }
-            doc.setTopics(topics.toArray(new String[topics.size()]));
-
             if (!full) {
                 doc.setText(StringUtils.abbreviate(doc.getText(), 500));
             }

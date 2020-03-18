@@ -20,9 +20,6 @@ public class WikipediaManagerFactory {
     @Max(5000)
     private float mu;
 
-    @NotEmpty
-    private String cat2topic;
-
     @JsonProperty
     public String getIndex() {
         return index;
@@ -53,18 +50,8 @@ public class WikipediaManagerFactory {
         this.mu = mu;
     }
 
-    @JsonProperty
-    public String getCat2topic() {
-        return cat2topic;
-    }
-
-    @JsonProperty
-    public void setCat2topic(String cat2topic) {
-        this.cat2topic = cat2topic;
-    }
-
     public WikipediaManager build(Environment environment) throws IOException {
-        final WikipediaManager wikipediaManager = new WikipediaManager(index, false, stopwords, mu, cat2topic);
+        final WikipediaManager wikipediaManager = new WikipediaManager(index, false, stopwords, mu);
         environment.lifecycle().manage(wikipediaManager);
         return wikipediaManager;
     }

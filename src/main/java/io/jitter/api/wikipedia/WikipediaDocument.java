@@ -14,7 +14,6 @@ public class WikipediaDocument extends AbstractDocument implements Document, Sha
     public String title; // required
     public String text; // required
     public String date; // required
-    public String[] categories;
     public String[] topics;
     public String[] shardIds;
 
@@ -24,7 +23,6 @@ public class WikipediaDocument extends AbstractDocument implements Document, Sha
         title = other.title;
         text = other.text;
         date = other.date;
-        categories = other.categories;
         topics = other.topics;
     }
 
@@ -33,7 +31,6 @@ public class WikipediaDocument extends AbstractDocument implements Document, Sha
         this.title = hit.get(WikipediaManager.TITLE_FIELD);
         this.text = hit.get(WikipediaManager.TEXT_FIELD);
         this.date = hit.get(WikipediaManager.DATE_FIELD);
-        this.categories = hit.getValues(WikipediaManager.CATEGORIES_FIELD);
     }
 
     @Override
@@ -78,14 +75,6 @@ public class WikipediaDocument extends AbstractDocument implements Document, Sha
 
     public void setDate(String date) {
         this.date = date;
-    }
-
-    public String[] getCategories() {
-        return categories;
-    }
-
-    public void setCategories(String[] categories) {
-        this.categories = categories;
     }
 
     public String[] getTopics() {
