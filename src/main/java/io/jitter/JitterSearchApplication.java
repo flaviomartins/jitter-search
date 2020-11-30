@@ -216,13 +216,20 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             final TimelineSseResource timelineSseResource = new TimelineSseResource();
             environment.jersey().register(timelineSseResource);
 
-//            final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10);
-            final UserStream userStream = new UserStream(oAuth1,
-                    Lists.newArrayList(timelineSseResource),
-                    Lists.newArrayList(timelineSseResource));
+            UserStream userStream;
+            if (configuration.isIndexing()) {
+                final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10);
+                userStream = new UserStream(oAuth1,
+                        Lists.newArrayList(timelineSseResource, userStreamIndexer),
+                        Lists.newArrayList(timelineSseResource, userRawStreamLogger));
+                environment.lifecycle().manage(userStreamIndexer);
+            } else {
+                userStream = new UserStream(oAuth1,
+                        Lists.newArrayList(timelineSseResource),
+                        Lists.newArrayList(timelineSseResource, userRawStreamLogger));
+            }
             environment.lifecycle().manage(userStream);
-//            environment.lifecycle().manage(userStreamIndexer);
-            
+
             String statusLogPath = "./data/archive/sample";
             if (StringUtils.isNotBlank(configuration.getStatusStreamLogPath()))
                 statusLogPath = configuration.getStatusStreamLogPath();
@@ -231,13 +238,19 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             final SampleSseResource sampleSseResource = new SampleSseResource();
             environment.jersey().register(sampleSseResource);
 
-
-//            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 10000);
-            final SampleStream statusStream = new SampleStream(oAuth2BearerToken,
-                    Lists.newArrayList(sampleSseResource),
-                    Lists.newArrayList(sampleSseResource));
+            SampleStream statusStream;
+            if (configuration.isIndexing()) {
+                final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 10000);
+                statusStream = new SampleStream(oAuth2BearerToken,
+                        Lists.newArrayList(sampleSseResource, statusStreamIndexer),
+                        Lists.newArrayList(sampleSseResource, statusRawStreamLogger));
+                environment.lifecycle().manage(statusStreamIndexer);
+            } else {
+                statusStream = new SampleStream(oAuth2BearerToken,
+                        Lists.newArrayList(sampleSseResource),
+                        Lists.newArrayList(sampleSseResource, statusRawStreamLogger));
+            }
             environment.lifecycle().manage(statusStream);
-//            environment.lifecycle().manage(statusStreamIndexer);
         }
     }
 }
