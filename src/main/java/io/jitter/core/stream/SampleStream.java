@@ -4,10 +4,10 @@ import com.google.common.collect.ImmutableList;
 import com.twitter.hbc.ClientBuilder;
 import com.twitter.hbc.core.Constants;
 import com.twitter.hbc.core.endpoint.StatusesSampleEndpoint;
-import com.twitter.hbc.core.processor.StringDelimitedProcessor;
+import com.twitter.hbc.core.processor.LineStringProcessor;
 import com.twitter.hbc.httpclient.BasicClient;
 import com.twitter.hbc.httpclient.auth.Authentication;
-import com.twitter.hbc.httpclient.auth.OAuth1;
+import com.twitter.hbc.httpclient.auth.OAuth2BearerToken;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.core.hbc.twitter4j.RawTwitter4jStatusClient;
 import org.slf4j.Logger;
@@ -31,14 +31,14 @@ public class SampleStream implements Managed {
 
     private BasicClient client;
 
-    public SampleStream(OAuth1 oAuth1, List<StatusListener> statusListeners, List<RawStreamListener> rawStreamListeners) {
-        this.auth = oAuth1;
+    public SampleStream(OAuth2BearerToken oAuth2, List<StatusListener> statusListeners, List<RawStreamListener> rawStreamListeners) {
+        this.auth = oAuth2;
         this.statusListeners = ImmutableList.copyOf(statusListeners);
         this.rawStreamListeners = ImmutableList.copyOf(rawStreamListeners);
     }
 
-    public SampleStream(io.jitter.core.twitter.OAuth1 oAuth1, List<StatusListener> statusListeners, List<RawStreamListener> rawStreamListeners) {
-        this(new OAuth1(oAuth1.getConsumerKey(), oAuth1.getConsumerSecret(), oAuth1.getToken(), oAuth1.getTokenSecret()), statusListeners, rawStreamListeners);
+    public SampleStream(io.jitter.core.twitter.OAuth2BearerToken oAuth2, List<StatusListener> statusListeners, List<RawStreamListener> rawStreamListeners) {
+        this(new OAuth2BearerToken(oAuth2.getBearerToken()), statusListeners, rawStreamListeners);
     }
 
     @Override
@@ -49,15 +49,19 @@ public class SampleStream implements Managed {
         // Define our endpoint: By default, delimited=length is set (we need this for our processor)
         // and stall warnings are on.
         StatusesSampleEndpoint endpoint = new StatusesSampleEndpoint();
+        endpoint.delimited(false);
         endpoint.stallWarnings(false);
+        endpoint.addQueryParameter("tweet.fields", "created_at,entities,geo,in_reply_to_user_id,lang,public_metrics");
+        endpoint.addQueryParameter("expansions", "author_id");
+        endpoint.addQueryParameter("user.fields", "created_at");
 
         // Create a new BasicClient. By default gzip is enabled.
         client = new ClientBuilder()
                 .name("sampleStreamClient")
-                .hosts(Constants.STREAM_HOST)
+                .hosts(Constants.API_HOST)
                 .endpoint(endpoint)
                 .authentication(auth)
-                .processor(new StringDelimitedProcessor(queue))
+                .processor(new LineStringProcessor(queue))
                 .build();
 
         // Create an executor service which will spawn threads to do the actual work of parsing the incoming messages and

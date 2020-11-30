@@ -11,6 +11,7 @@ import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.stream.SampleStream;
 import io.jitter.core.stream.UserStream;
 import io.jitter.core.twitter.OAuth1;
+import io.jitter.core.twitter.OAuth2BearerToken;
 import io.jitter.core.twitter.manager.TwitterManager;
 import io.jitter.core.utils.NoExitSecurityManager;
 import io.jitter.core.wikipedia.WikipediaManager;
@@ -205,6 +206,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
         if (configuration.isLive()) {
             OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getOAuth1Factory().build();
+            OAuth2BearerToken oAuth2BearerToken = configuration.getTwitterManagerFactory().getOAuth2BearerTokenFactory().build();
 
             String userLogPath = "./data/archive/user";
             if (StringUtils.isNotBlank(configuration.getUserStreamLogPath()))
@@ -231,7 +233,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
 
 //            final LiveStreamIndexer statusStreamIndexer = new LiveStreamIndexer(searchManager.getIndexPath(), 10000);
-            final SampleStream statusStream = new SampleStream(oAuth1,
+            final SampleStream statusStream = new SampleStream(oAuth2BearerToken,
                     Lists.newArrayList(sampleSseResource),
                     Lists.newArrayList(sampleSseResource));
             environment.lifecycle().manage(statusStream);
