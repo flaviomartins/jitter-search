@@ -1,9 +1,9 @@
 package io.jitter.core.feedback;
 
-import cc.twittertools.index.TweetAnalyzer;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.search.AbstractDocument;
 import io.jitter.api.search.StatusDocument;
+import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.utils.AnalyzerUtils;
