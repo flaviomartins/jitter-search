@@ -41,7 +41,7 @@
         <lucene.version>5.5.5</lucene.version>
 
         <twitter4j.version>4.0.7</twitter4j.version>
-        <hbc.version>2.2.1-hubspot-SNAPSHOT</hbc.version>
+        <hbc.version>2.2.1-SNAPSHOT</hbc.version>
 
         <twitter-text.version>1.14.7</twitter-text.version>
         <ranklib.version>2.8</ranklib.version>
@@ -198,17 +198,6 @@
             </dependency>
 
             <!-- Twitter Hosebird -->
-            <dependency>
-                <groupId>com.twitter</groupId>
-                <artifactId>hbc-core</artifactId>
-                <version>${hbc.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
             <dependency>
                 <groupId>com.twitter</groupId>
                 <artifactId>hbc-twitter4j</artifactId>
@@ -397,10 +386,6 @@
         <dependency>
             <groupId>cc.twittertools</groupId>
             <artifactId>twitter-tools-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>hbc-core</artifactId>
         </dependency>
     </dependencies>
 
