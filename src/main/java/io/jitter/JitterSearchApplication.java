@@ -208,27 +208,27 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
             OAuth1 oAuth1 = configuration.getTwitterManagerFactory().getOAuth1Factory().build();
             OAuth2BearerToken oAuth2BearerToken = configuration.getTwitterManagerFactory().getOAuth2BearerTokenFactory().build();
 
-            String userLogPath = "./data/archive/user";
-            if (StringUtils.isNotBlank(configuration.getUserStreamLogPath()))
-                userLogPath = configuration.getUserStreamLogPath();
+//            String userLogPath = "./data/archive/user";
+//            if (StringUtils.isNotBlank(configuration.getUserStreamLogPath()))
+//                userLogPath = configuration.getUserStreamLogPath();
 
-            final RawStreamLogger userRawStreamLogger = new RawStreamLogger(userLogPath);
-            final TimelineSseResource timelineSseResource = new TimelineSseResource();
-            environment.jersey().register(timelineSseResource);
+//            final RawStreamLogger userRawStreamLogger = new RawStreamLogger(userLogPath);
+//            final TimelineSseResource timelineSseResource = new TimelineSseResource();
+//            environment.jersey().register(timelineSseResource);
 
-            UserStream userStream;
-            if (configuration.isIndexing()) {
-                final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10);
-                userStream = new UserStream(oAuth1,
-                        Lists.newArrayList(timelineSseResource, userStreamIndexer),
-                        Lists.newArrayList(timelineSseResource, userRawStreamLogger));
-                environment.lifecycle().manage(userStreamIndexer);
-            } else {
-                userStream = new UserStream(oAuth1,
-                        Lists.newArrayList(timelineSseResource),
-                        Lists.newArrayList(timelineSseResource, userRawStreamLogger));
-            }
-            environment.lifecycle().manage(userStream);
+//            UserStream userStream;
+//            if (configuration.isIndexing()) {
+//                final LiveStreamIndexer userStreamIndexer = new LiveStreamIndexer(shardsManager.getIndexPath(), 10);
+//                userStream = new UserStream(oAuth1,
+//                        Lists.newArrayList(timelineSseResource, userStreamIndexer),
+//                        Lists.newArrayList(timelineSseResource, userRawStreamLogger));
+//                environment.lifecycle().manage(userStreamIndexer);
+//            } else {
+//                userStream = new UserStream(oAuth1,
+//                        Lists.newArrayList(timelineSseResource),
+//                        Lists.newArrayList(timelineSseResource, userRawStreamLogger));
+//            }
+//            environment.lifecycle().manage(userStream);
 
             String statusLogPath = "./data/archive/sample";
             if (StringUtils.isNotBlank(configuration.getStatusStreamLogPath()))
