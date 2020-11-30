@@ -17,15 +17,19 @@ public class JitterSearchConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private boolean cors;
+
+    @Valid
+    @NotNull
+    private boolean indexing;
+
+    @Valid
+    @NotNull
     private boolean live;
 
     private String statusStreamLogPath;
 
     private String userStreamLogPath;
-
-    @Valid
-    @NotNull
-    private boolean cors;
 
     @Valid
     @NotNull
@@ -137,6 +141,16 @@ public class JitterSearchConfiguration extends Configuration {
     @JsonProperty
     public void setCors(boolean cors) {
         this.cors = cors;
+    }
+
+    @JsonProperty
+    public boolean isIndexing() {
+        return indexing;
+    }
+
+    @JsonProperty
+    public void setIndexing(boolean indexing) {
+        this.indexing = indexing;
     }
 
     @JsonProperty
