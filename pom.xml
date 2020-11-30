@@ -40,8 +40,8 @@
 
         <lucene.version>5.5.5</lucene.version>
 
-        <twitter4j.version>4.0.7</twitter4j.version>
-        <hbc.version>2.2.1-SNAPSHOT</hbc.version>
+        <twitter4j.version>4.0.7-jitter</twitter4j.version>
+        <hbc.version>2.2.1-jitter</hbc.version>
 
         <twitter-text.version>1.14.7</twitter-text.version>
         <ranklib.version>2.8</ranklib.version>

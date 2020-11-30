@@ -51,9 +51,9 @@ public class SampleStream implements Managed {
         StatusesSampleEndpoint endpoint = new StatusesSampleEndpoint();
         endpoint.delimited(false);
         endpoint.stallWarnings(false);
-        endpoint.addQueryParameter("tweet.fields", "created_at,entities,geo,in_reply_to_user_id,lang,public_metrics");
+        endpoint.addQueryParameter("tweet.fields", "attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,text,withheld");
         endpoint.addQueryParameter("expansions", "author_id");
-        endpoint.addQueryParameter("user.fields", "created_at");
+        endpoint.addQueryParameter("user.fields", "created_at,description,entities,location,pinned_tweet_id,profile_image_url,protected,public_metrics,url,verified,withheld");
 
         // Create a new BasicClient. By default gzip is enabled.
         client = new ClientBuilder()
