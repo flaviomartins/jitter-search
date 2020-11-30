@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata modelVersion="1.1.0">
+  <groupId>com.twitter</groupId>
+  <artifactId>hbc</artifactId>
+  <version>2.2.1-hubspot-SNAPSHOT</version>
+  <versioning>
+    <snapshot>
+      <localCopy>true</localCopy>
+    </snapshot>
+    <lastUpdated>20201129233238</lastUpdated>
+    <snapshotVersions>
+      <snapshotVersion>
+        <extension>jar</extension>
+        <value>2.2.1-hubspot-SNAPSHOT</value>
+        <updated>20201129233238</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>2.2.1-hubspot-SNAPSHOT</value>
+        <updated>20201129233238</updated>
+      </snapshotVersion>
+    </snapshotVersions>
+  </versioning>
+</metadata>

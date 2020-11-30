@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>com.twitter</groupId>
+  <artifactId>hbc-core</artifactId>
+  <versioning>
+    <versions>
+      <version>2.2.1-hubspot-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20201130032117</lastUpdated>
+  </versioning>
+</metadata>
