@@ -7,12 +7,12 @@
     <snapshot>
       <localCopy>true</localCopy>
     </snapshot>
-    <lastUpdated>20201130061748</lastUpdated>
+    <lastUpdated>20201130063246</lastUpdated>
     <snapshotVersions>
       <snapshotVersion>
         <extension>jar</extension>
         <value>2.2.1-hubspot-SNAPSHOT</value>
-        <updated>20201130061748</updated>
+        <updated>20201130063246</updated>
       </snapshotVersion>
       <snapshotVersion>
         <extension>pom</extension>
