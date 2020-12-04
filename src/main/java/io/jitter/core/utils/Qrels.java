@@ -1,6 +1,7 @@
 package io.jitter.core.utils;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -12,7 +13,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class Qrels {
-    private static final Logger LOG = Logger.getLogger(Qrels.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Qrels.class);
 
     public static final Pattern SPACE_PATTERN = Pattern.compile(" ", Pattern.DOTALL);
 

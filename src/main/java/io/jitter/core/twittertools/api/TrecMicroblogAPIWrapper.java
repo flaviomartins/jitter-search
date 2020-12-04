@@ -13,18 +13,19 @@ import io.jitter.core.utils.Stopper;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.*;
 import java.util.*;
 
 public class TrecMicroblogAPIWrapper implements Managed {
-    private static final Logger LOG = Logger.getLogger(TrecMicroblogAPIWrapper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TrecMicroblogAPIWrapper.class);
 
     public static final float DEFAULT_MU = 2500.0f;
 
@@ -170,7 +171,7 @@ public class TrecMicroblogAPIWrapper implements Managed {
         }
 
         List<StatusDocument> documents = updatedResults.subList(0, Math.min(updatedResults.size(), numResults));
-        
+
         int totalHits = totalDF > 0 ? totalDF : documents.size();
         return new TopDocuments(totalHits, documents);
     }

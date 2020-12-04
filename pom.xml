@@ -29,10 +29,10 @@
         <maven.site.deploy.skip>true</maven.site.deploy.skip>
         <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
 
-        <dropwizard.version>2.0.2</dropwizard.version>
-        <jersey.version>2.30.1</jersey.version>
+        <dropwizard.version>2.0.16</dropwizard.version>
+        <jersey.version>2.32</jersey.version>
 
-        <swagger.version>1.5.16</swagger.version>
+        <swagger.version>1.6.2</swagger.version>
         <fastutil.version>7.2.1</fastutil.version>
         <commons-math3.version>3.6.1</commons-math3.version>
         <commons-csv.version>1.5</commons-csv.version>
