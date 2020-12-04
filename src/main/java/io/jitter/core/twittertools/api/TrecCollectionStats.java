@@ -3,7 +3,8 @@ package io.jitter.core.twittertools.api;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.core.taily.FeatureStore;
 import io.jitter.core.taily.RocksDbFeatureStore;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -13,7 +14,7 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 public class TrecCollectionStats implements CollectionStats {
-    private static final Logger LOG = Logger.getLogger(TrecCollectionStats.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TrecCollectionStats.class);
 
     public static final Pattern TAB_PATTERN = Pattern.compile("\\t", Pattern.DOTALL);
     public static final String CORPUS_DBENV = "corpus";
