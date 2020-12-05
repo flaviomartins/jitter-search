@@ -33,10 +33,10 @@
         <jersey.version>2.32</jersey.version>
 
         <swagger.version>1.6.2</swagger.version>
-        <fastutil.version>7.2.1</fastutil.version>
+        <fastutil.version>8.4.4</fastutil.version>
         <commons-math3.version>3.6.1</commons-math3.version>
-        <commons-csv.version>1.5</commons-csv.version>
-        <jsat.version>0.0.8</jsat.version>
+        <commons-csv.version>1.8</commons-csv.version>
+        <jsat.version>0.0.9</jsat.version>
 
         <lucene.version>5.5.5</lucene.version>
 
@@ -47,7 +47,7 @@
         <ranklib.version>2.8</ranklib.version>
         <kstem.version>3.4</kstem.version>
 
-        <rocksdbjni.version>5.7.2</rocksdbjni.version>
+        <rocksdbjni.version>6.13.3</rocksdbjni.version>
 
         <twittertools.version>1.4.6-SNAPSHOT</twittertools.version>
     </properties>
