@@ -15,10 +15,10 @@ import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
 import io.swagger.annotations.*;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.constraints.NotEmpty;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.IOException;
