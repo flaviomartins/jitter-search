@@ -3,9 +3,10 @@
   <groupId>cc.twittertools</groupId>
   <artifactId>twitter-tools-core</artifactId>
   <versioning>
+    <release>1.4.7-jitter</release>
     <versions>
-      <version>1.4.6-SNAPSHOT</version>
+      <version>1.4.7-jitter</version>
     </versions>
-    <lastUpdated>20170626124602</lastUpdated>
+    <lastUpdated>20201206022948</lastUpdated>
   </versioning>
 </metadata>

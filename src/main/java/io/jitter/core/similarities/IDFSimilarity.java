@@ -1,8 +1,8 @@
 package io.jitter.core.similarities;
 
-import org.apache.lucene.search.similarities.DefaultSimilarity;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
 
-public class IDFSimilarity extends DefaultSimilarity {
+public class IDFSimilarity extends ClassicSimilarity {
 
     @Override
     public float tf(float freq) {

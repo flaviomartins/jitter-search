@@ -19,7 +19,7 @@ import io.jitter.core.utils.SearchUtils;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.search.similarities.DefaultSimilarity;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +57,7 @@ public class RMTSReranker implements Reranker {
         this.numRerank = numRerank;
         this.rank = rank;
 
-        tfidfSimilarity = new DefaultSimilarity();
+        tfidfSimilarity = new ClassicSimilarity();
         qlModel = new QueryLikelihoodModel(2500.0f);
     }
 

@@ -1,6 +1,5 @@
 package io.jitter.core.rerank;
 
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
@@ -14,11 +13,11 @@ public class RerankerContext {
   private final String queryText;
   private final double queryEpoch;
   private final List<String> queryTokens;
-  private final Filter filter;
+  private final Query filter;
   private final String termVectorField;
 
   public RerankerContext(IndexSearcher searcher, Query query, String queryId, String queryText,
-                         double queryEpoch, List<String> queryTokens, String termVectorField, Filter filter) throws IOException {
+                         double queryEpoch, List<String> queryTokens, String termVectorField, Query filter) throws IOException {
     this.searcher = searcher;
     this.query = query;
     this.queryId = queryId;
@@ -33,7 +32,7 @@ public class RerankerContext {
     return searcher;
   }
 
-  public Filter getFilter() {
+  public Query getFilter() {
     return filter;
   }
 

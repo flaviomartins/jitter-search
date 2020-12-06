@@ -6,7 +6,7 @@ import io.jitter.core.selection.Selection;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.analysis.CharArraySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

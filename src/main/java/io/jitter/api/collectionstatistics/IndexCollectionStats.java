@@ -57,7 +57,7 @@ public class IndexCollectionStats implements CollectionStats {
 
     @Override
     public int numTerms() throws IOException {
-        Terms terms = MultiFields.getTerms(indexReader, field);
+        Terms terms = MultiTerms.getTerms(indexReader, field);
         TermsEnum termEnum = terms.iterator();
 
         int termCnt = 0;

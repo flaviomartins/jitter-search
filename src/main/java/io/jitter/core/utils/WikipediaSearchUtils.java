@@ -9,10 +9,7 @@ import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
 import io.jitter.core.wikipedia.WikipediaManager;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.MultiFields;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
@@ -97,7 +94,7 @@ public class WikipediaSearchUtils {
     }
 
     private static LinkedHashMap<String, Integer> getTermsMap(IndexReader indexReader) throws IOException {
-        Terms terms = MultiFields.getTerms(indexReader, WikipediaManager.TEXT_FIELD);
+        Terms terms = MultiTerms.getTerms(indexReader, WikipediaManager.TEXT_FIELD);
         TermsEnum termEnum = terms.iterator();
 
         LinkedHashMap<String, Integer> termsMap = new LinkedHashMap<>();

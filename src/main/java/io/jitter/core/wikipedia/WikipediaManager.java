@@ -7,7 +7,7 @@ import io.jitter.api.collectionstatistics.IndexCollectionStats;
 import io.jitter.api.wikipedia.WikipediaDocument;
 import io.jitter.core.utils.Stopper;
 import io.jitter.core.utils.WikipediaSearchUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
@@ -30,13 +30,10 @@ import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class WikipediaManager implements Managed {
 
@@ -107,11 +104,10 @@ public class WikipediaManager implements Managed {
         return mu;
     }
 
-    public WikipediaTopDocuments isearch(String query, String filterQuery, Filter filter, int n, boolean full) throws IOException, ParseException {
+    public WikipediaTopDocuments isearch(String query, String filterQuery, Query filter, int n, boolean full) throws IOException, ParseException {
         int len = Math.min(MAX_RESULTS, 3 * n);
         int nDocsReturned;
         int totalHits;
-        float maxScore;
         int[] ids;
         float[] scores;
 
@@ -127,11 +123,15 @@ public class WikipediaManager implements Managed {
             b.add(fq, BooleanClause.Occur.FILTER);
         }
 
+        if (filter != null) {
+            b.add(filter, BooleanClause.Occur.FILTER);
+        }
+
         Query bQuery = b.build();
 
-        final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
+        final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, len);
         final FacetsCollector fc = new FacetsCollector();
-        indexSearcher.search(bQuery, filter, MultiCollector.wrap(hitsCollector, fc));
+        indexSearcher.search(bQuery, MultiCollector.wrap(hitsCollector, fc));
 
         // Retrieve results
         List<FacetResult> results = new ArrayList<>();
@@ -141,8 +141,6 @@ public class WikipediaManager implements Managed {
         totalHits = hitsCollector.getTotalHits();
         TopDocs topDocs = hitsCollector.topDocs(0, len);
 
-        //noinspection UnusedAssignment
-        maxScore = totalHits > 0 ? topDocs.getMaxScore() : 0.0f;
         nDocsReturned = topDocs.scoreDocs.length;
         ids = new int[nDocsReturned];
         scores = new float[nDocsReturned];

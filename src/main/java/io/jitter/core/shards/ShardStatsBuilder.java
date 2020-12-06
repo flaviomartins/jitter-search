@@ -2,10 +2,7 @@ package io.jitter.core.shards;
 
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.MultiFields;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.index.*;
 import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +62,7 @@ public class ShardStatsBuilder {
         Map<String, Integer> collectionsSizes = new HashMap<>();
         Map<String, Integer> topicsSizes = new HashMap<>();
 
-        Terms terms = MultiFields.getTerms(reader, IndexStatuses.StatusField.SCREEN_NAME.name);
+        Terms terms = MultiTerms.getTerms(reader, IndexStatuses.StatusField.SCREEN_NAME.name);
         TermsEnum termEnum = terms.iterator();
 
         int colCnt = 0;
