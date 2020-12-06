@@ -11,10 +11,10 @@ import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.swagger.annotations.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.thrift.TException;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.constraints.NotEmpty;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.IOException;

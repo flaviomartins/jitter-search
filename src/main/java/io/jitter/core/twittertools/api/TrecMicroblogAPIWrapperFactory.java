@@ -2,7 +2,8 @@ package io.jitter.core.twittertools.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;
-import org.hibernate.validator.constraints.NotEmpty;
+
+import javax.validation.constraints.NotEmpty;
 
 public class TrecMicroblogAPIWrapperFactory {
 

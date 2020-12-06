@@ -1,7 +1,8 @@
 package io.jitter.core.twitter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.hibernate.validator.constraints.NotEmpty;
+
+import javax.validation.constraints.NotEmpty;
 
 public class OAuth1Factory {
 

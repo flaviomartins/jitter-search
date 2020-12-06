@@ -25,10 +25,10 @@ import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.core.document.FeatureVector;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.selection.SelectionManager;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.constraints.NotEmpty;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.IOException;
