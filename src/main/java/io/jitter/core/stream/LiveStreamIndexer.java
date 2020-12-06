@@ -82,20 +82,32 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
         try {
             Document doc = new Document();
             long id = status.getId();
-            doc.add(new LongField(StatusField.ID.name, id, Store.YES));
-            doc.add(new LongField(StatusField.EPOCH.name, status.getCreatedAt().getTime() / 1000L, Store.YES));
+            doc.add(new LongPoint(StatusField.ID.name, id));
+            doc.add(new StoredField(StatusField.ID.name, id));
+
+            doc.add(new LongPoint(StatusField.EPOCH.name, status.getCreatedAt().getTime() / 1000L));
+            doc.add(new StoredField(StatusField.EPOCH.name, status.getCreatedAt().getTime() / 1000L));
+
             doc.add(new Field(StatusField.SCREEN_NAME.name, status.getUser().getScreenName(), screenNameOptions));
 
             doc.add(new Field(StatusField.TEXT.name, status.getText(), textOptions));
 
-            doc.add(new IntField(StatusField.FRIENDS_COUNT.name, status.getUser().getFriendsCount(), Store.YES));
-            doc.add(new IntField(StatusField.FOLLOWERS_COUNT.name, status.getUser().getFollowersCount(), Store.YES));
-            doc.add(new IntField(StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount(), Store.YES));
+            doc.add(new IntPoint(StatusField.FRIENDS_COUNT.name, status.getUser().getFriendsCount()));
+            doc.add(new StoredField(StatusField.FRIENDS_COUNT.name, status.getUser().getFriendsCount()));
+
+            doc.add(new IntPoint(StatusField.FOLLOWERS_COUNT.name, status.getUser().getFollowersCount()));
+            doc.add(new StoredField(StatusField.FOLLOWERS_COUNT.name, status.getUser().getFollowersCount()));
+
+            doc.add(new IntPoint(StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount()));
+            doc.add(new StoredField(StatusField.STATUSES_COUNT.name, status.getUser().getStatusesCount()));
 
             long inReplyToStatusId = status.getInReplyToStatusId();
             if (inReplyToStatusId > 0) {
-                doc.add(new LongField(StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId, Store.YES));
-                doc.add(new LongField(StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId(), Store.YES));
+                doc.add(new LongPoint(StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId));
+                doc.add(new StoredField(StatusField.IN_REPLY_TO_STATUS_ID.name, inReplyToStatusId));
+
+                doc.add(new LongPoint(StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId()));
+                doc.add(new StoredField(StatusField.IN_REPLY_TO_USER_ID.name, status.getInReplyToUserId()));
             }
 
             String lang = status.getLang();
@@ -107,12 +119,16 @@ public class LiveStreamIndexer implements Managed, StatusListener, UserStreamLis
             Status retweetedStatus = status.getRetweetedStatus();
             if (retweetedStatus != null) {
                 retweetedStatusRetweetCount = retweetedStatus.getRetweetCount();
-                doc.add(new LongField(StatusField.RETWEETED_STATUS_ID.name, retweetedStatus.getId(), Store.YES));
-                doc.add(new LongField(StatusField.RETWEETED_USER_ID.name, retweetedStatus.getUser().getId(), Store.YES));
+                doc.add(new LongPoint(StatusField.RETWEETED_STATUS_ID.name, retweetedStatus.getId()));
+                doc.add(new StoredField(StatusField.RETWEETED_STATUS_ID.name, retweetedStatus.getId()));
+
+                doc.add(new LongPoint(StatusField.RETWEETED_USER_ID.name, retweetedStatus.getUser().getId()));
+                doc.add(new StoredField(StatusField.RETWEETED_USER_ID.name, retweetedStatus.getUser().getId()));
             }
 
             int retweetCount = status.getRetweetCount();
-            doc.add(new IntField(StatusField.RETWEET_COUNT.name, Math.max(retweetCount, retweetedStatusRetweetCount), Store.YES));
+            doc.add(new IntPoint(StatusField.RETWEET_COUNT.name, Math.max(retweetCount, retweetedStatusRetweetCount)));
+            doc.add(new StoredField(StatusField.RETWEET_COUNT.name, Math.max(retweetCount, retweetedStatusRetweetCount)));
 
             writer.addDocument(doc);
             if (counter.incrementAndGet() % commitEvery == 0) {

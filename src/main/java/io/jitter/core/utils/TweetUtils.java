@@ -1,8 +1,8 @@
 package io.jitter.core.utils;
 
 import com.twitter.Extractor;
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -99,6 +99,6 @@ public class TweetUtils {
     }
 
     public static String unescapeHtml(String text) {
-        return StringEscapeUtils.unescapeHtml(text);
+        return StringEscapeUtils.unescapeHtml4(text);
     }
 }

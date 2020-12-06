@@ -1,7 +1,7 @@
 package io.jitter.core.rerank;
 
 import io.jitter.api.search.StatusDocument;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;

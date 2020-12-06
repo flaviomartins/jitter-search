@@ -22,7 +22,7 @@ import io.swagger.converter.ModelConverters;
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.stream.LiveStreamIndexer;

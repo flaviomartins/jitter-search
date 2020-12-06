@@ -19,18 +19,13 @@ package io.jitter.core.analysis;
 import java.io.Reader;
 
 import com.google.common.base.CharMatcher;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.*;
 import org.apache.lucene.analysis.core.StopFilter;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.en.EnglishPossessiveFilter;
 import org.apache.lucene.analysis.en.PorterStemFilter;
 import org.apache.lucene.analysis.miscellaneous.SetKeywordMarkerFilter;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.standard.StandardFilter;
-import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.analysis.util.CharTokenizer;
-import org.apache.lucene.analysis.util.StopwordAnalyzerBase;
 
 /**
  * {@link Analyzer} for Tweets.
@@ -54,7 +49,7 @@ public final class TweetAnalyzer extends StopwordAnalyzerBase {
      * accesses the static final set the first time.;
      */
     private static class DefaultSetHolder {
-        static final CharArraySet DEFAULT_STOP_SET = StandardAnalyzer.STOP_WORDS_SET;
+        static final CharArraySet DEFAULT_STOP_SET = EnglishAnalyzer.ENGLISH_STOP_WORDS_SET;
     }
 
     /**
@@ -128,10 +123,9 @@ public final class TweetAnalyzer extends StopwordAnalyzerBase {
      *
      * @return A
      *         {@link org.apache.lucene.analysis.Analyzer.TokenStreamComponents}
-     *         built from an {@link CharTokenizer} filtered with
-     *         {@link StandardFilter}, {@link EnglishPossessiveFilter},
-     *         {@link EntityPreservingFilter}, {@link StopFilter}
-     *         , {@link SetKeywordMarkerFilter} if a stem exclusion set is
+     *         built from an {@link CharTokenizer}, {@link EnglishPossessiveFilter},
+     *         {@link EntityPreservingFilter}, {@link StopFilter},
+     *         {@link SetKeywordMarkerFilter} if a stem exclusion set is
      *         provided and {@link PorterStemFilter}.
      */
     @Override
@@ -142,8 +136,7 @@ public final class TweetAnalyzer extends StopwordAnalyzerBase {
         return !CharMatcher.whitespace().matches((char) c);
             }
         };
-        TokenStream result = new StandardFilter(source);
-        result = new EnglishPossessiveFilter(result);
+        TokenStream result = new EnglishPossessiveFilter(source);
         result = new EntityPreservingFilter(result, preserveCaps);
         // FIXME: LowerCaseFilter use blocked by LUCENE-3236
         result = new StopFilter(result, stopwords);

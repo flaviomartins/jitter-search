@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>jitter-search</artifactId>
-    <version>0.11.0-SNAPSHOT</version>
+    <version>0.12.0-SNAPSHOT</version>
     <groupId>org.novasearch.jitter</groupId>
     <name>Jitter Search</name>
     <url>http://www.jitter.io</url>
@@ -38,7 +38,7 @@
         <commons-csv.version>1.8</commons-csv.version>
         <jsat.version>0.0.9</jsat.version>
 
-        <lucene.version>5.5.5</lucene.version>
+        <lucene.version>8.3.0</lucene.version>
 
         <twitter4j.version>4.0.7-jitter</twitter4j.version>
         <hbc.version>2.2.2-jitter</hbc.version>
@@ -49,7 +49,7 @@
 
         <rocksdbjni.version>6.13.3</rocksdbjni.version>
 
-        <twittertools.version>1.4.6-SNAPSHOT</twittertools.version>
+        <twittertools.version>1.4.7-jitter</twittertools.version>
     </properties>
 
     <developers>

@@ -13,7 +13,7 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.similarities.DefaultSimilarity;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
 
 import java.io.IOException;
@@ -202,11 +202,11 @@ public class FeedbackRelevanceModel {
     }
 
     public FeedbackRelevanceModel() {
-        this(new StandardAnalyzer(), new DefaultSimilarity());
+        this(new StandardAnalyzer(), new ClassicSimilarity());
     }
 
     public FeedbackRelevanceModel(Analyzer analyzer) {
-        this(analyzer, new DefaultSimilarity());
+        this(analyzer, new ClassicSimilarity());
     }
 
     public FeedbackRelevanceModel(Analyzer analyzer, TFIDFSimilarity sim) {

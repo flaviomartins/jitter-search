@@ -4,7 +4,7 @@ import com.google.common.base.CharMatcher;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.analysis.CharArraySet;
 
 public class TweetFeedbackRelevanceModel extends FeedbackRelevanceModel {
 

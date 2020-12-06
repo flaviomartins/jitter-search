@@ -8,7 +8,6 @@ import com.google.common.collect.Sets;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.api.collectionstatistics.CollectionStats;
 import io.jitter.api.collectionstatistics.IndexCollectionStats;
-import io.jitter.api.search.AbstractDocument;
 import io.jitter.api.search.StatusDocument;
 import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.selection.SelectionTopDocuments;
@@ -18,7 +17,8 @@ import io.jitter.core.utils.SearchUtils;
 import io.jitter.core.utils.Stopper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
 import org.apache.lucene.misc.TermStats;
@@ -207,7 +207,8 @@ public class ShardsManager implements Managed {
         } else {
             int totalDF = 0;
             Set<Term> queryTerms = new TreeSet<>();
-            query.createWeight(searcher, false).extractTerms(queryTerms);
+            QueryVisitor termCollector = QueryVisitor.termCollector(queryTerms);
+            query.visit(termCollector);
             for (Term term : queryTerms) {
                 String text = term.text();
                 if (text.isEmpty())
@@ -258,7 +259,8 @@ public class ShardsManager implements Managed {
         } else {
             int totalDF = 0;
             Set<Term> queryTerms = new TreeSet<>();
-            query.createWeight(searcher, false).extractTerms(queryTerms);
+            QueryVisitor termCollector = QueryVisitor.termCollector(queryTerms);
+            query.visit(termCollector);
             for (Term term : queryTerms) {
                 String text = term.text();
                 if (text.isEmpty())
@@ -287,7 +289,7 @@ public class ShardsManager implements Managed {
         return selectionTopDocuments;
     }
 
-    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, String filterQuery, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
+    public SelectionTopDocuments isearch(boolean topics, Set<String> collections, String query, String filterQuery, Query filter, int n, boolean filterRT) throws IOException, ParseException {
         int len = Math.min(MAX_RESULTS, 3 * n);
         int nDocsReturned;
         int totalHits;
@@ -307,10 +309,14 @@ public class ShardsManager implements Managed {
             b.add(fq, BooleanClause.Occur.FILTER);
         }
 
+        if (filter != null) {
+            b.add(filter, BooleanClause.Occur.FILTER);
+        }
+
         Query bQuery = b.build();
 
-        final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
-        indexSearcher.search(bQuery, filter, hitsCollector);
+        final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, len);
+        indexSearcher.search(bQuery, hitsCollector);
 
         totalHits = hitsCollector.getTotalHits();
         TopDocs topDocs;
@@ -320,8 +326,6 @@ public class ShardsManager implements Managed {
             topDocs = hitsCollector.topDocs(0, indexReader.numDocs());
         }
 
-        //noinspection UnusedAssignment
-        maxScore = totalHits > 0 ? topDocs.getMaxScore() : 0.0f;
         nDocsReturned = topDocs.scoreDocs.length;
         ids = new int[nDocsReturned];
         scores = new float[nDocsReturned];
@@ -351,14 +355,12 @@ public class ShardsManager implements Managed {
     }
 
     public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, String filterQuery, int n, boolean filterRT, long maxId) throws IOException, ParseException {
-        Filter filter =
-                NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
+        Query filter = LongPoint.newRangeQuery(IndexStatuses.StatusField.ID.name, 0L, maxId);
         return isearch(topics, collections, query, filterQuery, filter, n, filterRT);
     }
 
     public SelectionTopDocuments search(boolean topics, Set<String> collections, String query, String filterQuery, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
-        Filter filter =
-                NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
+        Query filter = LongPoint.newRangeQuery(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch);
         return isearch(topics, collections, query, filterQuery, filter, n, filterRT);
     }
 

@@ -2,7 +2,7 @@ package io.jitter.core.taily;
 
 import cc.twittertools.index.IndexStatuses;
 import io.jitter.core.features.IndriFeature;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
@@ -107,11 +107,10 @@ public class Taily {
         Map<String, FeatureStore> topicStores = new HashMap<>(numTopics);
         buildTopics(topics, topicStores, sourceStores);
 
-        Bits liveDocs = MultiFields.getLiveDocs(indexReader);
         // TODO: read terms list
         // TODO: field list?
         // TODO: only create shard statistics for specified terms
-        Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
+        Terms terms = MultiTerms.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
         TermsEnum termEnum = terms.iterator();
 
         int termCnt = 0;
@@ -136,7 +135,7 @@ public class Taily {
             Map<String, ShardData> topicsShardDataMap = new HashMap<>(numTopics);
 
             if (termEnum.seekExact(bytesRef)) {
-                DocsEnum docsEnum = termEnum.docs(liveDocs, null);
+                PostingsEnum docsEnum = termEnum.postings(null);
                 if (docsEnum != null) {
                     int docId;
                     // go through each doc in index containing the current term
@@ -244,7 +243,7 @@ public class Taily {
     }
 
     private void buildSources(List<String> screenNames, DirectoryReader indexReader, Map<String, String> sourceTopicMap, Map<String, FeatureStore> sourceStores) throws IOException {
-        Terms screenNameTerms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.SCREEN_NAME.name);
+        Terms screenNameTerms = MultiTerms.getTerms(indexReader, IndexStatuses.StatusField.SCREEN_NAME.name);
         TermsEnum screenNameTermEnum = screenNameTerms.iterator();
         IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
@@ -298,7 +297,7 @@ public class Taily {
 
         // TODO: read terms list
         // TODO: field list?
-        Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
+        Terms terms = MultiTerms.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
         TermsEnum termEnum = terms.iterator();
 
         long termCnt = 0;

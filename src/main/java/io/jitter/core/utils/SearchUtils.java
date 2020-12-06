@@ -9,7 +9,7 @@ import io.jitter.api.search.Document;
 import io.jitter.core.document.DocVector;
 import io.jitter.core.rerank.DocumentComparator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
@@ -117,7 +117,7 @@ public class SearchUtils {
     }
 
     private static LinkedHashMap<String, Integer> getTermsMap(IndexReader indexReader) throws IOException {
-        Terms terms = MultiFields.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
+        Terms terms = MultiTerms.getTerms(indexReader, IndexStatuses.StatusField.TEXT.name);
         TermsEnum termEnum = terms.iterator();
 
         LinkedHashMap<String, Integer> termsMap = new LinkedHashMap<>();

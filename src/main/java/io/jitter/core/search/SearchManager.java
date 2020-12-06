@@ -9,7 +9,8 @@ import io.jitter.core.analysis.TweetAnalyzer;
 import io.jitter.core.utils.SearchUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.index.*;
 import org.apache.lucene.misc.HighFreqTerms;
 import org.apache.lucene.misc.TermStats;
@@ -101,11 +102,10 @@ public class SearchManager implements Managed {
         return mu;
     }
 
-    public TopDocuments isearch(String query, String filterQuery, Filter filter, int n, boolean filterRT) throws IOException, ParseException {
+    public TopDocuments isearch(String query, String filterQuery, Query filter, int n, boolean filterRT) throws IOException, ParseException {
         int len = Math.min(MAX_RESULTS, 3 * n);
         int nDocsReturned;
         int totalHits;
-        float maxScore;
         int[] ids;
         float[] scores;
 
@@ -121,16 +121,18 @@ public class SearchManager implements Managed {
             b.add(fq, BooleanClause.Occur.FILTER);
         }
 
+        if (filter != null) {
+            b.add(filter, BooleanClause.Occur.FILTER);
+        }
+
         Query bQuery = b.build();
 
-        final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, null);
-        indexSearcher.search(bQuery, filter, hitsCollector);
+        final TopDocsCollector hitsCollector = TopScoreDocCollector.create(len, len);
+        indexSearcher.search(bQuery, hitsCollector);
 
         totalHits = hitsCollector.getTotalHits();
         TopDocs topDocs = hitsCollector.topDocs(0, len);
 
-        //noinspection UnusedAssignment
-        maxScore = totalHits > 0 ? topDocs.getMaxScore() : 0.0f;
         nDocsReturned = topDocs.scoreDocs.length;
         ids = new int[nDocsReturned];
         scores = new float[nDocsReturned];
@@ -155,14 +157,12 @@ public class SearchManager implements Managed {
     }
 
     public TopDocuments search(String query, String filterQuery, int n, boolean filterRT, long maxId) throws IOException, ParseException {
-        Filter filter =
-                NumericRangeFilter.newLongRange(IndexStatuses.StatusField.ID.name, 0L, maxId, true, true);
+        Query filter = LongPoint.newRangeQuery(IndexStatuses.StatusField.ID.name, 0L, maxId);
         return isearch(query, filterQuery, filter, n, filterRT);
     }
 
     public TopDocuments search(String query, String filterQuery, int n, boolean filterRT, long firstEpoch, long lastEpoch) throws IOException, ParseException {
-        Filter filter =
-                NumericRangeFilter.newLongRange(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch, true, true);
+        Query filter = LongPoint.newRangeQuery(IndexStatuses.StatusField.EPOCH.name, firstEpoch, lastEpoch);
         return isearch(query, filterQuery, filter, n, filterRT);
     }
 

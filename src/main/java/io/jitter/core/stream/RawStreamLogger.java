@@ -10,7 +10,7 @@ import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
 import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.util.FileSize;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
 import twitter4j.RawStreamListener;
 
