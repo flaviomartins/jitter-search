@@ -33,7 +33,7 @@
         <jersey.version>2.32</jersey.version>
 
         <swagger.version>1.6.2</swagger.version>
-        <fastutil.version>8.4.4</fastutil.version>
+        <fastutil.version>8.5.16</fastutil.version>
         <commons-math3.version>3.6.1</commons-math3.version>
         <commons-csv.version>1.8</commons-csv.version>
         <jsat.version>0.0.9</jsat.version>
