@@ -587,6 +587,11 @@
                                 <exclude>META-INF/*.SF</exclude>
                                 <exclude>META-INF/*.DSA</exclude>
                                 <exclude>META-INF/*.RSA</exclude>
+                                <exclude>META-INF/*.MD</exclude>
+                                <exclude>META-INF/*.markdown</exclude>
+                                <exclude>META-INF/DEPENDENCIES</exclude>
+                                <exclude>META-INF/LICENSE*</exclude>
+                                <exclude>META-INF/NOTICE*</exclude>
                                 <exclude>module-info.class</exclude>
                             </excludes>
                         </filter>
