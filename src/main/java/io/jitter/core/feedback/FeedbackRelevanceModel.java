@@ -18,7 +18,9 @@ import org.apache.lucene.search.similarities.TFIDFSimilarity;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 public class FeedbackRelevanceModel {
@@ -149,7 +151,7 @@ public class FeedbackRelevanceModel {
     /**
      * For idf() calculations.
      */
-    private TFIDFSimilarity similarity;// = new DefaultSimilarity();
+    private final TFIDFSimilarity similarity;// = new DefaultSimilarity();
 
     /**
      * For numTerms() and docFreq() calculations.

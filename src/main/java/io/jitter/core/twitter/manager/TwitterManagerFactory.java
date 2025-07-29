@@ -1,14 +1,12 @@
 package io.jitter.core.twitter.manager;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import io.jitter.core.twitter.OAuth1Factory;
 import io.jitter.core.twitter.OAuth2BearerTokenFactory;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.util.Set;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class TwitterManagerFactory {
 
@@ -20,10 +18,10 @@ public class TwitterManagerFactory {
     @NotNull
     private OAuth2BearerTokenFactory oAuth2BearerTokenFactory = new OAuth2BearerTokenFactory();
 
-    @NotEmpty
+    @NotBlank
     private String databasePath;
 
-    @NotEmpty
+    @NotBlank
     private String collectionPath;
 
     @JsonProperty("oauth")

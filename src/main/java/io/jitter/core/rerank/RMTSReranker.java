@@ -25,7 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class RMTSReranker implements Reranker {
 
@@ -40,7 +43,7 @@ public class RMTSReranker implements Reranker {
     private final String rankerModel;
     private final String query;
     private final double queryEpoch;
-    private List<StatusDocument> shardResults;
+    private final List<StatusDocument> shardResults;
     private final CollectionStats collectionStats;
     private final int numResults;
     private final int numRerank;
@@ -146,7 +149,7 @@ public class RMTSReranker implements Reranker {
 
             for (Map.Entry<String, Float> termWeight : weights.entrySet()) {
                 String term = termWeight.getKey();
-                if (docVector.vector.keySet().contains(term)) {
+                if (docVector.vector.containsKey(term)) {
                     double tfValue = docVector.vector.get(term);
                     if (tfValue > 0) {
                         int docFreq = dfs.get(term);
@@ -251,7 +254,6 @@ public class RMTSReranker implements Reranker {
         return kernelDensityReranker.rerank(results, context);
     }
 
-    @SuppressWarnings("UnusedAssignment")
     private List<StatusDocument> rankRankLib(Ranker ranker, String query, List<StatusDocument> results, int numResults) {
         int[] features = ranker.getFeatures();
         List<DataPoint> rl = new ArrayList<>();

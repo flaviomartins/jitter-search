@@ -1,6 +1,5 @@
 package io.jitter.tasks;
 
-import com.google.common.collect.ImmutableMultimap;
 import io.dropwizard.servlets.tasks.Task;
 import io.jitter.core.search.SearchManager;
 
@@ -18,7 +17,7 @@ public class SearchManagerForceMergeTask extends Task {
     }
 
     @Override
-    public void execute(Map<String, List<String>> parameters, PrintWriter output) throws Exception {
+    public void execute(Map<String, List<String>> map, PrintWriter printWriter) throws Exception {
         searchManager.forceMerge();
     }
 }

@@ -3,6 +3,11 @@ package io.jitter.resources;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 import org.glassfish.jersey.media.sse.SseBroadcaster;
@@ -10,11 +15,6 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.slf4j.Logger;
 import twitter4j.*;
 
-import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
@@ -70,10 +70,9 @@ public class SampleSseResource implements StatusListener, RawStreamListener {
             String json;
             try {
                 json = objectWriter.writeValueAsString(status);
-                StringBuilder sb = new StringBuilder();
-                sb.append(json.substring(0, json.length()-2)).append(",\n");
-                sb.append("  \"id_str\" : \"").append(String.valueOf(status.getId())).append("\"\n}");
-                json = sb.toString();
+                String sb = json.substring(0, json.length() - 2) + ",\n" +
+                        "  \"id_str\" : \"" + status.getId() + "\"\n}";
+                json = sb;
                 broadcastMessage("status", json);
             } catch (JsonProcessingException e) {
                 logger.error(e.getMessage());

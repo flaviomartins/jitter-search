@@ -3,9 +3,8 @@ package io.jitter.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.caching.CacheControl;
-import io.dropwizard.jersey.params.DateTimeParam;
+import io.dropwizard.jersey.jsr310.LocalDateTimeParam;
 import io.jitter.api.ResponseHeader;
-import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.api.selection.SelectionDocumentsResponse;
 import io.jitter.api.selection.SelectionResponse;
 import io.jitter.core.selection.Selection;
@@ -13,16 +12,22 @@ import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.constraints.NotEmpty;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/select")
-@Api(value = "/select", description = "Resource selection")
+@Tag(name = "/select", description = "Resource selection")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class SelectionResource {
     private static final Logger logger = LoggerFactory.getLogger(SelectionResource.class);
@@ -51,44 +56,43 @@ public class SelectionResource {
     @GET
     @Timed
     @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
-    @ApiOperation(
-            value = "Searches documents by keyword query using a time-aware ranking model",
-            notes = "Returns a selection search response",
-            response = SelectionSearchResponse.class
+    @Operation(
+            summary = "Searches documents by keyword query using a time-aware ranking model",
+            description = "Returns a selection search response"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Invalid query"),
-            @ApiResponse(code = 404, message = "No results found"),
-            @ApiResponse(code = 500, message = "Internal Server Error")
+            @ApiResponse(responseCode = "400", description = "Invalid query"),
+            @ApiResponse(responseCode = "404", description = "No results found"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error")
     })
-    public SelectionResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") @NotEmpty String q,
-                                    @ApiParam(hidden = true) @QueryParam("fq") Optional<String> fq,
-                                    @ApiParam(value = "Limit results", allowableValues="range[1, 1000]") @QueryParam("limit") @DefaultValue("50") Integer limit,
-                                    @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("true") Boolean retweets,
-                                    @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
-                                    @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
-                                    @ApiParam(value = "Day filter") @QueryParam("day") Optional<DateTimeParam> day,
-                                    @ApiParam(value = "Limit feedback results", allowableValues="range[1, 10000]") @QueryParam("sLimit") @DefaultValue("1000") Integer sLimit,
-                                    @ApiParam(value = "Include retweets for feedback") @QueryParam("sRetweets") @DefaultValue("true") Boolean sRetweets,
-                                    @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean sFuture,
-                                    @ApiParam(value = "Resource selection method", allowableValues="taily,ranks,crcsexp,crcslin,votes,sizes") @QueryParam("method") @DefaultValue("ranks") String method,
-                                    @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
-                                    @ApiParam(value = "Maximum number of collections", allowableValues="range[0, 100]") @QueryParam("maxCol") @DefaultValue("3") Integer maxCol,
-                                    @ApiParam(value = "Rank-S parameter", allowableValues="range[0, 1]") @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
-                                    @ApiParam(value = "Use collection size normalization") @QueryParam("normalize") @DefaultValue("true") Boolean normalize,
-                                    @ApiParam(value = "Taily parameter", allowableValues="range[0, 100]") @QueryParam("v") @DefaultValue("10") Integer v,
+    public SelectionResponse search(@Parameter(name = "Search query", required = true) @QueryParam("q") @NotBlank String q,
+                                    @Parameter(hidden = true) @QueryParam("fq") Optional<String> fq,
+                                    @Parameter(name = "Limit results", schema = @Schema(minimum = "1", maximum = "1000")) @QueryParam("limit") @DefaultValue("50") Integer limit,
+                                    @Parameter(name = "Include retweets") @QueryParam("retweets") @DefaultValue("true") Boolean retweets,
+                                    @Parameter(name = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
+                                    @Parameter(name = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
+                                    @Parameter(name = "Day filter") @QueryParam("day") Optional<LocalDateTimeParam> day,
+                                    @Parameter(name = "Limit feedback results", schema = @Schema(minimum = "1", maximum = "10000")) @QueryParam("sLimit") @DefaultValue("1000") Integer sLimit,
+                                    @Parameter(name = "Include retweets for feedback") @QueryParam("sRetweets") @DefaultValue("true") Boolean sRetweets,
+                                    @Parameter(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean sFuture,
+                                    @Parameter(name = "Resource selection method", schema = @Schema(allowableValues = {"taily", "ranks", "crcsexp", "crcslin", "votes", "sizes"})) @QueryParam("method") @DefaultValue("ranks") String method,
+                                    @Parameter(name = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
+                                    @Parameter(name = "Maximum number of collections", schema = @Schema(minimum = "1", maximum = "100")) @QueryParam("maxCol") @DefaultValue("3") Integer maxCol,
+                                    @Parameter(name = "Rank-S parameter", schema = @Schema(minimum = "1", maximum = "1")) @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
+                                    @Parameter(name = "Use collection size normalization") @QueryParam("normalize") @DefaultValue("true") Boolean normalize,
+                                    @Parameter(name = "Taily parameter", schema = @Schema(minimum = "1", maximum = "100")) @QueryParam("v") @DefaultValue("10") Integer v,
                                     @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         try {
             long startTime = System.currentTimeMillis();
-            String query = URLDecoder.decode(q, "UTF-8");
-            String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
+            String query = URLDecoder.decode(q, StandardCharsets.UTF_8);
+            String filterQuery = URLDecoder.decode(fq.orElse(""), StandardCharsets.UTF_8);
             long[] epochs = Epochs.parseEpoch(epoch);
 
             if (day.isPresent()) {
-                DateTimeParam dateTimeParam = day.get();
+                LocalDateTimeParam dateTimeParam = day.get();
                 epochs = Epochs.parseDay(dateTimeParam.get());
             }
 

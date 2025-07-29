@@ -93,6 +93,6 @@ public class Qrels {
             LOG.error("no relevant documents found for query " + query);
             return 0.0;
         }
-        return (double) rel.get(query).size();
+        return rel.get(query).size();
     }
 }

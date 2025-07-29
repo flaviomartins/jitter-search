@@ -1,11 +1,12 @@
 package io.jitter.core.utils;
 
-import org.joda.time.DateTime;
-
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import static org.joda.time.DateTimeConstants.MILLIS_PER_SECOND;
+import static org.apache.commons.lang3.time.DateUtils.MILLIS_PER_SECOND;
+
 
 public class Epochs {
 
@@ -45,12 +46,12 @@ public class Epochs {
         return epochs;
     }
 
-    public static long[] parseDay(DateTime dateTime) {
+    public static long[] parseDay(LocalDateTime dateTime) {
         long[] epochs = new long[]{0L, Long.MAX_VALUE};
-        DateTime startDateTime = dateTime.withTimeAtStartOfDay();
-        DateTime endDateTime = dateTime.millisOfDay().withMaximumValue();
-        epochs[0] = startDateTime.getMillis() / MILLIS_PER_SECOND;
-        epochs[1] = endDateTime.getMillis() / MILLIS_PER_SECOND;
+        LocalDateTime startDateTime = dateTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endDateTime = dateTime.withHour(23).withMinute(59).withSecond(59).withNano(999);
+        epochs[0] = startDateTime.toInstant(ZoneOffset.UTC).toEpochMilli() / MILLIS_PER_SECOND;
+        epochs[1] = endDateTime.toInstant(ZoneOffset.UTC).toEpochMilli() / MILLIS_PER_SECOND;
         return epochs;
     }
 }

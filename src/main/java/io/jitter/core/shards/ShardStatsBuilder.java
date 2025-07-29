@@ -2,13 +2,18 @@ package io.jitter.core.shards;
 
 import cc.twittertools.index.IndexStatuses;
 import com.google.common.collect.ImmutableSortedSet;
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.MultiTerms;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 public class ShardStatsBuilder {
 
@@ -76,7 +81,7 @@ public class ShardStatsBuilder {
 
             String collection = term.toLowerCase(Locale.ROOT);
 
-            if (reverseTopicMap.keySet().contains(collection)) {
+            if (reverseTopicMap.containsKey(collection)) {
                 collectionsSizes.put(collection, docFreq);
                 logger.debug("collection {}: {} = {}", collection, "#d", docFreq);
             } else {

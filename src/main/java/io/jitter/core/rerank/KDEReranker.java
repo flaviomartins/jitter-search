@@ -7,7 +7,6 @@ import io.jitter.core.probabilitydistributions.KDE;
 import io.jitter.core.utils.TimeUtils;
 import org.apache.commons.math3.util.FastMath;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;

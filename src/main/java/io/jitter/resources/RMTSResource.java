@@ -7,12 +7,15 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.dropwizard.jersey.caching.CacheControl;
-import io.dropwizard.jersey.params.DateTimeParam;
+import io.dropwizard.jersey.jsr310.LocalDateTimeParam;
 import io.jitter.api.ResponseHeader;
 import io.jitter.api.search.RMTSDocumentsResponse;
 import io.jitter.api.search.SelectionSearchResponse;
 import io.jitter.api.search.StatusDocument;
-import io.jitter.core.rerank.*;
+import io.jitter.core.rerank.MeanTFFilter;
+import io.jitter.core.rerank.RMTSReranker;
+import io.jitter.core.rerank.RerankerCascade;
+import io.jitter.core.rerank.RerankerContext;
 import io.jitter.core.search.SearchManager;
 import io.jitter.core.search.TopDocuments;
 import io.jitter.core.selection.Selection;
@@ -21,16 +24,22 @@ import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.constraints.NotEmpty;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -39,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/rmts")
-@Api(value = "/rmts", description = "Enhanced temporal search endpoint")
+@Tag(name = "/rmts", description = "Enhanced temporal search endpoint")
 @Produces(MediaType.APPLICATION_JSON + "; charset=utf-8")
 public class RMTSResource extends AbstractFeedbackResource {
     private static final Logger logger = LoggerFactory.getLogger(RMTSResource.class);
@@ -66,50 +75,49 @@ public class RMTSResource extends AbstractFeedbackResource {
     @GET
     @Timed
     @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
-    @ApiOperation(
-            value = "Searches documents by keyword query using a time-aware ranking model",
-            notes = "Returns a selection search response",
-            response = SelectionSearchResponse.class
+    @Operation(
+            summary = "Searches documents by keyword query using a time-aware ranking model",
+            description = "Returns a selection search response"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Invalid query"),
-            @ApiResponse(code = 404, message = "No results found"),
-            @ApiResponse(code = 500, message = "Internal Server Error")
+            @ApiResponse(responseCode = "400", description = "Invalid query"),
+            @ApiResponse(responseCode = "404", description = "No results found"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error")
     })
-    public SelectionSearchResponse search(@ApiParam(value = "Search query", required = true) @QueryParam("q") @NotEmpty String q,
-                                          @ApiParam(hidden = true) @QueryParam("fq") Optional<String> fq,
-                                          @ApiParam(value = "Limit results", allowableValues="range[1, 10000]") @QueryParam("limit") @DefaultValue("1000") Integer limit,
-                                          @ApiParam(value = "Include retweets") @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
-                                          @ApiParam(value = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
-                                          @ApiParam(value = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
-                                          @ApiParam(value = "Day filter") @QueryParam("day") Optional<DateTimeParam> day,
-                                          @ApiParam(value = "Limit feedback results", allowableValues="range[1, 10000]") @QueryParam("sLimit") @DefaultValue("1000") Integer sLimit,
-                                          @ApiParam(value = "Include retweets for feedback") @QueryParam("sRetweets") @DefaultValue("true") Boolean sRetweets,
-                                          @ApiParam(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean sFuture,
-                                          @ApiParam(value = "Resource selection method", allowableValues="taily,ranks,crcsexp,crcslin,votes,sizes") @QueryParam("method") @DefaultValue("ranks") String method,
-                                          @ApiParam(value = "Maximum number of collections", allowableValues="range[0, 100]") @QueryParam("maxCol") @DefaultValue("3") Integer maxCol,
-                                          @ApiParam(value = "Rank-S parameter", allowableValues="range[0, 1]") @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
-                                          @ApiParam(value = "Use collection size normalization") @QueryParam("normalize") @DefaultValue("true") Boolean normalize,
-                                          @ApiParam(value = "Taily parameter", allowableValues="range[0, 100]") @QueryParam("v") @DefaultValue("10") Integer v,
-                                          @ApiParam(value = "Force topic") @QueryParam("topic") Optional<String> topic,
-                                          @ApiParam(value = "Number of feedback documents", allowableValues="range[1, 1000]") @QueryParam("fbDocs") @DefaultValue("50") Integer fbDocs,
-                                          @ApiParam(value = "Number of feedback terms", allowableValues="range[1, 1000]") @QueryParam("fbTerms") @DefaultValue("20") Integer fbTerms,
-                                          @ApiParam(value = "Original query weight", allowableValues="range[0, 1]") @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
-                                          @ApiParam(value = "Number of feedback collections") @QueryParam("fbCols") @DefaultValue("3") Integer fbCols,
-                                          @ApiParam(value = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
-                                          @ApiParam(hidden = true) @QueryParam("rerank") @DefaultValue("true") Boolean rerank,
-                                          @ApiParam(value = "Number of documents to rerank", allowableValues="range[1, 1000]") @QueryParam("numRerank") @DefaultValue("1000") Integer numRerank,
-                                          @ApiParam(hidden = true) @Context UriInfo uriInfo) {
+    public SelectionSearchResponse search(@Parameter(name = "Search query", required = true) @QueryParam("q") @NotBlank String q,
+                                          @Parameter(hidden = true) @QueryParam("fq") Optional<String> fq,
+                                          @Parameter(name = "Limit results", schema = @Schema(minimum = "1", maximum = "10000")) @QueryParam("limit") @DefaultValue("1000") Integer limit,
+                                          @Parameter(name = "Include retweets") @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
+                                          @Parameter(name = "Maximum document id") @QueryParam("maxId") Optional<Long> maxId,
+                                          @Parameter(name = "Epoch filter") @QueryParam("epoch") Optional<String> epoch,
+                                          @Parameter(name = "Day filter") @QueryParam("day") Optional<LocalDateTimeParam> day,
+                                          @Parameter(name = "Limit feedback results", schema = @Schema(minimum = "1", maximum = "10000")) @QueryParam("sLimit") @DefaultValue("1000") Integer sLimit,
+                                          @Parameter(name = "Include retweets for feedback") @QueryParam("sRetweets") @DefaultValue("true") Boolean sRetweets,
+                                          @Parameter(hidden = true) @QueryParam("sFuture") @DefaultValue("false") Boolean sFuture,
+                                          @Parameter(name = "Resource selection method", schema = @Schema(allowableValues = {"taily", "ranks", "crcsexp", "crcslin", "votes", "sizes"})) @QueryParam("method") @DefaultValue("ranks") String method,
+                                          @Parameter(name = "Maximum number of collections", schema = @Schema(minimum = "1", maximum = "100")) @QueryParam("maxCol") @DefaultValue("3") Integer maxCol,
+                                          @Parameter(name = "Rank-S parameter", schema = @Schema(minimum = "1", maximum = "1")) @QueryParam("minRanks") @DefaultValue("1e-5") Double minRanks,
+                                          @Parameter(name = "Use collection size normalization") @QueryParam("normalize") @DefaultValue("true") Boolean normalize,
+                                          @Parameter(name = "Taily parameter", schema = @Schema(minimum = "1", maximum = "100")) @QueryParam("v") @DefaultValue("10") Integer v,
+                                          @Parameter(name = "Force topic") @QueryParam("topic") Optional<String> topic,
+                                          @Parameter(name = "Number of feedback documents", schema = @Schema(minimum = "1", maximum = "1000")) @QueryParam("fbDocs") @DefaultValue("50") Integer fbDocs,
+                                          @Parameter(name = "Number of feedback terms", schema = @Schema(minimum = "1", maximum = "1000")) @QueryParam("fbTerms") @DefaultValue("20") Integer fbTerms,
+                                          @Parameter(name = "Original query weight", schema = @Schema(minimum = "1", maximum = "1")) @QueryParam("fbWeight") @DefaultValue("0.5") Double fbWeight,
+                                          @Parameter(name = "Number of feedback collections") @QueryParam("fbCols") @DefaultValue("3") Integer fbCols,
+                                          @Parameter(name = "Use topics") @QueryParam("topics") @DefaultValue("true") Boolean topics,
+                                          @Parameter(hidden = true) @QueryParam("rerank") @DefaultValue("true") Boolean rerank,
+                                          @Parameter(name = "Number of documents to rerank", schema = @Schema(minimum = "1", maximum = "1000")) @QueryParam("numRerank") @DefaultValue("1000") Integer numRerank,
+                                          @Parameter(hidden = true) @Context UriInfo uriInfo) {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 
         try {
             long startTime = System.currentTimeMillis();
-            String query = URLDecoder.decode(q, "UTF-8");
-            String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
+            String query = URLDecoder.decode(q, StandardCharsets.UTF_8);
+            String filterQuery = URLDecoder.decode(fq.orElse(""), StandardCharsets.UTF_8);
             long[] epochs = Epochs.parseEpoch(epoch);
 
             if (day.isPresent()) {
-                DateTimeParam dateTimeParam = day.get();
+                LocalDateTimeParam dateTimeParam = day.get();
                 epochs = Epochs.parseDay(dateTimeParam.get());
             }
 

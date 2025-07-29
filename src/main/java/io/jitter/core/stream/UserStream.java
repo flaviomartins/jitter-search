@@ -13,6 +13,7 @@ import twitter4j.conf.ConfigurationBuilder;
 import java.util.List;
 import java.util.concurrent.*;
 
+@SuppressWarnings("LoggingSimilarMessage")
 public class UserStream implements Managed {
 
     private final static Logger logger = LoggerFactory.getLogger(UserStream.class);
@@ -58,7 +59,7 @@ public class UserStream implements Managed {
                         if (te.getStatusCode() == 429) {
                             int secondsUntilReset = te.getRateLimitStatus().getSecondsUntilReset();
                             try {
-                                Thread.sleep(secondsUntilReset * 1000);
+                                Thread.sleep(secondsUntilReset * 1000L);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }

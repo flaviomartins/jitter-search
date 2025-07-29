@@ -1,24 +1,27 @@
 package io.jitter.core.wikipedia;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
 
 public class WikipediaManagerFactory {
 
-    @NotEmpty
+    @NotBlank
     private String index;
 
-    @NotEmpty
+    @NotBlank
     private String stopwords;
 
     @Min(1)
     @Max(5000)
     private float mu;
+
+    @NotBlank
+    private String cat2topic;
 
     @JsonProperty
     public String getIndex() {

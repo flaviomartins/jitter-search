@@ -1,17 +1,16 @@
 package io.jitter.core.analysis;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Arrays;
-import java.util.List;
-
+import com.google.common.collect.Lists;
 import junit.framework.TestCase;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-
-import com.google.common.collect.Lists;
 import org.junit.Assert;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Arrays;
+import java.util.List;
 
 public class TokenizationTest extends TestCase {
 

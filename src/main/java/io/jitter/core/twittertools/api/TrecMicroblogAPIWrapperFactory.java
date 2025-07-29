@@ -1,29 +1,26 @@
 package io.jitter.core.twittertools.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
+import jakarta.validation.constraints.NotBlank;public class TrecMicroblogAPIWrapperFactory {
 
-import javax.validation.constraints.NotEmpty;
-
-public class TrecMicroblogAPIWrapperFactory {
-
-    @NotEmpty
+    @NotBlank
     private String host;
 
     private int port;
 
-    @NotEmpty
+    @NotBlank
     private String group;
 
-    @NotEmpty
+    @NotBlank
     private String token;
 
-    @NotEmpty
+    @NotBlank
     private String cacheDir;
 
     private boolean useCache;
 
-    @NotEmpty
+    @NotBlank
     private String stopwords;
 
     private String stats;

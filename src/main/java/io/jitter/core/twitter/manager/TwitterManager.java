@@ -1,26 +1,33 @@
 package io.jitter.core.twitter.manager;
 
-import cc.twittertools.corpus.data.*;
+import cc.twittertools.corpus.data.JsonStatusCorpusReader;
+import cc.twittertools.corpus.data.StatusStream;
 import io.dropwizard.lifecycle.Managed;
 import io.jitter.core.analysis.LowercaseKeywordAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.*;
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import twitter4j.*;
+import twitter4j.Status;
+import twitter4j.Twitter;
+import twitter4j.TwitterFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static cc.twittertools.index.IndexStatuses.*;
-import static org.apache.lucene.document.Field.*;
+import static cc.twittertools.index.IndexStatuses.StatusField;
+import static org.apache.lucene.document.Field.Store;
 
 public class TwitterManager implements Managed {
 

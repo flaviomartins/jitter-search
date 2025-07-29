@@ -20,7 +20,6 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.*;
 import java.util.*;
 
@@ -38,12 +37,12 @@ public class TrecMicroblogAPIWrapper implements Managed {
     private final String cacheDir;
     private final boolean useCache;
     private Stopper stopper;
-    private Analyzer analyzer;
+    private final Analyzer analyzer;
     private CollectionStats collectionStats;
 
-    public TrecMicroblogAPIWrapper(String host, int port, @Nullable String group,
-                                   @Nullable String token, @Nullable String cacheDir, boolean useCache,
-                                   String stopwords, @Nullable String stats, @Nullable String statsDb) {
+    public TrecMicroblogAPIWrapper(String host, int port, String group,
+                                   String token, String cacheDir, boolean useCache,
+                                   String stopwords, String stats, String statsDb) {
         Preconditions.checkNotNull(host);
         Preconditions.checkArgument(port > 0);
         this.host = host;

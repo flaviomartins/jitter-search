@@ -1,7 +1,6 @@
 package io.jitter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.jaxrs.config.BeanConfig;
 
 /**
  * Created by fmartins on 04/11/16.
@@ -74,14 +73,4 @@ public class ApiDocsFactory {
         this.basePath = basePath;
     }
 
-    public BeanConfig build() {
-        final BeanConfig beanConfig = new BeanConfig();
-        beanConfig.setTitle(title);
-        beanConfig.setDescription(description);
-        beanConfig.setVersion(version);
-        beanConfig.setSchemes(schemes);
-        beanConfig.setHost(host);
-        beanConfig.setBasePath(basePath);
-        return beanConfig;
-    }
 }

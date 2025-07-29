@@ -6,7 +6,9 @@ import io.jitter.core.analysis.TweetAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.*;
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -20,8 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static cc.twittertools.index.IndexStatuses.*;
-import static org.apache.lucene.document.Field.*;
+import static cc.twittertools.index.IndexStatuses.StatusField;
+import static org.apache.lucene.document.Field.Store;
 
 public class LiveStreamIndexer implements Managed, StatusListener, UserStreamListener {
 

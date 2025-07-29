@@ -4,7 +4,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import twitter4j.*;
+import twitter4j.RawStreamListener;
+import twitter4j.Status;
+import twitter4j.TwitterObjectFactory;
+import twitter4j.UserStreamListener;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;

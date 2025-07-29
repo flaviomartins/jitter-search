@@ -16,8 +16,6 @@
 
 package io.jitter.core.analysis;
 
-import java.io.Reader;
-
 import com.google.common.base.CharMatcher;
 import org.apache.lucene.analysis.*;
 import org.apache.lucene.analysis.core.StopFilter;
@@ -26,6 +24,8 @@ import org.apache.lucene.analysis.en.EnglishPossessiveFilter;
 import org.apache.lucene.analysis.en.PorterStemFilter;
 import org.apache.lucene.analysis.miscellaneous.SetKeywordMarkerFilter;
 import org.apache.lucene.analysis.util.CharTokenizer;
+
+import java.io.Reader;
 
 /**
  * {@link Analyzer} for Tweets.

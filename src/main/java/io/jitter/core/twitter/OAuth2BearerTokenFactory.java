@@ -1,12 +1,11 @@
 package io.jitter.core.twitter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 
 public class OAuth2BearerTokenFactory {
 
-    @NotEmpty
+    @NotBlank
     private String bearerToken;
 
     @JsonProperty

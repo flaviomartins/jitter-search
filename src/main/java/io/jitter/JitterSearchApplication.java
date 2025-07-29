@@ -1,41 +1,35 @@
 package io.jitter;
 
 import com.google.common.collect.Lists;
-import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.Application;
+import io.dropwizard.core.setup.Bootstrap;
+import io.dropwizard.core.setup.Environment;
+import io.dropwizard.jetty.setup.ServletEnvironment;
+import io.dropwizard.web.WebBundle;
+import io.dropwizard.web.conf.WebConfiguration;
 import io.jitter.core.search.SearchManager;
-import io.jitter.core.taily.TailyManager;
+import io.jitter.core.selection.SelectionManager;
 import io.jitter.core.shards.ShardsManager;
+import io.jitter.core.stream.LiveStreamIndexer;
+import io.jitter.core.stream.RawStreamLogger;
 import io.jitter.core.stream.SampleStream;
 import io.jitter.core.stream.UserStream;
+import io.jitter.core.taily.TailyManager;
 import io.jitter.core.twitter.OAuth1;
 import io.jitter.core.twitter.OAuth2BearerToken;
 import io.jitter.core.twitter.manager.TwitterManager;
-import io.jitter.core.utils.NoExitSecurityManager;
+import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import io.jitter.core.wikipedia.WikipediaManager;
 import io.jitter.health.*;
 import io.jitter.resources.*;
 import io.jitter.tasks.*;
-import io.swagger.converter.ModelConverters;
-import io.swagger.jaxrs.config.BeanConfig;
-import io.swagger.jaxrs.listing.ApiListingResource;
-import io.swagger.jaxrs.listing.SwaggerSerializers;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
-import io.jitter.core.selection.SelectionManager;
-import io.jitter.core.stream.LiveStreamIndexer;
-import io.jitter.core.stream.RawStreamLogger;
-import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapper;
 import org.rocksdb.RocksDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
 import java.io.IOException;
-import java.util.EnumSet;
 
 public class JitterSearchApplication extends Application<JitterSearchConfiguration> {
 
@@ -44,7 +38,6 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
     public static void main(String[] args) throws Exception {
         // a static method that loads the RocksDB C++ library.
         RocksDB.loadLibrary();
-        System.setSecurityManager(new NoExitSecurityManager());
         new JitterSearchApplication().run(args);
     }
 
@@ -55,6 +48,18 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
     @Override
     public void initialize(Bootstrap<JitterSearchConfiguration> bootstrap) {
+        bootstrap.addBundle(new WebBundle<>() {
+            @Override
+            public WebConfiguration getWebConfiguration(final JitterSearchConfiguration configuration) {
+                return configuration.getWebConfiguration();
+            }
+
+            // Optional: Override Servlet environment to apply the configuration to the admin servlets
+            @Override
+            protected ServletEnvironment getServletEnvironment(Environment environment) {
+                return environment.admin();
+            }
+        });
         // API documentation bundles
         bootstrap.addBundle(new AssetsBundle("/swagger-ui", "/apidocs", "index.html", "swagger-ui"));
         bootstrap.addBundle(new AssetsBundle("/redoc", "/redoc", "index.html", "redoc"));
@@ -62,32 +67,7 @@ public class JitterSearchApplication extends Application<JitterSearchConfigurati
 
     @Override
     public void run(JitterSearchConfiguration configuration,
-                    Environment environment) throws IOException, InterruptedException {
-
-        if (configuration.isCors()) {
-            // Enable CORS headers
-            final FilterRegistration.Dynamic cors =
-                    environment.servlets().addFilter("CORS", CrossOriginFilter.class);
-
-            // Configure CORS parameters
-            cors.setInitParameter("allowedOrigins", "*");
-            cors.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin");
-            cors.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD");
-
-            // Add URL mapping
-            cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-        }
-
-        // DateTimeParam Property Converter for Swagger
-        ModelConverters.getInstance().addConverter(new DateTimeParamPropertyConverter());
-
-        // Swagger API listing
-        BeanConfig beanConfig = configuration.getApiDocsFactory().build();
-        beanConfig.setResourcePackage("io.jitter.resources");
-        beanConfig.setScan(true);
-
-        environment.jersey().register(SwaggerSerializers.class);
-        environment.jersey().register(new ApiListingResource());
+                    Environment environment) throws IOException {
 
         final TwitterManager twitterManager = configuration.getTwitterManagerFactory().build(environment);
         final TwitterManagerHealthCheck twitterManagerHealthCheck =
