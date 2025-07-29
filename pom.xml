@@ -90,11 +90,6 @@
             </snapshots>
             <url>file://${project.basedir}/repo</url>
         </repository>
-        <repository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sonatype Nexus Snapshots</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </repository>
     </repositories>
 
     <dependencyManagement>
