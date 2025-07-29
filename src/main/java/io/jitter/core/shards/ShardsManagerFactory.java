@@ -1,13 +1,13 @@
 package io.jitter.core.shards;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,17 +15,17 @@ public class ShardsManagerFactory {
 
     private String collection;
 
-    @NotEmpty
+    @NotBlank
     private String index;
 
-    @NotEmpty
+    @NotBlank
     private String stopwords;
 
     @Min(1)
     @Max(5000)
     private float mu;
 
-    @NotEmpty
+    @NotBlank
     private String method;
 
     @Valid

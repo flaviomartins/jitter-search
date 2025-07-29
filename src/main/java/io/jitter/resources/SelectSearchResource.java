@@ -12,19 +12,22 @@ import io.jitter.core.selection.SelectionTopDocuments;
 import io.jitter.core.shards.ShardsManager;
 import io.jitter.core.taily.TailyManager;
 import io.jitter.core.utils.Epochs;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.UriInfo;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.constraints.NotEmpty;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -52,7 +55,7 @@ public class SelectSearchResource extends AbstractFeedbackResource {
     @GET
     @Timed
     @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
-    public SelectionSearchResponse search(@QueryParam("q") @NotEmpty String q,
+    public SelectionSearchResponse search(@QueryParam("q") @NotBlank String q,
                                           @QueryParam("fq") Optional<String> fq,
                                           @QueryParam("limit") @DefaultValue("1000") Integer limit,
                                           @QueryParam("retweets") @DefaultValue("false") Boolean retweets,
@@ -70,8 +73,8 @@ public class SelectSearchResource extends AbstractFeedbackResource {
                                           @Context UriInfo uriInfo)
             throws IOException, ParseException {
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        String query = URLDecoder.decode(q, "UTF-8");
-        String filterQuery = URLDecoder.decode(fq.orElse(""), "UTF-8");
+        String query = URLDecoder.decode(q, StandardCharsets.UTF_8);
+        String filterQuery = URLDecoder.decode(fq.orElse(""), StandardCharsets.UTF_8);
         long[] epochs = Epochs.parseEpoch(epoch);
 
         long startTime = System.currentTimeMillis();

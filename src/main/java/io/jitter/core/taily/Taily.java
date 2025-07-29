@@ -7,7 +7,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 
+@SuppressWarnings("LoggingSimilarMessage")
 public class Taily {
     private static final Logger logger = LoggerFactory.getLogger(Taily.class);
 

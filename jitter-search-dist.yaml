@@ -37,6 +37,13 @@ twitter:
     - reuters
 
 
+web:
+  cors:
+    allowedMethods: ["DELETE","GET","HEAD","POST","PUT"]
+    allowedHeaders: ["Accept","Authorization","Content-Type","Origin","X-Requested-With"]
+    preflightMaxAge: 30 minutes
+
+
 server:
   applicationConnectors:
   - type: http

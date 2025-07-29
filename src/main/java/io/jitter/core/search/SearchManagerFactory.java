@@ -1,18 +1,17 @@
 package io.jitter.core.search;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.setup.Environment;
-
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
+import io.dropwizard.core.setup.Environment;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 
 public class SearchManagerFactory {
 
-    @NotEmpty
+    @NotBlank
     private String index;
 
-    @NotEmpty
+    @NotBlank
     private String stopwords;
 
     @Min(1)

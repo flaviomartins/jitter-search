@@ -1,17 +1,17 @@
 package io.jitter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.Configuration;
+import io.dropwizard.core.Configuration;
+import io.dropwizard.web.conf.WebConfiguration;
 import io.jitter.core.search.SearchManagerFactory;
-import io.jitter.core.taily.TailyManagerFactory;
-import io.jitter.core.shards.ShardsManagerFactory;
-import io.jitter.core.twitter.manager.TwitterManagerFactory;
 import io.jitter.core.selection.SelectionManagerFactory;
+import io.jitter.core.shards.ShardsManagerFactory;
+import io.jitter.core.taily.TailyManagerFactory;
+import io.jitter.core.twitter.manager.TwitterManagerFactory;
 import io.jitter.core.twittertools.api.TrecMicroblogAPIWrapperFactory;
 import io.jitter.core.wikipedia.WikipediaManagerFactory;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 public class JitterSearchConfiguration extends Configuration {
 
@@ -30,6 +30,11 @@ public class JitterSearchConfiguration extends Configuration {
     private String statusStreamLogPath;
 
     private String userStreamLogPath;
+
+    @Valid
+    @NotNull
+    @JsonProperty("web")
+    private WebConfiguration webConfiguration = new WebConfiguration();
 
     @Valid
     @NotNull
@@ -134,13 +139,13 @@ public class JitterSearchConfiguration extends Configuration {
     }
 
     @JsonProperty
-    public boolean isCors() {
-        return cors;
+    public WebConfiguration getWebConfiguration() {
+        return webConfiguration;
     }
 
     @JsonProperty
-    public void setCors(boolean cors) {
-        this.cors = cors;
+    public void setWebConfiguration(final WebConfiguration webConfiguration) {
+        this.webConfiguration = webConfiguration;
     }
 
     @JsonProperty

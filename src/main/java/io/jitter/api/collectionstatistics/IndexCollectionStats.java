@@ -2,7 +2,7 @@ package io.jitter.api.collectionstatistics;
 
 import org.apache.lucene.index.*;
 
-import java.io.*;
+import java.io.IOException;
 
 public class IndexCollectionStats implements CollectionStats {
 

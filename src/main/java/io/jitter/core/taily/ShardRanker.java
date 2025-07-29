@@ -1,8 +1,8 @@
 package io.jitter.core.taily;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.math3.distribution.GammaDistribution;
 import io.jitter.core.utils.AnalyzerUtils;
+import org.apache.commons.math3.distribution.GammaDistribution;
 import org.apache.lucene.analysis.Analyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

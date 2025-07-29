@@ -60,7 +60,7 @@ public class WikipediaManager implements Managed {
     private DirectoryReader indexReader;
     private IndexSearcher searcher;
     private TaxonomyReader taxoReader;
-    private FacetsConfig facetsConfig = new FacetsConfig();
+    private final FacetsConfig facetsConfig = new FacetsConfig();
 
     public WikipediaManager(String indexPath, boolean live, float mu) throws IOException {
         this.indexPath = indexPath;

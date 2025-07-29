@@ -1,23 +1,24 @@
 package io.jitter.core.taily;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 
 public class TailyManagerFactory {
 
-    @NotEmpty
+    @NotBlank
     private String index;
 
-    @NotEmpty
+    @NotBlank
     private String dbPath;
 
-    @NotEmpty
+    @NotBlank
     private String stopwords;
 
     @Min(1)
@@ -28,7 +29,7 @@ public class TailyManagerFactory {
     private float nc;
 
     @NotEmpty
-    private List<String> users;
+    private List<@NotBlank String> users;
 
     private Map<String, List<String>> topics;
 

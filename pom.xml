@@ -8,7 +8,7 @@
     <version>0.12.0-SNAPSHOT</version>
     <groupId>org.novasearch.jitter</groupId>
     <name>Jitter Search</name>
-    <url>http://www.jitter.io</url>
+    <url>https://www.jitter.io</url>
     <description>
         Jitter is a RESTful web application that does search on Twitter.
     </description>
@@ -29,10 +29,15 @@
         <maven.site.deploy.skip>true</maven.site.deploy.skip>
         <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
 
-        <dropwizard.version>2.0.16</dropwizard.version>
-        <jersey.version>2.32</jersey.version>
+        <dropwizard.version>4.0.15</dropwizard.version>
+        <dropwizard-web.version>3.0.1</dropwizard-web.version>
 
-        <swagger.version>1.6.2</swagger.version>
+        <slf4j.version>2.0.17</slf4j.version>
+
+        <jetty.version>11.0.25</jetty.version>
+        <jersey.version>3.0.18</jersey.version>
+        <swagger.version>2.2.34</swagger.version>
+
         <fastutil.version>8.5.16</fastutil.version>
         <commons-math3.version>3.6.1</commons-math3.version>
         <commons-csv.version>1.14.0</commons-csv.version>
@@ -102,6 +107,16 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>io.dropwizard.modules</groupId>
+                <artifactId>dropwizard-web</artifactId>
+                <version>${dropwizard-web.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>log4j-over-slf4j</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
 
             <!-- Jersey Server-Sent Events -->
             <dependency>
@@ -112,16 +127,22 @@
 
             <!-- API documentation -->
             <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-jersey2-jaxrs</artifactId>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-jaxrs2</artifactId>
                 <version>${swagger.version}</version>
                 <scope>compile</scope>
                 <exclusions>
                     <exclusion>
-                        <groupId>com.google.code.findbugs</groupId>
-                        <artifactId>annotations</artifactId>
+                        <groupId>org.yaml</groupId>
+                        <artifactId>snakeyaml</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>${swagger.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <!-- Utils -->
@@ -207,6 +228,10 @@
                         <groupId>commons-logging</groupId>
                         <artifactId>commons-logging</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
@@ -264,6 +289,14 @@
                         <groupId>org.slf4j</groupId>
                         <artifactId>slf4j-log4j12</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-io</groupId>
+                        <artifactId>commons-io</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
         </dependencies>
@@ -287,6 +320,14 @@
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-http2</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.dropwizard.modules</groupId>
+            <artifactId>dropwizard-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+        </dependency>
 
         <!-- Jersey Server-Sent Events -->
         <dependency>
@@ -296,8 +337,12 @@
 
         <!-- API documentation -->
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-jersey2-jaxrs</artifactId>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
         </dependency>
 
         <!-- Utils -->
@@ -435,7 +480,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.2.4</version>
+                    <version>3.6.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -543,6 +588,7 @@
                                 <exclude>META-INF/*.SF</exclude>
                                 <exclude>META-INF/*.DSA</exclude>
                                 <exclude>META-INF/*.RSA</exclude>
+                                <exclude>module-info.class</exclude>
                             </excludes>
                         </filter>
                     </filters>
