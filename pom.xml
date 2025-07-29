@@ -47,7 +47,7 @@
         <ranklib.version>2.14</ranklib.version>
         <kstem.version>3.4</kstem.version>
 
-        <rocksdbjni.version>6.13.3</rocksdbjni.version>
+        <rocksdbjni.version>10.2.1</rocksdbjni.version>
 
         <twittertools.version>1.4.7-jitter</twittertools.version>
     </properties>
