@@ -64,14 +64,14 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git@gitlab.com:flaviomartins/jitter-search.git</connection>
-        <developerConnection>scm:git:git@gitlab.com:flaviomartins/jitter-search.git</developerConnection>
-        <url>https://gitlab.com/flaviomartins/jitter-search</url>
+        <connection>scm:git:git@github.com:flaviomartins/jitter-search.git</connection>
+        <developerConnection>scm:git:git@github.com:flaviomartins/jitter-search.git</developerConnection>
+        <url>https://github.com/flaviomartins/jitter-search</url>
     </scm>
 
     <issueManagement>
-        <system>Gitlab</system>
-        <url>https://gitlab.com/flaviomartins/jitter-search/issues</url>
+        <system>GitHub</system>
+        <url>https://github.com/jitter/jitter-search/issues</url>
     </issueManagement>
 
     <repositories>
@@ -268,7 +268,7 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    
+
     <dependencies>
         <!-- Dropwizard modules -->
         <dependency>
@@ -319,7 +319,7 @@
             <groupId>com.edwardraff</groupId>
             <artifactId>JSAT</artifactId>
         </dependency>
-        
+
         <!-- Lucene -->
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -349,7 +349,7 @@
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-facet</artifactId>
         </dependency>
-        
+
         <!-- Twitter4j -->
         <dependency>
             <groupId>org.twitter4j</groupId>
