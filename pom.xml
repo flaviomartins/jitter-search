@@ -42,7 +42,7 @@
         <commons-csv.version>1.14.0</commons-csv.version>
         <jsat.version>0.0.9</jsat.version>
 
-        <lucene.version>8.3.0</lucene.version>
+        <lucene.version>8.11.4</lucene.version>
 
         <twitter4j.version>4.0.7</twitter4j.version>
         <hbc.version>2.2.2-jitter</hbc.version>
