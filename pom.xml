@@ -36,7 +36,7 @@
         <fastutil.version>8.5.16</fastutil.version>
         <commons-math3.version>3.6.1</commons-math3.version>
         <commons-csv.version>1.14.0</commons-csv.version>
-        <jsat.version>0.0.8</jsat.version>
+        <jsat.version>0.0.9</jsat.version>
 
         <lucene.version>8.3.0</lucene.version>
 
